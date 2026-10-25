@@ -32,7 +32,7 @@ public class ControladorRegistro {
         }
         vista.limpiarError();
         JOptionPane.showMessageDialog(vista, "Cuenta creada. Ya puedes iniciar sesión.",
-                "Constela", JOptionPane.INFORMATION_MESSAGE);
+                "AstroMatch", JOptionPane.INFORMATION_MESSAGE);
         vista.dispose();
     }
 }

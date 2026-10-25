@@ -2,10 +2,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-/**
- * Vista de inicio de sesion. SOLO interfaz: no valida ni consulta nada.
- * El controlador usa los getters para leer datos y asignar listeners.
- */
+
 public class VistaLogin extends JFrame {
 
     private static final char ECO = '\u2022';
@@ -13,31 +10,42 @@ public class VistaLogin extends JFrame {
     private final JTextField txtUsuario = new JTextField();
     private final JPasswordField txtContrasena = new JPasswordField();
     private final JButton btnVer = Tema.botonTexto("VER");
-    private final JButton btnIngresar = new VistaTablero.BotonPill("INICIAR SESIÓN", true);
+    private final VistaTablero.BotonPill btnIngresar = new VistaTablero.BotonPill("INICIAR SESIÓN  →", true, true);
     private final JButton btnOlvide = Tema.botonTexto("¿OLVIDASTE TU CONTRASEÑA?");
     private final JButton btnCrearCuenta = Tema.botonTexto("CREAR CUENTA");
     private final JLabel lblError = new JLabel(" ");
 
     public VistaLogin() {
-        super("Constela - Iniciar sesión");
+        super("AstroMatch - Iniciar sesión");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new GridLayout(1, 2));
+        setLayout(new GridBagLayout());
 
-        add(crearPanelHero());
-        add(crearPanelFormulario());
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = 0;
+        c.fill = GridBagConstraints.BOTH;
+        c.weighty = 1;
+
+        c.gridx = 0;
+        c.weightx = 0.65;
+        add(crearPanelHero(), c);
+
+        c.gridx = 1;
+        c.weightx = 0.35;
+        add(crearPanelFormulario(), c);
 
         setSize(1000, 620);
         setMinimumSize(new Dimension(820, 560));
         setLocationRelativeTo(null);
     }
 
-    // ---------- Lado izquierdo: cielo + lema ----------
     private JPanel crearPanelHero() {
-        Tema hero = new Tema(90);
+        Tema hero = new Tema(140);
+        hero.setMostrarOrion(true);
+        hero.setAnimado(true);
         hero.setLayout(new BorderLayout());
         hero.setBorder(new EmptyBorder(48, 56, 48, 56));
 
-        JLabel marca = new JLabel("<html><span style='color:#F6DCA2'>&#9679;</span>&nbsp;&nbsp;CONSTELA</html>");
+        JLabel marca = new JLabel("<html><span style='color:#F6DCA2'>&#9679;</span>&nbsp;&nbsp;AstroMatch</html>");
         marca.setFont(Tema.sans(Font.BOLD, 13));
         marca.setForeground(Tema.TEXTO);
 
@@ -49,12 +57,27 @@ public class VistaLogin extends JFrame {
         pie.setFont(Tema.sans(Font.PLAIN, 11));
         pie.setForeground(Tema.SECUNDARIO);
 
+        JLabel descripcion = new JLabel("<html><div style='width:400px'>"
+                + "Un juego de memoria sobre constelaciones. Compite con otro observador "
+                + "y demuestra quién tiene mejor memoria.</div></html>");
+        descripcion.setFont(Tema.sans(Font.PLAIN, 16));
+        descripcion.setForeground(Tema.SECUNDARIO);
+
+        JPanel textos = new JPanel();
+        textos.setOpaque(false);
+        textos.setLayout(new BoxLayout(textos, BoxLayout.Y_AXIS));
+        lema.setAlignmentX(Component.LEFT_ALIGNMENT);
+        descripcion.setAlignmentX(Component.LEFT_ALIGNMENT);
+        textos.add(lema);
+        textos.add(Box.createVerticalStrut(22));
+        textos.add(descripcion);
+
         JPanel centro = new JPanel(new GridBagLayout());
         centro.setOpaque(false);
         GridBagConstraints c = new GridBagConstraints();
         c.anchor = GridBagConstraints.WEST;
         c.weightx = 1;
-        centro.add(lema, c);
+        centro.add(textos, c);
 
         hero.add(marca, BorderLayout.NORTH);
         hero.add(centro, BorderLayout.CENTER);
@@ -62,7 +85,6 @@ public class VistaLogin extends JFrame {
         return hero;
     }
 
-    // ---------- Lado derecho: formulario ----------
     private JPanel crearPanelFormulario() {
         JPanel lado = new JPanel(new GridBagLayout());
         lado.setBackground(Tema.FONDO);
@@ -70,7 +92,7 @@ public class VistaLogin extends JFrame {
         JPanel form = new JPanel();
         form.setOpaque(false);
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
-        form.add(Box.createHorizontalStrut(360)); // ancho fijo del formulario
+        form.add(Box.createHorizontalStrut(280));
 
         Tema.estilizarCampo(txtUsuario);
         Tema.estilizarCampo(txtContrasena);
@@ -86,7 +108,7 @@ public class VistaLogin extends JFrame {
         lblError.setFont(Tema.sans(Font.PLAIN, 13));
         lblError.setForeground(Tema.ERROR);
 
-        btnIngresar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
+        btnIngresar.setMaximumSize(new Dimension(Integer.MAX_VALUE, btnIngresar.getPreferredSize().height));
 
         JPanel filaLinks = new JPanel(new BorderLayout());
         filaLinks.setOpaque(false);
@@ -107,21 +129,26 @@ public class VistaLogin extends JFrame {
         form.add(alinear(filaClave));
         form.add(Box.createVerticalStrut(14));
         form.add(alinear(lblError));
-        form.add(Box.createVerticalStrut(10));
         form.add(alinear(btnIngresar));
-        form.add(Box.createVerticalStrut(20));
+        form.add(Box.createVerticalStrut(4));
         form.add(alinear(filaLinks));
         form.add(Box.createVerticalStrut(30));
-        form.add(alinear(etiqueta("MOCKUP · SIN AUTENTICACIÓN REAL", Tema.sans(Font.PLAIN, 10), new Color(0x586184))));
 
-        // Mostrar/ocultar contrasena: comportamiento puramente visual
+        for (Component hijo : form.getComponents()) {
+            ((JComponent) hijo).setAlignmentX(Component.LEFT_ALIGNMENT);
+        }
+
         btnVer.addActionListener(e -> {
             boolean oculta = txtContrasena.getEchoChar() != 0;
             txtContrasena.setEchoChar(oculta ? (char) 0 : ECO);
             btnVer.setText(oculta ? "OCULTAR" : "VER");
         });
 
-        lado.add(form);
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0;
+        c.gridy = 0;
+        c.anchor = GridBagConstraints.CENTER;
+        lado.add(form, c);
         return lado;
     }
 
@@ -137,7 +164,6 @@ public class VistaLogin extends JFrame {
         return c;
     }
 
-    // ---------- API para el controlador ----------
     public String getUsuario()           { return txtUsuario.getText().trim(); }
     public String getContrasena()        { return new String(txtContrasena.getPassword()); }
     public JButton getBtnIngresar()      { return btnIngresar; }
