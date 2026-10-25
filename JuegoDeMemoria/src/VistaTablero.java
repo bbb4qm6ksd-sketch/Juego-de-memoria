@@ -3,7 +3,12 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 
-
+/**
+ * Vista UNICA del juego de memoria. Sirve para los dos modos (ver setModo):
+ *  - CLASICO:  dos jugadores, cada uno con su matriz 6x6 (18 parejas), turno con tiempo.
+ *  - PATRONES: un jugador, una matriz 6x6 de casillas que se iluminan, con sus tiempos.
+ * SOLO interfaz: no genera parejas ni patrones, no cuenta el tiempo ni decide turnos.
+ */
 public class VistaTablero extends JFrame {
 
     public enum Modo { CLASICO, PATRONES }
@@ -20,13 +25,16 @@ public class VistaTablero extends JFrame {
     private final JLabel[] lblIntentos = new JLabel[JUGADORES];
     private final JLabel[] lblParejas = new JLabel[JUGADORES];
 
+    // Titulos
     private final JLabel lblEyebrow = new JLabel();
     private final JLabel lblTitulo = new JLabel();
 
+    // Modo clasico: turno y reloj
     private final JLabel lblTurno = new JLabel("TURNO");
     private final JLabel lblTiempo = new JLabel("10");
     private final BarraTiempo barra = new BarraTiempo();
 
+    // Modo patrones: nivel, ronda y dos barras de tiempo
     private final JLabel lblNivel = new JLabel("3");
     private final JLabel lblRonda = new JLabel("1");
     private final JLabel lblTotal = new JLabel("12.0 s");
@@ -91,6 +99,7 @@ public class VistaTablero extends JFrame {
         textos.add(Box.createVerticalStrut(6));
         textos.add(lblTitulo);
 
+        // Derecha: una "tarjeta" por modo
         derecha.setOpaque(false);
         derecha.add(crearRelojClasico(), Modo.CLASICO.name());
         derecha.add(crearStatsPatrones(), Modo.PATRONES.name());
@@ -171,6 +180,7 @@ public class VistaTablero extends JFrame {
         return bloque;
     }
 
+    // ---------- Panel de un jugador (nombre + matriz 6x6) ----------
     private JPanel crearPanelJugador(int j) {
         JPanel panel = new JPanel(new BorderLayout(0, 12));
         panel.setOpaque(false);
@@ -219,7 +229,7 @@ public class VistaTablero extends JFrame {
                 new LineBorder(color, 1, true), new EmptyBorder(14, 14, 14, 14)));
     }
 
-
+    // ---------- Pie ----------
     private JPanel crearPie() {
         JPanel pie = new JPanel(new BorderLayout());
         pie.setOpaque(false);
@@ -287,20 +297,23 @@ public class VistaTablero extends JFrame {
 
     public Modo getModo() { return modo; }
 
+    // ---------- API para el controlador (ambos modos) ----------
+    /** En modo patrones se usa solo jugador 0. */
     public Carta getCarta(int jugador, int fila, int columna) { return cartas[jugador][fila][columna]; }
     public Carta[][] getCartas(int jugador)                   { return cartas[jugador]; }
-    public JButton getBtnAccion()                             { return btnAccion; }
+    public JButton getBtnAccion()                             { return btnAccion; }  // Reiniciar / Comenzar
     public JButton getBtnSalir()                              { return btnSalir; }
 
     public void setNombreJugador(int jugador, String nombre)  { lblNombre[jugador].setText(nombre); }
     public void setMensaje(String mensaje)                    { lblMensaje.setText(mensaje); }
 
-
+    // ---------- API modo CLASICO ----------
     public void setIntentos(int jugador, int intentos)        { lblIntentos[jugador].setText("INTENTOS  " + intentos); }
     public void setParejas(int jugador, int encontradas, int total) {
         lblParejas[jugador].setText("PAREJAS  " + encontradas + "/" + total);
     }
 
+    /** Resalta el panel del jugador al que le toca (solo cambia el aspecto). */
     public void setJugadorActivo(int jugador) {
         for (int j = 0; j < JUGADORES; j++) {
             marcarPanel(panelesJugador[j], j == jugador ? Tema.ESTRELLA : Tema.LINEA);
@@ -308,25 +321,29 @@ public class VistaTablero extends JFrame {
         lblTurno.setText("TURNO DE  " + lblNombre[jugador].getText().toUpperCase());
     }
 
+    /** Segundos restantes del turno; 'maximo' sirve para dibujar la barra. */
     public void setTiempoTurno(int restante, int maximo) {
         lblTiempo.setText(String.format("%02d", Math.max(0, restante)));
         barra.setFraccion(maximo <= 0 ? 0 : (double) restante / maximo);
     }
 
+    // ---------- API modo PATRONES ----------
     public void setNivel(int casillasDelPatron) { lblNivel.setText(String.valueOf(casillasDelPatron)); }
     public void setRonda(int ronda)             { lblRonda.setText(String.valueOf(ronda)); }
 
+    /** Tiempo total para replicar el patron (segundos). */
     public void setTiempoTotal(double restante, double maximo) {
         lblTotal.setText(String.format("%.1f s", Math.max(0, restante)));
         barraTotal.setFraccion(maximo <= 0 ? 0 : restante / maximo);
     }
 
+    /** Tiempo para pulsar la siguiente casilla (segundos). */
     public void setTiempoCasilla(double restante, double maximo) {
         lblEntre.setText(String.format("%.1f s", Math.max(0, restante)));
         barraEntre.setFraccion(maximo <= 0 ? 0 : restante / maximo);
     }
 
-
+    // ---------- Barra de tiempo (clase interna, solo visual; tambien la usa VistaPatrones) ----------
     public static class BarraTiempo extends JComponent {
 
         private double fraccion = 1.0;
@@ -354,6 +371,8 @@ public class VistaTablero extends JFrame {
         }
     }
 
+    // ---------- Boton redondeado (clase interna, solo visual) ----------
+    /** Boton tipo pastilla. relleno=true: solido; false: solo contorno. */
     public static class BotonPill extends JButton {
 
         private final boolean relleno;
