@@ -3,10 +3,7 @@ import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.RoundRectangle2D;
 
-/**
- * Carta del tablero. Solo se encarga de DIBUJARSE segun su estado visual.
- * Que estado tiene en cada momento lo decide el controlador.
- */
+
 public class Carta extends JButton {
 
     public enum Estado { OCULTA, VOLTEADA, ENCONTRADA }

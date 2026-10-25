@@ -3,17 +3,11 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 
-/**
- * Vista de PREMIOS: top 5 de jugadores con su premio en dinero.
- * SOLO interfaz: el calculo (1 / puntaje * 100 * CambioDolar), el orden del top 5 y la
- * consulta al API del Banco Central los hace el modelo/controlador.
- */
+
 public class VistaPremios extends JFrame {
 
     public static final int PUESTOS = 5;
     private static final double[] PESOS = {0.12, 0.44, 0.18, 0.26};
-
-    // celdas[puesto][columna]: 0 = posicion, 1 = jugador, 2 = intentos, 3 = premio
     private final JLabel[][] celdas = new JLabel[PUESTOS][4];
     private final JLabel lblCambio = new JLabel("Tipo de cambio: —");
     private final JButton btnVolver = new VistaTablero.BotonPill("VOLVER", true);
@@ -66,7 +60,6 @@ public class VistaPremios extends JFrame {
         return p;
     }
 
-    // ---------- Tabla: cabecera + 5 filas ----------
     private JPanel crearTabla() {
         JPanel tabla = new JPanel(new GridLayout(PUESTOS + 1, 1, 0, 10));
         tabla.setOpaque(false);
@@ -98,7 +91,6 @@ public class VistaPremios extends JFrame {
         return l;
     }
 
-    /** Fila con 4 columnas proporcionales. Si 'borde' es null, no dibuja contorno (cabecera). */
     private static JPanel fila(JLabel[] columnas, Color borde) {
         JPanel fila = new JPanel(new GridBagLayout());
         fila.setOpaque(false);
@@ -127,13 +119,11 @@ public class VistaPremios extends JFrame {
         return pie;
     }
 
-    // ---------- API para el controlador ----------
+
     public JButton getBtnVolver() { return btnVolver; }
 
-    /** Muestra el tipo de cambio usado, ya formateado (ej. "₡ 510,00 por dólar"). */
     public void setTipoCambio(String texto) { lblCambio.setText("Tipo de cambio: " + texto); }
 
-    /** posicion va de 1 a 5. El premio llega ya formateado. */
     public void setPuesto(int posicion, String jugador, int intentos, String premio) {
         int i = posicion - 1;
         celdas[i][1].setText(jugador);
