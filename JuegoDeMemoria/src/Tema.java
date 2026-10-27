@@ -162,7 +162,6 @@ public class Tema extends JPanel {
     }
 
     private static int[] geometriaOrion(int w, int h) {
-        if (w < 760) return null;
         int lado = (int) Math.min(h * 0.55, w * 0.38);
         int x0 = (int) (w * 0.94 - lado * 0.74);
         int y0 = (int) (h * 0.5 - lado * 0.58);
