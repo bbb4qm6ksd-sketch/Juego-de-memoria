@@ -7,6 +7,7 @@ public class VistaPantallaPrincipal extends JFrame {
     private final JButton btnClasico = new VistaTablero.BotonPill("INICIAR JUEGO  →", true, true);
     private final JButton btnPremios = new VistaTablero.BotonPill("VER PREMIOS  →", false);
     private final JButton btnCerrarSesion = Tema.botonTexto("CERRAR SESIÓN");
+    private final JButton btnSonido = Tema.botonTexto("SONIDO: ON");
 
     public VistaPantallaPrincipal(String usuario) {
         super("AstroMatch - Inicio");
@@ -37,6 +38,7 @@ public class VistaPantallaPrincipal extends JFrame {
         nombre.setForeground(Tema.SECUNDARIO);
         btnCerrarSesion.setForeground(Tema.SECUNDARIO);
         usuarioPanel.add(nombre);
+        usuarioPanel.add(btnSonido);
         usuarioPanel.add(btnCerrarSesion);
         encabezado.add(marca, BorderLayout.WEST);
         encabezado.add(usuarioPanel, BorderLayout.EAST);
@@ -120,6 +122,7 @@ public class VistaPantallaPrincipal extends JFrame {
     public JButton getBtnClasico() { return btnClasico; }
     public JButton getBtnPremios() { return btnPremios; }
     public JButton getBtnCerrarSesion() { return btnCerrarSesion; }
+    public JButton getBtnSonido() { return btnSonido; }
 
     private static class PanelOpcion extends JPanel {
         private final boolean destacado;

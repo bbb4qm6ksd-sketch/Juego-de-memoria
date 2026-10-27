@@ -22,6 +22,7 @@ public class ControladorRegistro {
             return;
         }
         if (!clave.equals(confirmacion)) {
+            Sonidos.reproducir(Sonidos.Efecto.ERROR);
             vista.mostrarError("Las contraseñas no coinciden.");
             return;
         }

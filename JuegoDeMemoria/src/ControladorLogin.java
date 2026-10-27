@@ -20,11 +20,13 @@ public class ControladorLogin {
         String clave = vista.getContrasena();
 
         if (usuarioOCorreo.isEmpty() || clave.isEmpty()) {
+
             vista.mostrarError("Escribe tu usuario y contraseña.");
             return;
         }
         String usuario = Cuentas.validar(usuarioOCorreo, clave);
         if (usuario == null) {
+            Sonidos.reproducir(Sonidos.Efecto.ERROR);
             vista.mostrarError("Usuario o contraseña incorrectos.");
             return;
         }
@@ -69,6 +71,11 @@ public class ControladorLogin {
         premios.getBtnVolver().addActionListener(e -> {
             premios.setVisible(false);
             menu.setVisible(true);
+        });
+        menu.getBtnSonido().setText(Sonidos.isSilenciado() ? "SONIDO: OFF" : "SONIDO: ON");
+        menu.getBtnSonido().addActionListener(e -> {
+            Sonidos.setSilenciado(!Sonidos.isSilenciado());
+            menu.getBtnSonido().setText(Sonidos.isSilenciado() ? "SONIDO: OFF" : "SONIDO: ON");
         });
 
         vista.setVisible(false);
