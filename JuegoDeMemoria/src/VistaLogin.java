@@ -42,6 +42,7 @@ public class VistaLogin extends JFrame {
         Tema hero = new Tema(140);
         hero.setMostrarOrion(true);
         hero.setAnimado(true);
+        hero.setViaje(true);
         hero.setLayout(new BorderLayout());
         hero.setBorder(new EmptyBorder(48, 56, 48, 56));
 

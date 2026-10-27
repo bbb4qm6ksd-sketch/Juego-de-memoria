@@ -75,12 +75,18 @@ public class Tema extends JPanel {
     private final Color borde;
     private final int cantidad;
     private final float[] sx, sy, tam, brilloBase, periodo, fase;
+    private final float[] vel;
+    private final Random azar = new Random();
+    private boolean viaje = false;
+    private long ultimoNs = System.nanoTime();
+
 
     private BufferedImage fondoCache;
     private boolean mostrarOrion = false;
     private boolean animado = true;
     private long inicioNs = System.nanoTime();
-    private final Timer reloj = new Timer(33, e -> repaint());
+
+    private final Timer reloj = new Timer(33, e -> { actualizar(); repaint(); });
 
     public Tema(int cantidad) {
         this(cantidad, new Color(0x16224A), FONDO);
@@ -91,6 +97,7 @@ public class Tema extends JPanel {
         this.centro = centro;
         this.borde = borde;
         setOpaque(true);
+        vel = new float[cantidad];
 
         Random r = new Random(7);
         sx = new float[cantidad]; sy = new float[cantidad]; tam = new float[cantidad];
@@ -102,11 +109,14 @@ public class Tema extends JPanel {
             brilloBase[i] = (40 + r.nextInt(180)) / 255f;
             periodo[i] = 2f + r.nextFloat() * 4f;
             fase[i] = r.nextFloat();
+            float profundidad = (tam[i] - 1f) / 2f;
+            vel[i] = 0.012f + profundidad * 0.05f;
         }
 
         addHierarchyListener(e -> {
             if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
                 if (isShowing()) iniciarAnimacion(); else reloj.stop();
+
             }
         });
     }
@@ -122,10 +132,32 @@ public class Tema extends JPanel {
         repaint();
     }
 
+    public void setViaje(boolean viaje) {
+        this.viaje = viaje;
+        reloj.setDelay(viaje ? 16 : 33);
+        ultimoNs = System.nanoTime();
+    }
+
     private void iniciarAnimacion() {
         if (animado) {
             inicioNs = System.nanoTime();
+            ultimoNs = System.nanoTime();
             reloj.start();
+        }
+    }
+
+    private void actualizar() {
+        long ahora = System.nanoTime();
+        float dt = Math.min((ahora - ultimoNs) / 1e9f, 0.1f);
+        ultimoNs = ahora;
+        if (!viaje) return;
+
+        for (int i = 0; i < cantidad; i++) {
+            sx[i] -= vel[i] * dt;
+            if (sx[i] < 0f) {
+                sx[i] += 1f;
+                sy[i] = azar.nextFloat();
+            }
         }
     }
 
