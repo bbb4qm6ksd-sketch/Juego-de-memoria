@@ -12,7 +12,7 @@ public class ControladorLogin {
         vista.getBtnOlvide().addActionListener(e ->
                 JOptionPane.showMessageDialog(vista,
                         "La recuperación de contraseña estará disponible próximamente.",
-                        "Constela", JOptionPane.INFORMATION_MESSAGE));
+                        "AstroMatch", JOptionPane.INFORMATION_MESSAGE));
     }
 
     private void ingresar() {
@@ -20,16 +20,18 @@ public class ControladorLogin {
         String clave = vista.getContrasena();
 
         if (usuarioOCorreo.isEmpty() || clave.isEmpty()) {
+
             vista.mostrarError("Escribe tu usuario y contraseña.");
             return;
         }
         String usuario = Cuentas.validar(usuarioOCorreo, clave);
         if (usuario == null) {
+            Sonidos.reproducir(Sonidos.Efecto.ERROR);
             vista.mostrarError("Usuario o contraseña incorrectos.");
             return;
         }
         vista.limpiarError();
-        abrirTablero(usuario);
+        abrirMenu(usuario);
     }
 
     private void abrirRegistro() {
@@ -38,12 +40,45 @@ public class ControladorLogin {
         registro.setVisible(true);
     }
 
-    private void abrirTablero(String usuario) {
+    private void abrirMenu(String usuario) {
+        VistaPantallaPrincipal menu = new VistaPantallaPrincipal(usuario);
         VistaTablero tablero = new VistaTablero();
+        VistaPremios premios = new VistaPremios();
+
         tablero.setNombreJugador(0, usuario);
         tablero.setJugadorActivo(0);
-        tablero.setMensaje("Bienvenido, " + usuario + ".");
-        tablero.setVisible(true);
-        vista.dispose();
+        tablero.setMensaje("Tu turno, " + usuario + ".");
+
+        menu.getBtnClasico().addActionListener(e -> {
+            menu.setVisible(false);
+            tablero.setVisible(true);
+        });
+        menu.getBtnPremios().addActionListener(e -> {
+            menu.setVisible(false);
+            premios.setVisible(true);
+        });
+        menu.getBtnCerrarSesion().addActionListener(e -> {
+            menu.dispose();
+            tablero.dispose();
+            premios.dispose();
+            vista.limpiarCampos();
+            vista.setVisible(true);
+        });
+        tablero.getBtnSalir().addActionListener(e -> {
+            tablero.setVisible(false);
+            menu.setVisible(true);
+        });
+        premios.getBtnVolver().addActionListener(e -> {
+            premios.setVisible(false);
+            menu.setVisible(true);
+        });
+        menu.getBtnSonido().setText(Sonidos.isSilenciado() ? "SONIDO: OFF" : "SONIDO: ON");
+        menu.getBtnSonido().addActionListener(e -> {
+            Sonidos.setSilenciado(!Sonidos.isSilenciado());
+            menu.getBtnSonido().setText(Sonidos.isSilenciado() ? "SONIDO: OFF" : "SONIDO: ON");
+        });
+
+        vista.setVisible(false);
+        menu.setVisible(true);
     }
 }

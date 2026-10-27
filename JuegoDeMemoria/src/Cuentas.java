@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 
 public class Cuentas {
 
-    // cada linea del archivo: usuario;correo;sal;hash
     private static final Path ARCHIVO = Paths.get("cuentas.txt");
     private static final Pattern USUARIO = Pattern.compile("[A-Za-z0-9_.-]{3,20}");
     private static final Pattern CORREO = Pattern.compile("[^\\s@;]+@[^\\s@;]+\\.[^\\s@;]+");
@@ -30,7 +29,6 @@ public class Cuentas {
         String hash;
     }
 
-    // devuelve null si se creo bien, o el mensaje de error
     public static String registrar(String usuario, String correo, String contrasena) {
         if (!USUARIO.matcher(usuario).matches()) {
             return "Usuario: de 3 a 20 caracteres (letras, números, . _ -).";

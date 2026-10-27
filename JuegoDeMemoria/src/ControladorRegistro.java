@@ -22,6 +22,7 @@ public class ControladorRegistro {
             return;
         }
         if (!clave.equals(confirmacion)) {
+            Sonidos.reproducir(Sonidos.Efecto.ERROR);
             vista.mostrarError("Las contraseñas no coinciden.");
             return;
         }
@@ -32,7 +33,7 @@ public class ControladorRegistro {
         }
         vista.limpiarError();
         JOptionPane.showMessageDialog(vista, "Cuenta creada. Ya puedes iniciar sesión.",
-                "Constela", JOptionPane.INFORMATION_MESSAGE);
+                "AstroMatch", JOptionPane.INFORMATION_MESSAGE);
         vista.dispose();
     }
 }
