@@ -44,6 +44,7 @@ public class ControladorLogin {
         VistaPantallaPrincipal menu = new VistaPantallaPrincipal(usuario);
         VistaTablero tablero = new VistaTablero();
         VistaPremios premios = new VistaPremios();
+        VistaPatrones patrones = new VistaPatrones();
 
         tablero.setNombreJugador(0, usuario);
         tablero.setJugadorActivo(0);
@@ -52,6 +53,18 @@ public class ControladorLogin {
         menu.getBtnClasico().addActionListener(e -> {
             menu.setVisible(false);
             tablero.setVisible(true);
+        });
+
+        patrones.setJugador(usuario);
+
+        menu.getBtnPatrones().addActionListener(e -> {
+            menu.setVisible(false);
+            patrones.setVisible(true);
+        });
+
+        patrones.getBtnSalir().addActionListener(e -> {
+            patrones.setVisible(false);
+            menu.setVisible(true);
         });
         menu.getBtnPremios().addActionListener(e -> {
             menu.setVisible(false);

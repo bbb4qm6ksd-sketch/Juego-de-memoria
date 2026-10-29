@@ -9,6 +9,7 @@ import java.util.Map;
 
 public class VistaPantallaPrincipal extends JFrame {
     private final JButton btnClasico = new BotonEstrella("JUGAR", true);
+    private final JButton btnPatrones = new BotonEstrella("JUGAR", true);
     private final JButton btnPremios = new BotonEstrella("PREMIOS", false);
     private final JButton btnCerrarSesion = Tema.botonTexto("CERRAR SESIÓN");
     private final JButton btnSonido = Tema.botonTexto("SONIDO: ON");
@@ -28,12 +29,6 @@ public class VistaPantallaPrincipal extends JFrame {
         pantallas = new JPanel(tarjetas);
         pantallas.setOpaque(false);
 
-        pantallas.add(crearBienvenida(usuario), "bienvenida");
-        pantallas.add(crearContenido(), "opciones");
-
-        tarjetas = new CardLayout();
-        pantallas = new JPanel(tarjetas);
-        pantallas.setOpaque(false);
 
         pantallas.add(crearBienvenida(usuario), "bienvenida");
         pantallas.add(crearContenido(), "opciones");
@@ -42,7 +37,7 @@ public class VistaPantallaPrincipal extends JFrame {
         fondo.add(pantallas, BorderLayout.CENTER);
         fondo.add(crearPie(), BorderLayout.SOUTH);
         setSize(1280, 780);
-        setMinimumSize(new Dimension(980, 650));
+        setMinimumSize(new Dimension(1100, 650));
         setLocationRelativeTo(null);
     }
 
@@ -104,7 +99,8 @@ public class VistaPantallaPrincipal extends JFrame {
         sur.setOpaque(false);
         sur.setBorder(new EmptyBorder(0, 0, 6, 0));
 
-        JButton btnVerOpciones = new JButton("Ver opciones");
+        JButton btnVerOpciones =
+                new VistaTablero.BotonPill("VER OPCIONES  →", true, true);
         btnVerOpciones.addActionListener(e -> tarjetas.show(pantallas, "opciones"));
         sur.add(btnVerOpciones);
 
@@ -137,12 +133,15 @@ public class VistaPantallaPrincipal extends JFrame {
         titulos.add(Box.createVerticalStrut(8));
         titulos.add(subtitulo);
 
-        JPanel opciones = new JPanel(new GridLayout(1, 2, 24, 0));
+        JPanel opciones = new JPanel(new GridLayout(1, 3, 24, 0));
         opciones.setOpaque(false);
-        opciones.add(crearTarjeta("01  ·  JUEGO DE MEMORIA", "Memoriza las constelaciones",
-                "Compite con otro observador. Encuentra las parejas de constelaciones y consigue más puntos.",
+        opciones.add(crearTarjeta("01  ·  MODO CLÁSICO", "Memoriza las constelaciones",
+                "Dos jugadores, cada uno con su tablero de 6×6. Encuentra las 18 parejas con el menor número de intentos.",
                 btnClasico, true));
-        opciones.add(crearTarjeta("02  ·  CLASIFICACIÓN", "Top 5 premios",
+        opciones.add(crearTarjeta("02  ·  MODO PATRONES", "Repite el patrón",
+                "Un jugador. Memoriza la secuencia de casillas que se ilumina y repítela en orden, con una más en cada ronda.",
+                btnPatrones, true));
+        opciones.add(crearTarjeta("03  ·  CLASIFICACIÓN", "Top 5 premios",
                 "Consulta los mejores resultados y descubre quién lidera el observatorio.",
                 btnPremios, false));
         contenido.add(titulos, BorderLayout.NORTH);
@@ -160,10 +159,10 @@ public class VistaPantallaPrincipal extends JFrame {
         JLabel etiqueta = new JLabel(categoria);
         etiqueta.setFont(Tema.sans(Font.BOLD, 10));
         etiqueta.setForeground(principal ? Tema.ESTRELLA : Tema.HIELO);
-        JLabel encabezado = new JLabel(titulo);
-        encabezado.setFont(Tema.serif(Font.PLAIN, 34));
+        JLabel encabezado = new JLabel("<html><body style='width:210px'>" + titulo + "</body></html>");
+        encabezado.setFont(Tema.serif(Font.PLAIN, 30));
         encabezado.setForeground(Tema.TEXTO);
-        JLabel detalle = new JLabel("<html><div style='width:360px'>" + descripcion + "</div></html>");
+        JLabel detalle = new JLabel("<html><body style='width:200px'>" + descripcion + "</body></html>");
         detalle.setFont(Tema.sans(Font.PLAIN, 15));
         detalle.setForeground(Tema.SECUNDARIO);
         for (JComponent c : new JComponent[]{etiqueta, encabezado, detalle}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -172,7 +171,7 @@ public class VistaPantallaPrincipal extends JFrame {
         textos.add(encabezado);
         textos.add(Box.createVerticalStrut(12));
         textos.add(detalle);
-        boton.setPreferredSize(new Dimension(360, principal ? 66 : 60));
+        boton.setPreferredSize(new Dimension(225, principal ? 66 : 60));
         boton.setMaximumSize(new Dimension(Integer.MAX_VALUE, principal ? 66 : 60));
         tarjeta.add(textos, BorderLayout.CENTER);
         tarjeta.add(boton, BorderLayout.SOUTH);
@@ -198,6 +197,7 @@ public class VistaPantallaPrincipal extends JFrame {
     }
 
     public JButton getBtnClasico() { return btnClasico; }
+    public JButton getBtnPatrones() { return btnPatrones; }
     public JButton getBtnPremios() { return btnPremios; }
     public JButton getBtnCerrarSesion() { return btnCerrarSesion; }
     public JButton getBtnSonido() { return btnSonido; }

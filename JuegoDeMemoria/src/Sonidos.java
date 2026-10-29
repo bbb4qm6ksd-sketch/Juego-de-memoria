@@ -11,21 +11,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Sonidos de AstroMatch.
- *
- * Todo se SINTETIZA por codigo (no hay archivos .wav/.mp3):
- *  - Musica de fondo: un "pad" espacial que se funde entre dos acordes, con destellos
- *    de campanitas cristalinas (como estrellas titilando). Es un bucle sin cortes.
- *  - Efectos: campanitas de cristal para clics, voltear carta, acierto, fallo, victoria...
- *
- * Uso basico:
- *   Sonidos.iniciar();                         // una vez, en Main
- *   Sonidos.reproducir(Sonidos.Efecto.ACIERTO);
- *   Sonidos.setSilenciado(true);               // mute (para o reanuda la musica)
- *
- * Si el equipo no tiene salida de audio, todo falla en silencio y el juego sigue normal.
- */
 public final class Sonidos {
 
     public enum Efecto { CLICK, HOVER, VOLTEAR, ACIERTO, FALLO, VICTORIA, ERROR, TICK, ABRIR }
@@ -52,12 +37,6 @@ public final class Sonidos {
     private static long ultimoHover = 0;
 
     private Sonidos() { }
-
-    // =====================================================================
-    //  API publica
-    // =====================================================================
-
-    /** Genera los sonidos, empieza la musica y activa los sonidos automaticos en botones. */
     public static void iniciar() {
         if (iniciado) return;
         iniciado = true;
@@ -67,7 +46,6 @@ public final class Sonidos {
                 datosMusica = generarMusica();
                 if (!silenciado && musicaActiva) arrancarMusica();
             } catch (Throwable t) {
-                // sin audio disponible: seguimos sin sonido
             }
         });
         instalarSonidoEnBotones();
@@ -80,7 +58,7 @@ public final class Sonidos {
 
     public static boolean isSilenciado() { return silenciado; }
 
-    /** Silencia o reactiva TODO (musica y efectos). */
+
     public static void setSilenciado(boolean valor) {
         silenciado = valor;
         HILO.execute(() -> {
@@ -89,7 +67,6 @@ public final class Sonidos {
         });
     }
 
-    /** Activa o desactiva solo la musica de fondo (los efectos siguen). */
     public static void setMusicaActiva(boolean valor) {
         musicaActiva = valor;
         HILO.execute(() -> {
@@ -97,21 +74,12 @@ public final class Sonidos {
         });
     }
 
-    /** Volumen de la musica en decibelios (ej. -20 muy bajo, 0 maximo). */
+
     public static void setVolumenMusica(float db) {
         volumenMusicaDb = db;
         HILO.execute(() -> aplicarGanancia(musica, volumenMusicaDb));
     }
 
-    // =====================================================================
-    //  Sonido automatico en botones
-    // =====================================================================
-
-    /**
-     * Escucha los eventos de raton de toda la aplicacion: cualquier boton (incluidos los
-     * de las ventanas que se creen despues) suena al pulsarse y al pasar el raton por encima.
-     * Las cartas suenan distinto (voltear) y no hacen hover para no saturar.
-     */
     private static void instalarSonidoEnBotones() {
         Toolkit.getDefaultToolkit().addAWTEventListener(ev -> {
             if (!(ev instanceof MouseEvent)) return;
@@ -132,10 +100,6 @@ public final class Sonidos {
             }
         }, AWTEvent.MOUSE_EVENT_MASK);
     }
-
-    // =====================================================================
-    //  Reproduccion
-    // =====================================================================
 
     private static void sonar(Efecto efecto) {
         byte[] datos = EFECTOS.get(efecto);
@@ -187,13 +151,9 @@ public final class Sonidos {
                 c.setValue(Math.max(c.getMinimum(), Math.min(c.getMaximum(), db)));
             }
         } catch (Exception e) {
-            // ignorar
         }
     }
 
-    // =====================================================================
-    //  Sintesis de efectos
-    // =====================================================================
 
     private static void generarEfectos() {
         // Clic de boton: campanita corta y limpia
@@ -221,7 +181,7 @@ public final class Sonidos {
         }
         EFECTOS.put(Efecto.ACIERTO, aBytes(b, 0.55, true));
 
-        // Fallo: tono grave suave que baja (nada agresivo)
+        // Fallo: tono grave suave que baja
         b = vacio(0.55);
         double fase = 0;
         for (int i = 0; i < b.length; i++) {
@@ -233,7 +193,7 @@ public final class Sonidos {
         }
         EFECTOS.put(Efecto.FALLO, aBytes(b, 0.40, true));
 
-        // Error (login / formulario): dos notas graves descendentes
+        // Error (login / formulario)
         b = vacio(0.9);
         campana(b, 0, 392, 0.8, 1.0, 0.18, false);
         campana(b, 0.13, 293.7, 0.8, 1.0, 0.22, false);
@@ -244,7 +204,7 @@ public final class Sonidos {
         campana(b, 0, 1760, 0.10, 1.0, 0.02, false);
         EFECTOS.put(Efecto.TICK, aBytes(b, 0.30, true));
 
-        // Abrir ventana / cambiar de pantalla: barrido suave de dos notas
+        // Abrir ventana / cambiar de pantalla
         b = vacio(0.9);
         campana(b, 0, 880, 0.8, 0.8, 0.22, false);
         campana(b, 0.10, 1318.5, 0.8, 0.8, 0.26, false);
@@ -262,20 +222,13 @@ public final class Sonidos {
         EFECTOS.put(Efecto.VICTORIA, aBytes(b, 0.60, true));
     }
 
-    // =====================================================================
-    //  Sintesis de la musica de fondo
-    // =====================================================================
 
-    /**
-     * Pad espacial en bucle perfecto. Todas las frecuencias se ajustan a un numero entero
-     * de ciclos dentro del bucle, asi que el final encaja con el principio sin "clic".
-     */
     private static byte[] generarMusica() {
         double L = DURACION_BUCLE;
         int N = (int) (L * FS);
         double[] pad = new double[N];
 
-        // Dos acordes entre los que el sonido se funde lentamente: Am9 <-> Fmaj7
+
         double[] acordeA = {110.0, 164.8, 220.0, 261.6, 329.6, 493.9};   // La2 Mi3 La3 Do4 Mi4 Si4
         double[] acordeB = {87.3, 130.8, 174.6, 220.0, 261.6, 329.6};    // Fa2 Do3 Fa3 La3 Do4 Mi4
 
@@ -294,7 +247,7 @@ public final class Sonidos {
         }
         normalizar(pad, 0.55);
 
-        // Destellos: campanitas agudas en posiciones fijas del bucle (pentatonica de La menor)
+
         double[] estrellas = new double[N];
         double[] escala = {880, 1046.5, 1318.5, 1568, 1760, 2093};
         Random r = new Random(11);
@@ -313,22 +266,13 @@ public final class Sonidos {
 
         double[] total = new double[N];
         for (int i = 0; i < N; i++) total[i] = pad[i] + conEco[i];
-        return aBytes(total, 0.60, false);          // sin fundido: el bucle es continuo
+        return aBytes(total, 0.60, false);
     }
-
-    // =====================================================================
-    //  Utilidades de sintesis
-    // =====================================================================
 
     private static double[] vacio(double segundos) { return new double[(int) (segundos * FS)]; }
 
     private static double ajustar(double f, double L) { return Math.round(f * L) / L; }
 
-    /**
-     * Campanita de cristal: tres parciales inarmonicos (1, 2.76, 5.4) que decaen a distinta
-     * velocidad. tau = duracion del decaimiento del parcial principal. Si circular=true,
-     * lo que se pasa del final vuelve al principio (para bucles).
-     */
     private static void campana(double[] buf, double inicio, double f, double dur,
                                 double amp, double tau, boolean circular) {
         double[] ratio = {1.0, 2.76, 5.4};
@@ -358,7 +302,6 @@ public final class Sonidos {
         for (int i = 0; i < b.length; i++) b[i] *= k;
     }
 
-    /** Normaliza al pico indicado y convierte a PCM 16 bits. Con fundido final si no es bucle. */
     private static byte[] aBytes(double[] b, double pico, boolean fundido) {
         normalizar(b, pico);
         byte[] out = new byte[b.length * 2];
