@@ -24,6 +24,19 @@ public class Tema extends JPanel {
 
     public static Font serif(int estilo, int tam) { return new Font(Font.SERIF, estilo, tam); }
     public static Font sans(int estilo, int tam)  { return new Font(Font.SANS_SERIF, estilo, tam); }
+    private static Font fuenteLemaBase;
+
+    public static Font lema(float tam) {
+        if (fuenteLemaBase == null) {
+            try (java.io.InputStream in = Tema.class.getResourceAsStream("/fonts/ROMANTIC.TTF")) {
+                fuenteLemaBase = Font.createFont(Font.TRUETYPE_FONT, in);
+            } catch (Exception e) {
+                System.err.println("No se pudo cargar ROMANTIC.TTF, se usa la fuente serif: " + e);
+                fuenteLemaBase = new Font(Font.SERIF, Font.PLAIN, 12);
+            }
+        }
+        return fuenteLemaBase.deriveFont(Map.of(TextAttribute.SIZE, tam, TextAttribute.TRACKING, 0.08f));
+    }
 
     public static JButton botonTexto(String texto) {
         JButton b = new JButton(texto);

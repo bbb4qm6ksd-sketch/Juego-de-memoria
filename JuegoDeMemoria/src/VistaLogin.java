@@ -1,6 +1,8 @@
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.awt.font.LineMetrics;
 
 
 public class VistaLogin extends JFrame {
@@ -50,9 +52,7 @@ public class VistaLogin extends JFrame {
         marca.setFont(Tema.sans(Font.BOLD, 13));
         marca.setForeground(Tema.TEXTO);
 
-        JLabel lema = new JLabel("<html>Une los puntos,<br><i style='color:#A9BCFF'>lee el cielo.</i></html>");
-        lema.setFont(Tema.serif(Font.PLAIN, 54));
-        lema.setForeground(Tema.TEXTO);
+        Lema lema = new Lema();
 
         JLabel pie = new JLabel("OBSERVATORIO  ·  EDICIÓN NOCTURNA");
         pie.setFont(Tema.sans(Font.PLAIN, 11));
@@ -163,6 +163,42 @@ public class VistaLogin extends JFrame {
     private static <T extends JComponent> T alinear(T c) {
         c.setAlignmentX(Component.LEFT_ALIGNMENT);
         return c;
+    }
+
+    private static class Lema extends JComponent {
+        private static final String LINEA1 = "Une los puntos,";
+        private static final String LINEA2 = "lee el cielo.";
+        private final Font fuente = Tema.lema(72f);
+        private final FontRenderContext frc = new FontRenderContext(null, true, true);
+        private final int altoLinea;
+        private final int ancho;
+
+        Lema() {
+            LineMetrics lm = fuente.getLineMetrics(LINEA1, frc);
+            altoLinea = (int) Math.ceil((lm.getAscent() + lm.getDescent()) * 0.95);
+            ancho = (int) Math.ceil(Math.max(
+                    fuente.getStringBounds(LINEA1, frc).getWidth(),
+                    fuente.getStringBounds(LINEA2, frc).getWidth())) + 12;
+            setOpaque(false);
+        }
+
+        @Override public Dimension getPreferredSize() { return new Dimension(ancho, altoLinea * 2 + 10); }
+        @Override public Dimension getMaximumSize()   { return getPreferredSize(); }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+            g2.setFont(fuente);
+            float base = fuente.getLineMetrics(LINEA1, g2.getFontRenderContext()).getAscent();
+            g2.setColor(Tema.TEXTO);
+            g2.drawString(LINEA1, 0f, base);
+            g2.setColor(Tema.HIELO);
+            g2.drawString(LINEA2, 0f, base + altoLinea);
+            g2.dispose();
+        }
     }
 
     public String getUsuario()           { return txtUsuario.getText().trim(); }
