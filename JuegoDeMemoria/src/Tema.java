@@ -38,6 +38,21 @@ public class Tema extends JPanel {
         return fuenteLemaBase.deriveFont(Map.of(TextAttribute.SIZE, tam, TextAttribute.TRACKING, 0.08f));
     }
 
+    private static Font fuenteTituloBase;
+
+    public static Font titulo(float tam) {
+        if (fuenteTituloBase == null) {
+            try (java.io.InputStream in = Tema.class.getResourceAsStream("/fonts/KiwiSoda.ttf")) {
+                fuenteTituloBase = Font.createFont(Font.TRUETYPE_FONT, in);
+            } catch (Exception e) {
+                System.err.println("No se pudo cargar KiwiSoda.ttf, se usa la fuente serif: " + e);
+                fuenteTituloBase = new Font(Font.SERIF, Font.PLAIN, 12);
+            }
+        }
+        return fuenteTituloBase.deriveFont(Font.PLAIN, tam);
+    }
+
+
     public static JButton botonTexto(String texto) {
         JButton b = new JButton(texto);
         b.setContentAreaFilled(false);

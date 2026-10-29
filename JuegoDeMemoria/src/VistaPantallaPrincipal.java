@@ -6,8 +6,12 @@ import java.awt.font.TextAttribute;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.util.Map;
+import java.awt.font.FontRenderContext;
+import java.awt.font.LineMetrics;
 
-public class VistaPantallaPrincipal extends JFrame {
+
+   //Botones
+    public class VistaPantallaPrincipal extends JFrame {
     private final JButton btnClasico = new BotonEstrella("JUGAR", true);
     private final JButton btnPatrones = new BotonEstrella("JUGAR", true);
     private final JButton btnPremios = new BotonEstrella("PREMIOS", false);
@@ -16,12 +20,15 @@ public class VistaPantallaPrincipal extends JFrame {
     private CardLayout tarjetas;
     private JPanel pantallas;
 
+    //Constructor
     public VistaPantallaPrincipal(String usuario) {
         super("AstroMatch - Inicio");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        //Fondo de estrellas
         Tema fondo = new Tema(150, new Color(0x141F47), Tema.FONDO);
-        fondo.setAnimado(true);
-        fondo.setViaje(true);
+        fondo.setAnimado(true);    //estrellas titilan
+        fondo.setViaje(true);   //estrellas se mueven
         fondo.setLayout(new BorderLayout());
         fondo.setBorder(new EmptyBorder(30, 52, 28, 52));
         setContentPane(fondo);
@@ -41,12 +48,15 @@ public class VistaPantallaPrincipal extends JFrame {
         setLocationRelativeTo(null);
     }
 
+    //Encabezado
     private JPanel crearEncabezado(String usuario) {
         JPanel encabezado = new JPanel(new BorderLayout());
         encabezado.setOpaque(false);
+
         JLabel marca = new JLabel("✦  AstroMatch");
         marca.setFont(Tema.sans(Font.BOLD, 14));
         marca.setForeground(Tema.TEXTO);
+
         JPanel usuarioPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 18, 0));
         usuarioPanel.setOpaque(false);
         JLabel nombre = new JLabel("OBSERVADOR  ·  " + usuario.toUpperCase());
@@ -61,6 +71,7 @@ public class VistaPantallaPrincipal extends JFrame {
         return encabezado;
     }
 
+    //Bienvenida
     private JPanel crearBienvenida(String usuario) {
         JPanel seccion = new JPanel(new BorderLayout());
         seccion.setOpaque(false);
@@ -70,18 +81,18 @@ public class VistaPantallaPrincipal extends JFrame {
         eyebrow.setForeground(Tema.HIELO);
 
         JLabel titulo = new JLabel("AstroMatch");
-        titulo.setFont(Tema.serif(Font.PLAIN, 96));
+        titulo.setFont(Tema.titulo(170f));
         titulo.setForeground(Tema.TEXTO);
 
-        DivisorEstelar divisor = new DivisorEstelar();
+        DivisorEstelar divisor = new DivisorEstelar(); //linea con estrella en el centro
 
-        JLabel lema = new JLabel("<html>Une los puntos, <i style='color:#A9BCFF'>lee el cielo.</i></html>");
-        lema.setFont(Tema.serif(Font.PLAIN, 28));
-        lema.setForeground(Tema.SECUNDARIO);
+        LemaBienvenida lema = new LemaBienvenida();
 
         JPanel textos = new JPanel();
         textos.setOpaque(false);
         textos.setLayout(new BoxLayout(textos, BoxLayout.Y_AXIS));
+
+        //Acomoda todo en el centro
         for (JComponent c : new JComponent[]{eyebrow, titulo, divisor, lema}) c.setAlignmentX(Component.CENTER_ALIGNMENT);
         textos.add(eyebrow);
         textos.add(Box.createVerticalStrut(14));
@@ -110,10 +121,11 @@ public class VistaPantallaPrincipal extends JFrame {
     }
 
 
-
+    //Opciones
     private JPanel crearContenido() {
         JPanel contenido = new JPanel(new BorderLayout(0, 32));
         contenido.setOpaque(false);
+
         JPanel titulos = new JPanel();
         titulos.setOpaque(false);
         titulos.setLayout(new BoxLayout(titulos, BoxLayout.Y_AXIS));
@@ -133,6 +145,7 @@ public class VistaPantallaPrincipal extends JFrame {
         titulos.add(Box.createVerticalStrut(8));
         titulos.add(subtitulo);
 
+        //Las tres tarjetas
         JPanel opciones = new JPanel(new GridLayout(1, 3, 24, 0));
         opciones.setOpaque(false);
         opciones.add(crearTarjeta("01  ·  MODO CLÁSICO", "Memoriza las constelaciones",
@@ -153,26 +166,33 @@ public class VistaPantallaPrincipal extends JFrame {
         PanelOpcion tarjeta = new PanelOpcion(principal);
         tarjeta.setLayout(new BorderLayout(0, 18));
         tarjeta.setBorder(new EmptyBorder(28, 30, 28, 30));
+
         JPanel textos = new JPanel();
         textos.setOpaque(false);
         textos.setLayout(new BoxLayout(textos, BoxLayout.Y_AXIS));
+
         JLabel etiqueta = new JLabel(categoria);
         etiqueta.setFont(Tema.sans(Font.BOLD, 10));
         etiqueta.setForeground(principal ? Tema.ESTRELLA : Tema.HIELO);
+
         JLabel encabezado = new JLabel("<html><body style='width:210px'>" + titulo + "</body></html>");
         encabezado.setFont(Tema.serif(Font.PLAIN, 30));
         encabezado.setForeground(Tema.TEXTO);
+
         JLabel detalle = new JLabel("<html><body style='width:200px'>" + descripcion + "</body></html>");
         detalle.setFont(Tema.sans(Font.PLAIN, 15));
         detalle.setForeground(Tema.SECUNDARIO);
+
         for (JComponent c : new JComponent[]{etiqueta, encabezado, detalle}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
         textos.add(etiqueta);
         textos.add(Box.createVerticalStrut(16));
         textos.add(encabezado);
         textos.add(Box.createVerticalStrut(12));
         textos.add(detalle);
+
         boton.setPreferredSize(new Dimension(225, principal ? 66 : 60));
         boton.setMaximumSize(new Dimension(Integer.MAX_VALUE, principal ? 66 : 60));
+
         tarjeta.add(textos, BorderLayout.CENTER);
         tarjeta.add(boton, BorderLayout.SOUTH);
         return tarjeta;
@@ -188,6 +208,7 @@ public class VistaPantallaPrincipal extends JFrame {
         return pie;
     }
 
+    //Cambio de pagina
     private void mostrarBienvenida() {
         tarjetas.first(pantallas);
     }
@@ -214,6 +235,7 @@ public class VistaPantallaPrincipal extends JFrame {
         return p;
     }
 
+    //Mezclar colores
     private static Color mezclar(Color a, Color b, float t) {
         t = Math.max(0f, Math.min(1f, t));
         return new Color(
@@ -238,7 +260,7 @@ public class VistaPantallaPrincipal extends JFrame {
         }
     }
 
-
+    //Boton de estrella que gira
     private static class BotonEstrella extends JButton {
         private final boolean principal;
         private boolean encima = false;
@@ -262,6 +284,7 @@ public class VistaPantallaPrincipal extends JFrame {
         @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
+            //Calidad de dibujo
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
@@ -328,6 +351,49 @@ public class VistaPantallaPrincipal extends JFrame {
         }
     }
 
+    //Dibuja la frase de bienvenida
+    private static class LemaBienvenida extends JComponent {
+        private static final String PARTE1 = "Une los puntos,";
+        private static final String PARTE2 = "lee el cielo.";
+        private final Font fuente = Tema.lema(44f);
+        private final FontRenderContext frc = new FontRenderContext(null, true, true);
+        private final int alto;
+        private final int ancho;
+
+        LemaBienvenida() {
+            LineMetrics lm = fuente.getLineMetrics(PARTE1, frc);
+            alto = (int) Math.ceil(lm.getAscent() + lm.getDescent()) + 6;
+            ancho = (int) Math.ceil(fuente.getStringBounds(PARTE1 + " " + PARTE2, frc).getWidth()) + 12;
+            setOpaque(false);
+        }
+
+        @Override public Dimension getPreferredSize() { return new Dimension(ancho, alto); }
+        @Override public Dimension getMaximumSize()   { return getPreferredSize(); }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+            g2.setFont(fuente);
+
+            FontRenderContext f = g2.getFontRenderContext();
+            double total = fuente.getStringBounds(PARTE1 + " " + PARTE2, f).getWidth();
+            double anchoParte2 = fuente.getStringBounds(PARTE2, f).getWidth();
+            float x1 = (float) ((getWidth() - total) / 2.0);
+            float x2 = (float) (x1 + total - anchoParte2);
+            float base = fuente.getLineMetrics(PARTE1, f).getAscent() + 3;
+
+            g2.setColor(Tema.TEXTO);
+            g2.drawString(PARTE1, x1, base);
+            g2.setColor(Tema.HIELO);
+            g2.drawString(PARTE2, x2, base);
+            g2.dispose();
+        }
+    }
+
+    //Linea con estrella
     private static class DivisorEstelar extends JComponent {
         @Override public Dimension getPreferredSize() { return new Dimension(280, 28); }
         @Override public Dimension getMaximumSize()   { return getPreferredSize(); }
