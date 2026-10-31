@@ -74,7 +74,6 @@ public class VistaPatrones extends JFrame {
         return encabezado;
     }
 
-    // ---------- Titulo + nivel y ronda ----------
     private JPanel crearTitulo() {
         JPanel p = new JPanel(new BorderLayout());
         p.setOpaque(false);
@@ -124,13 +123,16 @@ public class VistaPatrones extends JFrame {
         return p;
     }
 
-    // ---------- Dos barras: tiempo total (12 s) y tiempo entre casillas (2 s) ----------
     private JPanel crearTiempos() {
         JPanel tiempos = new JPanel(new GridLayout(1, 2, 28, 0));
         tiempos.setOpaque(false);
         tiempos.add(crearBloqueTiempo("TIEMPO TOTAL", lblTotal, barraTotal));
         tiempos.add(crearBloqueTiempo("ENTRE CASILLAS", lblEntre, barraEntre));
-        return tiempos;
+        tiempos.setPreferredSize(new Dimension(480, tiempos.getPreferredSize().height));   
+        JPanel izquierda = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        izquierda.setOpaque(false);
+        izquierda.add(tiempos);
+        return izquierda;
     }
 
     private JPanel crearBloqueTiempo(String titulo, JLabel valor, VistaTablero.BarraTiempo barra) {
@@ -152,7 +154,7 @@ public class VistaPatrones extends JFrame {
         return bloque;
     }
 
-    // ---------- Matriz 6x6, siempre cuadrada y centrada ----------
+
     private JPanel crearMatriz() {
         JPanel tablero = new JPanel(new GridLayout(FILAS, COLUMNAS, 10, 10));
         tablero.setOpaque(false);
@@ -188,7 +190,7 @@ public class VistaPatrones extends JFrame {
         return pie;
     }
 
-    // ---------- API para el controlador (solo muestra datos, no decide nada) ----------
+
     public Casilla getCasilla(int fila, int columna) { return casillas[fila][columna]; }
     public Casilla[][] getCasillas()                 { return casillas; }
     public JButton getBtnComenzar()                  { return btnComenzar; }
@@ -199,7 +201,7 @@ public class VistaPatrones extends JFrame {
     public void setRonda(int ronda)                  { lblRonda.setText(String.valueOf(ronda)); }
     public void setFase(String texto)                { lblFase.setText(texto); }
 
-    /** Tiempo total para repetir el patron (segundos). */
+
     public void setTiempoTotal(double restante, double maximo) {
         lblTotal.setText(String.format("%.1f s", Math.max(0, restante)));
         barraTotal.setFraccion(maximo <= 0 ? 0 : restante / maximo);
@@ -211,7 +213,6 @@ public class VistaPatrones extends JFrame {
         barraEntre.setFraccion(maximo <= 0 ? 0 : restante / maximo);
     }
 
-    /** Deja todas las casillas en reposo y sin numero. */
     public void limpiarCasillas() {
         for (Casilla[] fila : casillas) {
             for (Casilla c : fila) {
@@ -221,14 +222,12 @@ public class VistaPatrones extends JFrame {
         }
     }
 
-    // ---------- Casilla del modo patrones (clase interna, solo se dibuja) ----------
     public static class Casilla extends JButton {
 
-        /** REPOSO: normal | ILUMINADA: parte del patron | ACIERTO: pulsada bien | ERROR: pulsada mal */
         public enum Estado { REPOSO, ILUMINADA, ACIERTO, ERROR }
 
         private Estado estado = Estado.REPOSO;
-        private int numero = 0;   // orden dentro del patron (0 = no mostrar numero)
+        private int numero = 0;
 
         public Casilla() {
             setContentAreaFilled(false);
