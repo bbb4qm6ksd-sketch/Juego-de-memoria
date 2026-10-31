@@ -5,13 +5,19 @@ import java.awt.event.*;
 import java.awt.font.TextAttribute;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
+import java.awt.font.GlyphVector;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.awt.font.FontRenderContext;
 import java.awt.font.LineMetrics;
 
 
-   //Botones
-    public class VistaPantallaPrincipal extends JFrame {
+//Botones
+public class VistaPantallaPrincipal extends JFrame {
     private final JButton btnClasico = new BotonEstrella("JUGAR", true);
     private final JButton btnPatrones = new BotonEstrella("JUGAR", true);
     private final JButton btnPremios = new BotonEstrella("PREMIOS", false);
@@ -117,6 +123,12 @@ import java.awt.font.LineMetrics;
 
         seccion.add(centro, BorderLayout.CENTER);
         seccion.add(sur, BorderLayout.SOUTH);
+
+        //Estrella fugaz que cruza por delante y por detras del titulo
+        EstrellaFugaz estrellaFugaz = new EstrellaFugaz(seccion, titulo);
+        getRootPane().setGlassPane(estrellaFugaz);
+        estrellaFugaz.setVisible(true);
+
         return seccion;
     }
 
@@ -420,5 +432,171 @@ import java.awt.font.LineMetrics;
         }
     }
 
+    //Estrella fugaz grande: pasa por delante y por detras de las letras del titulo (se dibuja en el glass pane)
+    private static class EstrellaFugaz extends JComponent {
+        //x, y (fraccion del area de bienvenida), z (-1 detras del texto, 1 delante)
+        private static final double[][] RUTA = {
+                {-.18, .92, -1}, {.15, .66, -1}, {.45, .50, -1}, {.78, .36, 0}, {1.00, .14, 1},
+                {.90, -.12, 1}, {.68, 0, 1}, {.58, .30, 1}, {.40, .62, 1}, {.20, .55, 0},
+                {.05, .28, -1}, {.30, .06, -1}, {.60, .46, -1}, {.95, .80, -1}, {1.20, .98, -1}};
+        private static final double DURACION = 13.0, CICLO = 14.5;
+
+        private final JComponent area;
+        private final JLabel titulo;
+        private final List<double[]> cola = new ArrayList<>();     //x, y, z, escala
+        private final List<double[]> chispas = new ArrayList<>();  //x, y, vx, vy, vida, z, radio
+        private BufferedImage capa;
+        private long inicio;
+        private double previo;
+        private boolean activo, enVuelo;
+
+        EstrellaFugaz(JComponent area, JLabel titulo) {
+            this.area = area;
+            this.titulo = titulo;
+            setOpaque(false);
+            new Timer(16, e -> avanzar()).start();
+        }
+
+        //Deja pasar los clics a lo que hay debajo
+        @Override public boolean contains(int x, int y) { return false; }
+
+        private void avanzar() {
+            if (!titulo.isShowing() || area.getWidth() == 0) { activo = false; return; }
+            long ahora = System.nanoTime();
+            if (!activo) { activo = true; inicio = ahora; previo = 0; cola.clear(); chispas.clear(); }
+            double t = ((ahora - inicio) / 1e9) % CICLO;
+            if (t < previo) { cola.clear(); chispas.clear(); }
+            previo = t;
+            double w = area.getWidth(), h = area.getHeight();
+            enVuelo = t < DURACION;
+            if (enVuelo) {
+                double[] p = punto(t / DURACION * (RUTA.length - 1));
+                cola.add(new double[]{p[0], p[1], p[2], 1 + 0.3 * p[2]});
+                for (int k = 0; k < 2; k++)
+                    chispas.add(new double[]{p[0], p[1], (Math.random() - .5) * 1.6 / w,
+                            (Math.random() - .2) * 1.6 / h, 1, p[2], Math.random() * 2.2 + .6});
+            } else if (!cola.isEmpty()) {
+                cola.remove(0);
+            }
+            while (cola.size() > 130) cola.remove(0);
+            for (double[] c : chispas) { c[0] += c[2]; c[1] += c[3]; c[3] += .02 / h; c[4] -= .014; }
+            chispas.removeIf(c -> c[4] <= 0);
+            repaint();
+        }
+
+        //Curva suave (Catmull-Rom) por los puntos de RUTA
+        private static double[] punto(double u) {
+            int n = RUTA.length, i = Math.min((int) Math.floor(u), n - 2);
+            double f = u - i;
+            double[] p0 = RUTA[Math.max(i - 1, 0)], p1 = RUTA[i], p2 = RUTA[i + 1], p3 = RUTA[Math.min(i + 2, n - 1)];
+            double[] r = new double[3];
+            for (int k = 0; k < 3; k++)
+                r[k] = 0.5 * ((2 * p1[k]) + (-p0[k] + p2[k]) * f
+                        + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * f * f
+                        + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * f * f * f);
+            return r;
+        }
+
+        //Silueta exacta de las letras del titulo, en coordenadas de esta capa
+        private Shape formaTitulo() {
+            Font f = titulo.getFont();
+            GlyphVector gv = f.createGlyphVector(new FontRenderContext(null, true, true), titulo.getText());
+            FontMetrics fm = titulo.getFontMetrics(f);
+            int base = titulo.getBaseline(titulo.getWidth(), titulo.getHeight());
+            if (base < 0) base = fm.getAscent() + (titulo.getHeight() - fm.getHeight()) / 2;
+            Point p = SwingUtilities.convertPoint(titulo, titulo.getInsets().left, base, this);
+            return gv.getOutline(p.x, p.y);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            if (!activo || (cola.isEmpty() && chispas.isEmpty())) return;
+            int ancho = getWidth(), alto = getHeight();
+            if (ancho <= 0 || alto <= 0) return;
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            Point o = SwingUtilities.convertPoint(area, 0, 0, this);
+            double w = area.getWidth(), h = area.getHeight();
+            double r0 = Math.min(w * 0.020, h * 0.05);
+
+            //Capa de atras: se dibuja y luego se "borra" donde hay letras, asi la estrella queda detras del texto
+            if (capa == null || capa.getWidth() != ancho || capa.getHeight() != alto)
+                capa = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D gb = capa.createGraphics();
+            gb.setComposite(AlphaComposite.Clear);
+            gb.fillRect(0, 0, ancho, alto);
+            gb.setComposite(AlphaComposite.SrcOver);
+            gb.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            dibujar(gb, false, o, w, h, r0);
+            gb.setComposite(AlphaComposite.DstOut);
+            Shape texto = formaTitulo();
+            gb.setColor(Color.WHITE);
+            gb.fill(texto);
+            gb.setStroke(new BasicStroke(1.2f));
+            gb.draw(texto);
+            gb.dispose();
+            g2.drawImage(capa, 0, 0, null);
+
+            //Capa de adelante: se dibuja encima del texto
+            dibujar(g2, true, o, w, h, r0);
+            g2.dispose();
+        }
+
+        //Dibuja la parte de la cola, chispas y estrella que esta en la capa pedida
+        private void dibujar(Graphics2D c, boolean frente, Point o, double w, double h, double r0) {
+            int n = cola.size();
+            for (int i = 1; i < n; i++) {
+                double[] a = cola.get(i - 1), b = cola.get(i);
+                if ((b[2] > 0) != frente) continue;
+                double q = (double) i / n;
+                Line2D.Double l = new Line2D.Double(o.x + a[0] * w, o.y + a[1] * h, o.x + b[0] * w, o.y + b[1] * h);
+                c.setColor(new Color(225, 235, 255, (int) (Math.pow(q, 1.5) * 60)));
+                c.setStroke(new BasicStroke((float) (r0 * 2.4 * Math.pow(q, 0.9) * b[3]), BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
+                c.draw(l);
+                c.setColor(new Color(255, 255, 255, (int) (Math.pow(q, 1.3) * 230)));
+                c.setStroke(new BasicStroke((float) (r0 * 0.75 * Math.pow(q, 1.1) * b[3]), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                c.draw(l);
+            }
+            for (double[] s : chispas) {
+                if ((s[5] > 0) != frente) continue;
+                c.setColor(new Color(255, 255, 255, (int) (Math.max(0, s[4]) * 230)));
+                double r = s[6] * s[4];
+                c.fill(new Ellipse2D.Double(o.x + s[0] * w - r, o.y + s[1] * h - r, r * 2, r * 2));
+            }
+            if (enVuelo && n > 0) {
+                double[] u = cola.get(n - 1);
+                if ((u[2] > 0) == frente)
+                    cabeza(c, o.x + u[0] * w, o.y + u[1] * h, r0 * u[3], System.nanoTime() / 9e8);
+            }
+        }
+
+        //La estrella: brillo, destello de 4 puntas y cuerpo dorado
+        private void cabeza(Graphics2D c, double x, double y, double r, double giro) {
+            float rg = (float) (r * 3.4);
+            c.setPaint(new RadialGradientPaint((float) x, (float) y, rg, new float[]{0f, .4f, 1f},
+                    new Color[]{new Color(255, 255, 255, 130), new Color(215, 228, 255, 40), new Color(215, 228, 255, 0)}));
+            c.fill(new Ellipse2D.Double(x - rg, y - rg, rg * 2, rg * 2));
+
+            AffineTransform viejo = c.getTransform();
+            c.translate(x, y);
+            c.rotate(giro);
+            Path2D.Double destello = new Path2D.Double();
+            for (int i = 0; i < 8; i++) {
+                double ang = i * Math.PI / 4, rr = (i % 2 == 0) ? r * 2.1 : r * 0.22;
+                double px = rr * Math.cos(ang), py = rr * Math.sin(ang);
+                if (i == 0) destello.moveTo(px, py); else destello.lineTo(px, py);
+            }
+            destello.closePath();
+            c.setColor(new Color(255, 255, 255, 215));
+            c.fill(destello);
+
+            Path2D forma = estrella(0, 0, r, r * 0.5);
+            c.setPaint(new GradientPaint((float) -r, (float) -r, new Color(0xFFFFFF), (float) r, (float) r, new Color(0xC9D6F2)));
+            c.fill(forma);
+            c.setStroke(new BasicStroke((float) (r * 0.28), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            c.draw(forma);
+            c.setTransform(viejo);
+        }
+    }
 
 }
