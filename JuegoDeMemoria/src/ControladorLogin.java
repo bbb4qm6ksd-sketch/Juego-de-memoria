@@ -44,7 +44,6 @@ public class ControladorLogin {
         VistaPantallaPrincipal menu = new VistaPantallaPrincipal(usuario);
         VistaTablero tablero = new VistaTablero();
         VistaPremios premios = new VistaPremios();
-        VistaPatrones patrones = new VistaPatrones();
 
         tablero.setNombreJugador(0, usuario);
         tablero.setJugadorActivo(0);
@@ -55,16 +54,13 @@ public class ControladorLogin {
             tablero.setVisible(true);
         });
 
-        patrones.setJugador(usuario);
-
+        // Modo patrones: cada vez que se pulsa JUGAR se crea una vista nueva y se le conecta su controlador
         menu.getBtnPatrones().addActionListener(e -> {
+            VistaPatrones patrones = new VistaPatrones();
+            patrones.setJugador(usuario);
+            new ControladorPatrones(patrones, () -> menu.setVisible(true));   // al pulsar SALIR vuelve al menu
             menu.setVisible(false);
             patrones.setVisible(true);
-        });
-
-        patrones.getBtnSalir().addActionListener(e -> {
-            patrones.setVisible(false);
-            menu.setVisible(true);
         });
         menu.getBtnPremios().addActionListener(e -> {
             menu.setVisible(false);

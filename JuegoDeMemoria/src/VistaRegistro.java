@@ -50,20 +50,20 @@ public class VistaRegistro extends JDialog {
         lblError.setForeground(Tema.ERROR);
         btnCrear.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
 
-        form.add(alinear(etiqueta("NUEVA CUENTA", Tema.sans(Font.BOLD, 11), Tema.HIELO)));
+        form.add(alinear(etiqueta("NUEVA CUENTA", fuentes.mono(Font.BOLD, 11), Tema.HIELO)));
         form.add(Box.createVerticalStrut(14));
-        form.add(alinear(etiqueta("Crea tu cuenta", Tema.serif(Font.PLAIN, 40), Tema.TEXTO)));
+        form.add(alinear(etiqueta("Crea tu cuenta", fuentes.romantic(Font.PLAIN, 40), Tema.TEXTO)));
         form.add(Box.createVerticalStrut(28));
-        form.add(alinear(etiqueta("USUARIO", Tema.sans(Font.BOLD, 10), Tema.SECUNDARIO)));
+        form.add(alinear(etiqueta("USUARIO",fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO)));
         form.add(alinear(txtUsuario));
         form.add(Box.createVerticalStrut(16));
-        form.add(alinear(etiqueta("CORREO", Tema.sans(Font.BOLD, 10), Tema.SECUNDARIO)));
+        form.add(alinear(etiqueta("CORREO",fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO)));
         form.add(alinear(txtCorreo));
         form.add(Box.createVerticalStrut(16));
-        form.add(alinear(etiqueta("CONTRASEÑA", Tema.sans(Font.BOLD, 10), Tema.SECUNDARIO)));
+        form.add(alinear(etiqueta("CONTRASEÑA", fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO)));
         form.add(alinear(campoClave(txtContrasena)));
         form.add(Box.createVerticalStrut(16));
-        form.add(alinear(etiqueta("CONFIRMAR CONTRASEÑA", Tema.sans(Font.BOLD, 10), Tema.SECUNDARIO)));
+        form.add(alinear(etiqueta("CONFIRMAR CONTRASEÑA", fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO)));
         form.add(alinear(campoClave(txtConfirmar)));
         form.add(Box.createVerticalStrut(14));
         form.add(alinear(lblError));

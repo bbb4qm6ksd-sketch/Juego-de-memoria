@@ -6,6 +6,7 @@ import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
 import java.util.Map;
 
+
 public class VistaTablero extends JFrame {
 
     public static final int JUGADORES = 2;
@@ -56,7 +57,7 @@ public class VistaTablero extends JFrame {
 
         zona.setLayout(new GridLayout(1, JUGADORES, 24, 0));
         for (JPanel panel : panelesJugador) zona.add(panel);
-        lblEyebrow.setText("MODO CLÁSICO  ·  2 JUGADORES");
+        lblEyebrow.setText("MODO CLÁSICO  *  2 JUGADORES");
         lblTitulo.setText("<html>Encuentra las <i style='color:#A9BCFF'>constelaciones</i></html>");
         setTitle("AstroMatch - Modo clásico");
         Dimension pantalla = Toolkit.getDefaultToolkit().getScreenSize();
@@ -64,15 +65,16 @@ public class VistaTablero extends JFrame {
         setSize(Math.min(1280, pantalla.width - 60), Math.min(820, pantalla.height - 80));
         setLocationRelativeTo(null);
         setJugadorActivo(0);
+
     }
 
     private JPanel crearEncabezado() {
         JPanel encabezado = new JPanel(new BorderLayout());
         encabezado.setOpaque(false);
 
-        lblEyebrow.setFont(Tema.sans(Font.BOLD, 11));
+        lblEyebrow.setFont(fuentes.mono(Font.BOLD, 11));
         lblEyebrow.setForeground(Tema.HIELO);
-        lblTitulo.setFont(Tema.serif(Font.PLAIN, 36));
+        lblTitulo.setFont(fuentes.kiwiSoda(Font.PLAIN, 36));
         lblTitulo.setForeground(Tema.TEXTO);
 
         JPanel textos = new JPanel();
@@ -90,7 +92,7 @@ public class VistaTablero extends JFrame {
     }
 
     private JPanel crearRelojClasico() {
-        lblTurno.setFont(Tema.sans(Font.BOLD, 11));
+        lblTurno.setFont(fuentes.mono(Font.BOLD, 11));
         lblTurno.setForeground(Tema.ESTRELLA);
         barra.setPreferredSize(new Dimension(260, 8));
         barra.setMaximumSize(new Dimension(260, 8));
@@ -104,7 +106,7 @@ public class VistaTablero extends JFrame {
         turno.add(Box.createVerticalStrut(10));
         turno.add(barra);
 
-        lblTiempo.setFont(Tema.serif(Font.PLAIN, 44));
+        lblTiempo.setFont(fuentes.kiwiSoda(Font.PLAIN, 44));
         lblTiempo.setForeground(Tema.TEXTO);
 
         JPanel reloj = new JPanel(new BorderLayout(18, 0));
@@ -120,7 +122,7 @@ public class VistaTablero extends JFrame {
         marcarPanel(panel, Tema.LINEA);
 
         lblNombre[j] = new JLabel("Jugador " + (j + 1));
-        lblNombre[j].setFont(Tema.serif(Font.PLAIN, 24));
+        lblNombre[j].setFont(fuentes.kiwiSoda(Font.PLAIN, 24));
         lblNombre[j].setForeground(Tema.TEXTO);
 
         lblIntentos[j] = etiquetaDato("INTENTOS  0");
@@ -152,7 +154,7 @@ public class VistaTablero extends JFrame {
 
     private static JLabel etiquetaDato(String texto) {
         JLabel l = new JLabel(texto);
-        l.setFont(Tema.sans(Font.BOLD, 11));
+        l.setFont(fuentes.mono(Font.BOLD, 11));
         l.setForeground(Tema.SECUNDARIO);
         return l;
     }
@@ -166,7 +168,7 @@ public class VistaTablero extends JFrame {
         JPanel pie = new JPanel(new BorderLayout());
         pie.setOpaque(false);
 
-        lblMensaje.setFont(Tema.sans(Font.PLAIN, 14));
+        lblMensaje.setFont(fuentes.mono(Font.PLAIN, 14));
         lblMensaje.setForeground(Tema.SECUNDARIO);
 
         btnAccion.setPreferredSize(new Dimension(170, 42));
@@ -205,6 +207,8 @@ public class VistaTablero extends JFrame {
         lblTiempo.setText(String.format("%02d", Math.max(0, restante)));
         barra.setFraccion(maximo <= 0 ? 0 : (double) restante / maximo);
     }
+
+
 
     public static class BarraTiempo extends JComponent {
 
@@ -251,7 +255,7 @@ public class VistaTablero extends JFrame {
             setBorderPainted(false);
             setFocusPainted(false);
             setForeground(relleno ? new Color(0x0A1030) : Tema.TEXTO);
-            setFont(Tema.sans(Font.BOLD, 12));
+            setFont(fuentes.mono(Font.BOLD, 12));
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             setPreferredSize(new Dimension(220, (brillo ? 52 : 46) + 2 * margen));
         }

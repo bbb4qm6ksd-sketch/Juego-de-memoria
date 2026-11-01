@@ -35,7 +35,7 @@ public class VistaLogin extends JFrame {
         c.weightx = 0.35;
         add(crearPanelFormulario(), c);
 
-        setSize(1000, 620);
+        setSize(2000, 1000);
         setMinimumSize(new Dimension(820, 560));
         setLocationRelativeTo(null);
     }
@@ -49,19 +49,19 @@ public class VistaLogin extends JFrame {
         hero.setBorder(new EmptyBorder(48, 56, 48, 56));
 
         JLabel marca = new JLabel("<html><span style='color:#F6DCA2'>&#9679;</span>&nbsp;&nbsp;AstroMatch</html>");
-        marca.setFont(Tema.sans(Font.BOLD, 13));
+        marca.setFont(fuentes.mono(Font.BOLD, 13));
         marca.setForeground(Tema.TEXTO);
 
         Lema lema = new Lema();
 
-        JLabel pie = new JLabel("OBSERVATORIO  ·  EDICIÓN NOCTURNA");
-        pie.setFont(Tema.sans(Font.PLAIN, 11));
+        JLabel pie = new JLabel("OBSERVATORIO  *  EDICIÓN NOCTURNA");
+        pie.setFont(fuentes.mono(Font.PLAIN, 11));
         pie.setForeground(Tema.SECUNDARIO);
 
         JLabel descripcion = new JLabel("<html><div style='width:400px'>"
                 + "Un juego de memoria sobre constelaciones. Compite con otro observador "
                 + "y demuestra quién tiene mejor memoria.</div></html>");
-        descripcion.setFont(Tema.sans(Font.PLAIN, 16));
+        descripcion.setFont(fuentes.mono(Font.PLAIN, 16));
         descripcion.setForeground(Tema.SECUNDARIO);
 
         JPanel textos = new JPanel();
@@ -117,16 +117,16 @@ public class VistaLogin extends JFrame {
         filaLinks.add(btnCrearCuenta, BorderLayout.EAST);
         filaLinks.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
 
-        form.add(alinear(etiqueta("ACCESO", Tema.sans(Font.BOLD, 11), Tema.HIELO)));
+        form.add(alinear(etiqueta("ACCESO", fuentes.mono(Font.BOLD, 11), Tema.HIELO)));
         form.add(Box.createVerticalStrut(14));
-        form.add(alinear(etiqueta("Bienvenido", Tema.serif(Font.PLAIN, 46), Tema.TEXTO)));
+        form.add(alinear(etiqueta("Bienvenido", fuentes.romantic(Font.PLAIN, 46), Tema.TEXTO)));
         form.add(Box.createVerticalStrut(8));
-        form.add(alinear(etiqueta("Inicia sesión para continuar.", Tema.sans(Font.PLAIN, 14), Tema.SECUNDARIO)));
+        form.add(alinear(etiqueta("Inicia sesión para continuar.", fuentes.mono(Font.PLAIN, 14), Tema.SECUNDARIO)));
         form.add(Box.createVerticalStrut(34));
-        form.add(alinear(etiqueta("USUARIO O CORREO", Tema.sans(Font.BOLD, 10), Tema.SECUNDARIO)));
+        form.add(alinear(etiqueta("USUARIO O CORREO", fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO)));
         form.add(alinear(txtUsuario));
         form.add(Box.createVerticalStrut(22));
-        form.add(alinear(etiqueta("CONTRASEÑA", Tema.sans(Font.BOLD, 10), Tema.SECUNDARIO)));
+        form.add(alinear(etiqueta("CONTRASEÑA", fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO)));
         form.add(alinear(filaClave));
         form.add(Box.createVerticalStrut(14));
         form.add(alinear(lblError));
@@ -168,7 +168,7 @@ public class VistaLogin extends JFrame {
     private static class Lema extends JComponent {
         private static final String LINEA1 = "Une los puntos,";
         private static final String LINEA2 = "lee el cielo.";
-        private final Font fuente = Tema.lema(72f);
+        private final Font fuente = fuentes.romantic(Font.PLAIN, 72f);
         private final FontRenderContext frc = new FontRenderContext(null, true, true);
         private final int altoLinea;
         private final int ancho;
