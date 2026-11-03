@@ -59,8 +59,10 @@ public class ControladorLogin {
             Sonidos.cambiarMusica(Sonidos.Pista.JUEGO);
             VistaPatrones patrones = new VistaPatrones();
             patrones.setJugador(usuario);
-            new ControladorPatrones(patrones, () -> menu.setVisible(true));   // al pulsar SALIR vuelve al menu
-            Sonidos.cambiarMusica(Sonidos.Pista.MENU);
+            new ControladorPatrones(patrones, () -> {
+                Sonidos.cambiarMusica(Sonidos.Pista.MENU);   // al salir, vuelve la música del menú
+                menu.setVisible(true);
+            });
             menu.setVisible(false);
             patrones.setVisible(true);
         });
