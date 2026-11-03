@@ -20,7 +20,7 @@ public class ControladorLogin {
         String clave = vista.getContrasena();
 
         if (usuarioOCorreo.isEmpty() || clave.isEmpty()) {
-
+            Sonidos.reproducir(Sonidos.Efecto.ERROR);
             vista.mostrarError("Escribe tu usuario y contraseña.");
             return;
         }
@@ -45,20 +45,22 @@ public class ControladorLogin {
         VistaTablero tablero = new VistaTablero();
         VistaPremios premios = new VistaPremios();
 
-        tablero.setNombreJugador(0, usuario);
-        tablero.setJugadorActivo(0);
-        tablero.setMensaje("Tu turno, " + usuario + ".");
+        ControladorClasico clasico = new ControladorClasico(tablero, usuario, "Jugador 2");
 
         menu.getBtnClasico().addActionListener(e -> {
+            Sonidos.cambiarMusica(Sonidos.Pista.JUEGO);
+            clasico.nuevaPartida();
             menu.setVisible(false);
             tablero.setVisible(true);
         });
 
         // Modo patrones: cada vez que se pulsa JUGAR se crea una vista nueva y se le conecta su controlador
         menu.getBtnPatrones().addActionListener(e -> {
+            Sonidos.cambiarMusica(Sonidos.Pista.JUEGO);
             VistaPatrones patrones = new VistaPatrones();
             patrones.setJugador(usuario);
             new ControladorPatrones(patrones, () -> menu.setVisible(true));   // al pulsar SALIR vuelve al menu
+            Sonidos.cambiarMusica(Sonidos.Pista.MENU);
             menu.setVisible(false);
             patrones.setVisible(true);
         });
@@ -67,6 +69,8 @@ public class ControladorLogin {
             premios.setVisible(true);
         });
         menu.getBtnCerrarSesion().addActionListener(e -> {
+            Sonidos.cambiarMusica(Sonidos.Pista.MENU);
+            clasico.detener();
             menu.dispose();
             tablero.dispose();
             premios.dispose();
@@ -74,6 +78,8 @@ public class ControladorLogin {
             vista.setVisible(true);
         });
         tablero.getBtnSalir().addActionListener(e -> {
+            Sonidos.cambiarMusica(Sonidos.Pista.MENU);
+            clasico.detener();
             tablero.setVisible(false);
             menu.setVisible(true);
         });

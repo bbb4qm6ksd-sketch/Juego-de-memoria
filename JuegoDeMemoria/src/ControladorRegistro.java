@@ -18,6 +18,7 @@ public class ControladorRegistro {
         String confirmacion = vista.getConfirmacion();
 
         if (usuario.isEmpty() || correo.isEmpty() || clave.isEmpty() || confirmacion.isEmpty()) {
+            Sonidos.reproducir(Sonidos.Efecto.ERROR);
             vista.mostrarError("Completa todos los campos.");
             return;
         }
@@ -27,11 +28,14 @@ public class ControladorRegistro {
             return;
         }
         String error = Cuentas.registrar(usuario, correo, clave);
+
         if (error != null) {
+            Sonidos.reproducir(Sonidos.Efecto.ERROR);
             vista.mostrarError(error);
             return;
         }
         vista.limpiarError();
+        Sonidos.reproducir(Sonidos.Efecto.ACIERTO);
         JOptionPane.showMessageDialog(vista, "Cuenta creada. Ya puedes iniciar sesión.",
                 "AstroMatch", JOptionPane.INFORMATION_MESSAGE);
         vista.dispose();
