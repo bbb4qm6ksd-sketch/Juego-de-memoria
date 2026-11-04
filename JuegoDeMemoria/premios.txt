@@ -1,0 +1,6 @@
+Ana	18
+Luis	22
+Marta	20
+Pedro	30
+Sofia	19
+Carlos	25

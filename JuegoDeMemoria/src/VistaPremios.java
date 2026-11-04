@@ -2,6 +2,9 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.util.List;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 public class VistaPremios extends JFrame {
 
@@ -35,10 +38,10 @@ public class VistaPremios extends JFrame {
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
 
         JLabel eyebrow = new JLabel("CLASIFICACIÓN");
-        eyebrow.setFont(Tema.sans(Font.BOLD, 11));
+        eyebrow.setFont(fuentes.mono(Font.BOLD, 11));
         eyebrow.setForeground(Tema.HIELO);
         JLabel titulo = new JLabel("<html>Mejores <i style='color:#F6DCA2'>jugadores</i></html>");
-        titulo.setFont(Tema.serif(Font.PLAIN, 46));
+        titulo.setFont(fuentes.kiwiSoda(Font.PLAIN, 46));
         titulo.setForeground(Tema.TEXTO);
         JLabel formula = new JLabel("Premio = 1 / intentos × 100 × tipo de cambio");
         formula.setFont(Tema.sans(Font.PLAIN, 13));
@@ -64,10 +67,10 @@ public class VistaPremios extends JFrame {
         tabla.setOpaque(false);
 
         JLabel[] cab = {
-                celda("POS.", Tema.sans(Font.BOLD, 10), Tema.SECUNDARIO, SwingConstants.LEFT),
-                celda("JUGADOR", Tema.sans(Font.BOLD, 10), Tema.SECUNDARIO, SwingConstants.LEFT),
-                celda("INTENTOS", Tema.sans(Font.BOLD, 10), Tema.SECUNDARIO, SwingConstants.CENTER),
-                celda("PREMIO", Tema.sans(Font.BOLD, 10), Tema.SECUNDARIO, SwingConstants.RIGHT)
+                celda("POS.", fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO, SwingConstants.LEFT),
+                celda("JUGADOR", fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO, SwingConstants.LEFT),
+                celda("INTENTOS", fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO, SwingConstants.CENTER),
+                celda("PREMIO", fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO, SwingConstants.RIGHT)
         };
         tabla.add(fila(cab, null));
 
@@ -75,7 +78,7 @@ public class VistaPremios extends JFrame {
             boolean oro = i == 0;
             Color acento = oro ? Tema.ESTRELLA : Tema.TEXTO;
             celdas[i][0] = celda(String.valueOf(i + 1), Tema.serif(Font.PLAIN, 28), oro ? Tema.ESTRELLA : Tema.HIELO, SwingConstants.LEFT);
-            celdas[i][1] = celda("—", Tema.sans(Font.PLAIN, 18), Tema.TEXTO, SwingConstants.LEFT);
+            celdas[i][1] = celda("—", fuentes.mono(Font.PLAIN, 18), Tema.TEXTO, SwingConstants.LEFT);
             celdas[i][2] = celda("—", Tema.sans(Font.PLAIN, 18), Tema.TEXTO, SwingConstants.CENTER);
             celdas[i][3] = celda("—", Tema.serif(Font.PLAIN, 26), acento, SwingConstants.RIGHT);
             tabla.add(fila(celdas[i], oro ? Tema.ESTRELLA : Tema.LINEA));
@@ -121,5 +124,36 @@ public class VistaPremios extends JFrame {
     public JButton getBtnVolver() { return btnVolver; }
 
     public void setTipoCambio(String texto) { lblCambio.setText("Tipo de cambio: " + texto); }
+
+    public void mostrarTop(List<ModeloPremios.Fila> filas, double cambio, boolean cambioActual) {
+        setTipoCambio(String.format("₡%.2f", cambio) + (cambioActual ? " (BCCR, actual)" : " (último guardado, sin conexión)"));
+
+        NumberFormat moneda = NumberFormat.getNumberInstance(Locale.US);
+        moneda.setMaximumFractionDigits(2);
+        moneda.setMinimumFractionDigits(2);
+
+        for (int i = 0; i < PUESTOS; i++) {
+            if (i < filas.size()) {
+                ModeloPremios.Fila f = filas.get(i);
+                celdas[i][1].setText(f.jugador);
+                celdas[i][2].setText(String.valueOf(f.intentos));
+                celdas[i][3].setText("₡" + moneda.format(f.premio));
+            } else {
+                celdas[i][1].setText("—");
+                celdas[i][2].setText("—");
+                celdas[i][3].setText("—");
+            }
+        }
+    }
+
+    public void mostrarErrorCambio(String mensaje) {
+        lblCambio.setText(mensaje);
+        for (int i = 0; i < PUESTOS; i++) {
+            celdas[i][1].setText("—");
+            celdas[i][2].setText("—");
+            celdas[i][3].setText("—");
+        }
+    }
+
 
 }

@@ -246,7 +246,7 @@ public class VistaPatrones extends JFrame {
     public JButton getBtnComenzar()                  { return btnComenzar; }
     public JButton getBtnSalir()                     { return btnSalir; }
 
-    public void setJugador(String nombre)            { lblJugador.setText("OBSERVADOR  ·  " + nombre.toUpperCase()); }
+    public void setJugador(String nombre)            { lblJugador.setText("OBSERVADOR  *  " + nombre.toUpperCase()); }
     public void setNivel(int casillasDelPatron)      { lblNivel.setText(String.valueOf(casillasDelPatron)); }
     public void setRonda(int ronda)                  { lblRonda.setText(String.valueOf(ronda)); }
     public void setFase(String texto)                { lblFase.setText(texto); }

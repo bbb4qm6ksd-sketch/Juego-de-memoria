@@ -2,16 +2,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Logica pura del modo clasico (no usa Swing).
- *
- * Reglas:
- *  - 2 jugadores, cada uno con su propio tablero 6x6 (18 parejas), barajado distinto.
- *  - Cada turno dura 10 segundos. Cada acierto suma 7 segundos al turno actual.
- *  - Un fallo (o quedarse sin tiempo) cede el turno al contrincante.
- *  - Un "intento" = destapar dos cartas (sea acierto o fallo).
- *  - Gana quien necesite menos intentos para completar su tablero.
- */
+
 public class ModeloClasico {
 
     public static final int JUGADORES = 2;
@@ -100,7 +91,7 @@ public class ModeloClasico {
         return acierto ? Resultado.ACIERTO : Resultado.FALLO;
     }
 
-    /** Pasa el turno al otro jugador (si el otro ya termino su tablero, sigue el mismo). */
+    //Pasa el turno al otro jugador (si el otro ya termino su tablero, sigue el mismo).
     public void cambiarTurno() {
         int otro = 1 - jugadorActivo;
         if (parejas[otro] < PAREJAS) {
@@ -132,7 +123,7 @@ public class ModeloClasico {
         return jugadorTermino(0) && jugadorTermino(1);
     }
 
-    /** Ganador (0 o 1) segun menos intentos, o -1 si hay empate. Usar solo con la partida terminada. */
+    //Ganador (0 o 1) segun menos intentos, o -1 si hay empate. Usar solo con la partida terminada.
     public int getGanador() {
         if (intentos[0] == intentos[1]) return -1;
         return intentos[0] < intentos[1] ? 0 : 1;
