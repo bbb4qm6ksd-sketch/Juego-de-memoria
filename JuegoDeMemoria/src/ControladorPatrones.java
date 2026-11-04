@@ -38,6 +38,7 @@ public class ControladorPatrones {
     }
 
     private void comenzar() {
+        vista.detenerConfeti();
         if (perdio) {
             modelo.nuevoJuego();
             perdio = false;
@@ -99,6 +100,7 @@ public class ControladorPatrones {
         vista.setNivel(modelo.getNivel());
         vista.setRonda(modelo.getRonda());
         vista.setFase("¡Correcto! Pulsa COMENZAR para la siguiente ronda");
+        vista.lanzarConfeti();
     }
 
     private void terminarPorError(String mensaje) {
@@ -114,6 +116,7 @@ public class ControladorPatrones {
     }
 
     private void salir() {
+        vista.detenerConfeti();
         relojMostrar.stop();
         relojJuego.stop();
         vista.dispose();

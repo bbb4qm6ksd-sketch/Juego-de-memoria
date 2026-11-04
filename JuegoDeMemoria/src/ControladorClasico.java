@@ -46,6 +46,7 @@ public class ControladorClasico {
 
     public void nuevaPartida() {
         detener();
+        vista.detenerConfeti();
         modelo.nuevaPartida();
 
         for (int j = 0; j < ModeloClasico.JUGADORES; j++) {
@@ -63,6 +64,7 @@ public class ControladorClasico {
         actualizarTurno();
         bloqueado = false;
         arrancarReloj();
+
     }
 
     /** Para relojes y bloquea el tablero (al salir al menu, cerrar sesion o reiniciar). */
@@ -184,6 +186,7 @@ public class ControladorClasico {
         }
         vista.setMensaje(mensaje);
         Sonidos.reproducir(Sonidos.Efecto.VICTORIA);
+        vista.lanzarConfeti();
         JOptionPane.showMessageDialog(vista, mensaje, "AstroMatch", JOptionPane.INFORMATION_MESSAGE);
     }
 
@@ -204,4 +207,8 @@ public class ControladorClasico {
     private void mostrarTiempo() {
         vista.setTiempoTurno(segundosRestantes(), (int) Math.ceil(modelo.getTiempoMaximo()));
     }
+
+
+
+
 }
