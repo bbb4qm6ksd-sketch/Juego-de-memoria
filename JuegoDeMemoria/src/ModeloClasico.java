@@ -138,6 +138,11 @@ public class ModeloClasico {
         return intentos[0] < intentos[1] ? 0 : 1;
     }
 
+
+
+
+
+
     public String getNombre(int jugador, int fila, int columna) { return nombres[jugador][fila][columna]; }
     public int getIntentos(int jugador)                         { return intentos[jugador]; }
     public int getParejas(int jugador)                          { return parejas[jugador]; }

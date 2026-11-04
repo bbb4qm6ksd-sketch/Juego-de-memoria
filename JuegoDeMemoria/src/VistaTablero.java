@@ -5,6 +5,9 @@ import java.awt.*;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
 import java.util.Map;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import javax.swing.Timer;
 
 
 public class VistaTablero extends JFrame {
@@ -31,6 +34,43 @@ public class VistaTablero extends JFrame {
     private final JLabel lblMensaje = new JLabel(" ");
     private final JButton btnAccion = new BotonPill("REINICIAR", true);
     private final JButton btnSalir = Tema.botonTexto("SALIR");
+
+    // ---------- Confeti ----------
+    private Confeti confeti;
+    private long ultimoConfetiNs;
+    private final Timer timerConfeti = new Timer(16, e -> {
+        long ahora = System.nanoTime();
+        double dt = (ahora - ultimoConfetiNs) / 1e9;
+        ultimoConfetiNs = ahora;
+        if (confeti != null) {
+            confeti.actualizar(dt);
+            if (!confeti.estaActivo()) {
+                ((Timer) e.getSource()).stop();
+            }
+        }
+        repaint();
+    });
+
+    public void lanzarConfeti() {
+        confeti = new Confeti(getWidth(), getHeight());
+        confeti.iniciar();
+        ultimoConfetiNs = System.nanoTime();
+        timerConfeti.start();
+    }
+
+    public void detenerConfeti() {
+        timerConfeti.stop();
+        confeti = null;
+        repaint();
+    }
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+        if (confeti != null) {
+            confeti.dibujar((Graphics2D) g);
+        }
+    }
 
     public VistaTablero() {
         super("AstroMatch");

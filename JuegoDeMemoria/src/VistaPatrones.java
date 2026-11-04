@@ -4,6 +4,10 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import javax.swing.JComponent;
+import javax.swing.Timer;
 
 
 public class VistaPatrones extends JFrame {
@@ -23,6 +27,48 @@ public class VistaPatrones extends JFrame {
     private final JLabel lblFase = new JLabel("Pulsa COMENZAR para ver el patrón");
     private final JButton btnComenzar = new VistaTablero.BotonPill("COMENZAR", true);
     private final JButton btnSalir = Tema.botonTexto("SALIR");
+
+    // ---------- Confeti ----------
+    private Confeti confeti;
+    private long ultimoConfetiNs;
+
+    private final JComponent capaConfeti = new JComponent() {
+        @Override
+        protected void paintComponent(Graphics g) {
+            if (confeti != null) {
+                confeti.dibujar((Graphics2D) g);
+            }
+        }
+    };
+
+    private final Timer timerConfeti = new Timer(16, e -> {
+        long ahora = System.nanoTime();
+        double dt = (ahora - ultimoConfetiNs) / 1e9;
+        ultimoConfetiNs = ahora;
+        if (confeti != null) {
+            confeti.actualizar(dt);
+            if (!confeti.estaActivo()) {
+                ((Timer) e.getSource()).stop();
+                capaConfeti.setVisible(false);
+            }
+        }
+        capaConfeti.repaint();
+    });
+
+    public void lanzarConfeti() {
+        confeti = new Confeti(getWidth(), getHeight());
+        confeti.iniciar();
+        ultimoConfetiNs = System.nanoTime();
+        capaConfeti.setVisible(true);
+        timerConfeti.start();
+    }
+
+    public void detenerConfeti() {
+        timerConfeti.stop();
+        confeti = null;
+        capaConfeti.setVisible(false);
+        capaConfeti.repaint();
+    }
 
     public VistaPatrones() {
         super("AstroMatch - Modo patrones");
@@ -52,6 +98,9 @@ public class VistaPatrones extends JFrame {
         setMinimumSize(new Dimension(760, 680));
         setLocationRelativeTo(null);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setGlassPane(capaConfeti);
+        capaConfeti.setOpaque(false);
+        capaConfeti.setVisible(false);
     }
 
     // ---------- Barra superior: marca + jugador + salir ----------
