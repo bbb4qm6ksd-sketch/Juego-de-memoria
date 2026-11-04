@@ -44,6 +44,8 @@ public class ControladorLogin {
         VistaPantallaPrincipal menu = new VistaPantallaPrincipal(usuario);
         VistaTablero tablero = new VistaTablero();
         VistaPremios premios = new VistaPremios();
+        ModeloPremios modeloPremios = new ModeloPremios();
+        ControladorPremios controladorPremios = new ControladorPremios(premios, modeloPremios);
 
         ControladorClasico clasico = new ControladorClasico(tablero, usuario, "Jugador 2");
 
@@ -69,6 +71,7 @@ public class ControladorLogin {
         menu.getBtnPremios().addActionListener(e -> {
             menu.setVisible(false);
             premios.setVisible(true);
+            controladorPremios.actualizar();
         });
         menu.getBtnCerrarSesion().addActionListener(e -> {
             Sonidos.cambiarMusica(Sonidos.Pista.MENU);

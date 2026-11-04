@@ -1,10 +1,7 @@
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
 
-/**
- * Conecta VistaTablero (interfaz) con ModeloClasico (reglas).
- * Se encarga de: clics en cartas, reloj del turno, pausa tras un fallo, mensajes y sonidos.
- */
+
 public class ControladorClasico {
 
     private static final int PAUSA_FALLO_MS = 900;     // tiempo que se ven las dos cartas de un fallo
@@ -65,9 +62,10 @@ public class ControladorClasico {
         bloqueado = false;
         arrancarReloj();
 
+
     }
 
-    /** Para relojes y bloquea el tablero (al salir al menu, cerrar sesion o reiniciar). */
+    // Para relojes y bloquea el tablero (al salir al menu, cerrar sesion o reiniciar).
     public void detener() {
         relojTurno.stop();
         pausaFallo.stop();
@@ -127,7 +125,7 @@ public class ControladorClasico {
         }
     }
 
-    /** Pasados unos instantes de un fallo: se tapan las cartas y juega el otro. */
+    // Pasados unos instantes de un fallo: se tapan las cartas y juega el otro.
     private void resolverFallo() {
         if (primeraCarta != null) primeraCarta.setEstado(Carta.Estado.OCULTA);
         if (segundaCarta != null) segundaCarta.setEstado(Carta.Estado.OCULTA);
@@ -177,17 +175,21 @@ public class ControladorClasico {
     private void terminar() {
         detener();
         int ganador = modelo.getGanador();
+
+        String titulo;
         String mensaje;
         if (ganador < 0) {
-            mensaje = "¡Empate! Ambos usaron " + modelo.getIntentos(0) + " intentos.";
+            titulo = "!Empate!";
+            mensaje = " Ambos usaron " + modelo.getIntentos(0) + " intentos.";
         } else {
+            titulo = "!FELICIDADES!";
             mensaje = "¡Gana " + nombres[ganador] + " con " + modelo.getIntentos(ganador)
                     + " intentos!  (" + nombres[1 - ganador] + ": " + modelo.getIntentos(1 - ganador) + ")";
         }
-        vista.setMensaje(mensaje);
+        vista.setMensaje(titulo);
         Sonidos.reproducir(Sonidos.Efecto.VICTORIA);
         vista.lanzarConfeti();
-        JOptionPane.showMessageDialog(vista, mensaje, "AstroMatch", JOptionPane.INFORMATION_MESSAGE);
+        vista.mostrarMensajeFinal(titulo, mensaje);
     }
 
     // ---------- Refrescar la vista ----------

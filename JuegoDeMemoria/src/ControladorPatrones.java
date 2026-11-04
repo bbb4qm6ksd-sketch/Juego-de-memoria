@@ -35,6 +35,7 @@ public class ControladorPatrones {
                 vista.getCasilla(f, c).addActionListener(e -> pulsarCasilla(f, c));
             }
         }
+
     }
 
     private void comenzar() {

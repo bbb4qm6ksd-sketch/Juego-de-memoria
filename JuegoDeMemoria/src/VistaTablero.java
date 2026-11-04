@@ -8,6 +8,14 @@ import java.util.Map;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import javax.swing.Timer;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+
 
 
 public class VistaTablero extends JFrame {
@@ -56,6 +64,24 @@ public class VistaTablero extends JFrame {
         confeti.iniciar();
         ultimoConfetiNs = System.nanoTime();
         timerConfeti.start();
+    }
+
+    public void mostrarMensajeFinal(String titulo, String detalle) {
+        JLabel lblTitulo = new JLabel(titulo, SwingConstants.CENTER);
+        lblTitulo.setFont(fuentes.kiwiSoda(Font.BOLD, 32));
+        lblTitulo.setForeground(Tema.TEXTO);
+
+        JLabel lblDetalle = new JLabel(detalle, SwingConstants.CENTER);
+        lblDetalle.setFont(fuentes.mono(Font.PLAIN, 13));
+        lblDetalle.setForeground(Tema.SECUNDARIO);
+
+        JPanel panel = new JPanel(new BorderLayout(0, 14));
+        panel.setBackground(new Color(0x141F47));
+        panel.setBorder(new EmptyBorder(24, 40, 24, 40));
+        panel.add(lblTitulo, BorderLayout.CENTER);
+        panel.add(lblDetalle, BorderLayout.SOUTH);
+
+        JOptionPane.showMessageDialog(this, panel, "AstroMatch", JOptionPane.PLAIN_MESSAGE);
     }
 
     public void detenerConfeti() {
