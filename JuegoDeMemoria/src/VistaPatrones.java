@@ -178,7 +178,7 @@ public class VistaPatrones extends JFrame {
         tiempos.setOpaque(false);
         tiempos.add(crearBloqueTiempo("TIEMPO TOTAL", lblTotal, barraTotal));
         tiempos.add(crearBloqueTiempo("ENTRE CASILLAS", lblEntre, barraEntre));
-        tiempos.setPreferredSize(new Dimension(480, tiempos.getPreferredSize().height));   
+        tiempos.setPreferredSize(new Dimension(480, tiempos.getPreferredSize().height));
         JPanel izquierda = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         izquierda.setOpaque(false);
         izquierda.add(tiempos);

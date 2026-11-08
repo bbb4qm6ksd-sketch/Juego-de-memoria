@@ -9,10 +9,7 @@ public class ControladorLogin {
         vista.getRootPane().setDefaultButton(vista.getBtnIngresar());
         vista.getBtnIngresar().addActionListener(e -> ingresar());
         vista.getBtnCrearCuenta().addActionListener(e -> abrirRegistro());
-        vista.getBtnOlvide().addActionListener(e ->
-                JOptionPane.showMessageDialog(vista,
-                        "La recuperación de contraseña estará disponible próximamente.",
-                        "AstroMatch", JOptionPane.INFORMATION_MESSAGE));
+        vista.getBtnOlvide().addActionListener(e -> abrirRecuperacion());
     }
 
     private void ingresar() {
@@ -40,6 +37,11 @@ public class ControladorLogin {
         registro.setVisible(true);
     }
 
+    private void abrirRecuperacion() {
+        VistaRecuperarContraseña recuperar = new VistaRecuperarContraseña(vista);
+        new ControladorRecuperarContraseña(recuperar, new ModeloRecuperarContraseña());
+        recuperar.setVisible(true);
+    }
     private void abrirMenu(String usuario) {
         VistaPantallaPrincipal menu = new VistaPantallaPrincipal(usuario);
         VistaTablero tablero = new VistaTablero();

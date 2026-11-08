@@ -66,9 +66,7 @@ public class Cuentas {
     public static String validar(String usuarioOCorreo, String contrasena) {
         try {
             for (Cuenta c : cargar()) {
-                boolean coincide = c.usuario.equalsIgnoreCase(usuarioOCorreo)
-                        || c.correo.equalsIgnoreCase(usuarioOCorreo);
-                if (!coincide) {
+                if (!coincide(c, usuarioOCorreo)) {
                     continue;
                 }
                 byte[] sal = Base64.getDecoder().decode(c.sal);
@@ -82,6 +80,48 @@ public class Cuentas {
             return null;
         }
         return null;
+    }
+
+    // true si existe una cuenta con ese usuario o correo
+    public static boolean existe(String usuarioOCorreo) {
+        try {
+            for (Cuenta c : cargar()) {
+                if (coincide(c, usuarioOCorreo)) {
+                    return true;
+                }
+            }
+        } catch (IOException e) {
+            return false;
+        }
+        return false;
+    }
+
+    // cambia la contraseña de la cuenta; devuelve null si todo salió bien, o el mensaje de error
+    public static String restablecerClave(String usuarioOCorreo, String nuevaContrasena) {
+        if (nuevaContrasena.length() < MIN_CONTRASENA) {
+            return "La contraseña debe tener al menos " + MIN_CONTRASENA + " caracteres.";
+        }
+        try {
+            List<Cuenta> lista = cargar();
+            for (Cuenta c : lista) {
+                if (!coincide(c, usuarioOCorreo)) {
+                    continue;
+                }
+                byte[] sal = new byte[16];
+                new SecureRandom().nextBytes(sal);   // sal nueva en cada cambio
+                c.sal = Base64.getEncoder().encodeToString(sal);
+                c.hash = Base64.getEncoder().encodeToString(calcularHash(nuevaContrasena, sal));
+                guardar(lista);
+                return null;
+            }
+            return "No existe esa cuenta.";
+        } catch (IOException | GeneralSecurityException e) {
+            return "No se pudo guardar la nueva contraseña.";
+        }
+    }
+
+    private static boolean coincide(Cuenta c, String usuarioOCorreo) {
+        return c.usuario.equalsIgnoreCase(usuarioOCorreo) || c.correo.equalsIgnoreCase(usuarioOCorreo);
     }
 
     private static List<Cuenta> cargar() throws IOException {
@@ -102,6 +142,20 @@ public class Cuentas {
             lista.add(c);
         }
         return lista;
+    }
+
+    // reescribe el archivo completo con la lista de cuentas
+    private static void guardar(List<Cuenta> lista) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        for (Cuenta c : lista) {
+            sb.append(c.usuario).append(';')
+                    .append(c.correo).append(';')
+                    .append(c.sal).append(';')
+                    .append(c.hash)
+                    .append(System.lineSeparator());
+        }
+        Files.write(ARCHIVO, sb.toString().getBytes(StandardCharsets.UTF_8),
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 
     private static byte[] calcularHash(String contrasena, byte[] sal) throws GeneralSecurityException {
