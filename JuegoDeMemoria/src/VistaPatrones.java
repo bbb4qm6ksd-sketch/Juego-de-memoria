@@ -2,8 +2,11 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.geom.Arc2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import javax.swing.JComponent;
@@ -27,17 +30,19 @@ public class VistaPatrones extends JFrame {
     private final JLabel lblFase = new JLabel("Pulsa COMENZAR para ver el patrón");
     private final JButton btnComenzar = new VistaTablero.BotonPill("COMENZAR", true);
     private final JButton btnSalir = Tema.botonTexto("SALIR");
-
-    // ---------- Confeti ----------
     private Confeti confeti;
     private long ultimoConfetiNs;
+    private boolean cuentaActiva = false;
+    private double cuentaRestante = 0;
+    private BufferedImage fondoDifuminado;
 
     private final JComponent capaConfeti = new JComponent() {
         @Override
         protected void paintComponent(Graphics g) {
-            if (confeti != null) {
-                confeti.dibujar((Graphics2D) g);
-            }
+            Graphics2D g2 = (Graphics2D) g.create();
+            if (cuentaActiva) dibujarCuentaAtras(g2);
+            if (confeti != null) confeti.dibujar(g2);
+            g2.dispose();
         }
     };
 
@@ -49,7 +54,7 @@ public class VistaPatrones extends JFrame {
             confeti.actualizar(dt);
             if (!confeti.estaActivo()) {
                 ((Timer) e.getSource()).stop();
-                capaConfeti.setVisible(false);
+                actualizarVisibilidadCapa();
             }
         }
         capaConfeti.repaint();
@@ -66,8 +71,81 @@ public class VistaPatrones extends JFrame {
     public void detenerConfeti() {
         timerConfeti.stop();
         confeti = null;
-        capaConfeti.setVisible(false);
+        actualizarVisibilidadCapa();
         capaConfeti.repaint();
+    }
+
+    private void actualizarVisibilidadCapa() {
+        boolean hayConfeti = confeti != null && confeti.estaActivo();
+        capaConfeti.setVisible(cuentaActiva || hayConfeti);
+    }
+
+    public void mostrarCuentaAtras(double restante) {
+        if (!cuentaActiva) {
+            fondoDifuminado = capturarFondoDifuminado();
+            cuentaActiva = true;
+        }
+        cuentaRestante = restante;
+        actualizarVisibilidadCapa();
+        capaConfeti.repaint();
+    }
+
+    public void ocultarCuentaAtras() {
+        cuentaActiva = false;
+        fondoDifuminado = null;
+        actualizarVisibilidadCapa();
+        capaConfeti.repaint();
+    }
+
+    private BufferedImage capturarFondoDifuminado() {
+        Container cp = getContentPane();
+        final int reduccion = 10;
+        int w = Math.max(1, cp.getWidth() / reduccion);
+        int h = Math.max(1, cp.getHeight() / reduccion);
+        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = img.createGraphics();
+        g.scale(1.0 / reduccion, 1.0 / reduccion);
+        cp.paint(g);
+        g.dispose();
+        return img;
+    }
+
+    private void dibujarCuentaAtras(Graphics2D g2) {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        int w = capaConfeti.getWidth(), h = capaConfeti.getHeight();
+
+        if (fondoDifuminado != null) {
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2.drawImage(fondoDifuminado, 0, 0, w, h, null);
+        }
+        g2.setColor(new Color(10, 15, 32, 140));
+        g2.fillRect(0, 0, w, h);
+
+        int numero = (int) Math.ceil(cuentaRestante);
+        double fraccion = Math.max(0, Math.min(1, cuentaRestante - (numero - 1)));
+
+
+        int d = Math.max(160, Math.min(w, h) / 4);
+        int x = (w - d) / 2, y = (h - d) / 2;
+        g2.setColor(new Color(17, 26, 51, 225));
+        g2.fillOval(x, y, d, d);
+        g2.setColor(Tema.LINEA);
+        g2.setStroke(new BasicStroke(4f));
+        g2.drawOval(x, y, d, d);
+        g2.setColor(Tema.HIELO);
+        g2.setStroke(new BasicStroke(6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.draw(new Arc2D.Double(x, y, d, d, 90, -360 * fraccion, Arc2D.OPEN));
+        g2.setFont(fuentes.mono(Font.BOLD, d / 2));
+        FontMetrics fm = g2.getFontMetrics();
+        String t = String.valueOf(numero);
+        g2.setColor(Tema.TEXTO);
+        g2.drawString(t, x + (d - fm.stringWidth(t)) / 2, y + (d + fm.getAscent() - fm.getDescent()) / 2);
+        g2.setFont(fuentes.romantic(Font.PLAIN, 24));
+        fm = g2.getFontMetrics();
+        String msg = "La siguiente ronda comienza en";
+        g2.setColor(Tema.ESTRELLA);
+        g2.drawString(msg, (w - fm.stringWidth(msg)) / 2, y - 28);
     }
 
     public VistaPatrones() {
@@ -100,6 +178,7 @@ public class VistaPatrones extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setGlassPane(capaConfeti);
         capaConfeti.setOpaque(false);
+        capaConfeti.addMouseListener(new MouseAdapter() {});
         capaConfeti.setVisible(false);
     }
 
@@ -226,7 +305,6 @@ public class VistaPatrones extends JFrame {
         return contenedor;
     }
 
-    // ---------- Pie: fase actual + comenzar ----------
     private JPanel crearPie() {
         JPanel pie = new JPanel(new BorderLayout());
         pie.setOpaque(false);
@@ -314,7 +392,7 @@ public class VistaPatrones extends JFrame {
             g2.fill(forma);
 
             boolean brilla = estado != Estado.REPOSO;
-            if (brilla) {                                          // resplandor
+            if (brilla) {
                 for (int i = 3; i >= 1; i--) {
                     g2.setColor(alfa(luz, 30 / i));
                     g2.setStroke(new BasicStroke(1 + i * 2.5f));
@@ -325,7 +403,7 @@ public class VistaPatrones extends JFrame {
             g2.setStroke(new BasicStroke(1.2f));
             g2.draw(forma);
 
-            if (estado == Estado.REPOSO) {                         // puntito de estrella
+            if (estado == Estado.REPOSO) {
                 float cx = w / 2f, cy = h / 2f;
                 g2.setPaint(new RadialGradientPaint(new Point2D.Float(cx, cy), 10f,
                         new float[]{0f, 1f}, new Color[]{alfa(Tema.HIELO, 90), alfa(Tema.HIELO, 0)}));

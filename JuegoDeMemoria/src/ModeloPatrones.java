@@ -9,6 +9,7 @@ public class ModeloPatrones {
     public static final int NIVEL_INICIAL = 3;
     public static final double TIEMPO_TOTAL = 12.0;
     public static final double TIEMPO_ENTRE_CASILLAS = 2.0;
+    public static final double TIEMPO_SIGUIENTE_RONDA = 3.0;
 
     private int[] patron = new int[0];
     private int nivel = NIVEL_INICIAL;
@@ -16,6 +17,7 @@ public class ModeloPatrones {
     private int posicion = 0;
     private double tiempoTotal = TIEMPO_TOTAL;
     private double tiempoEntreCasillas = TIEMPO_ENTRE_CASILLAS;
+    private double tiempoSiguienteRonda = TIEMPO_SIGUIENTE_RONDA;
 
     public void nuevoJuego(){
         nivel = NIVEL_INICIAL;
@@ -71,6 +73,20 @@ public class ModeloPatrones {
         return tiempoTotal < 0.001 || tiempoEntreCasillas < 0.001;
     }
 
+    // ---------- Cuenta atrás entre rondas ----------
+    public void iniciarCuentaAtras() {
+        tiempoSiguienteRonda = TIEMPO_SIGUIENTE_RONDA;
+    }
+    public void restarCuentaAtras(double segundos) {
+        tiempoSiguienteRonda = Math.max(0, tiempoSiguienteRonda - segundos);
+    }
+    public boolean cuentaAtrasTerminada() {
+        return tiempoSiguienteRonda < 0.001;
+    }
+    public double getTiempoSiguienteRonda() {
+        return tiempoSiguienteRonda;
+    }
+
     public int getFilaPatron(int i){
         return patron[i] / COLUMNAS;
     }
@@ -93,4 +109,3 @@ public class ModeloPatrones {
         return tiempoEntreCasillas;
     }
 }
-
