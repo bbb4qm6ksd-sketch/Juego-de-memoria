@@ -14,6 +14,7 @@ public class ControladorPatrones {
 
     private final Timer relojMostrar = new Timer(500, e -> mostrarSiguienteCasilla());
     private final Timer relojJuego = new Timer(100, e -> pasarTiempo());
+    private final Timer relojSiguiente = new Timer(50, e -> pasarCuentaAtras());
 
     public ControladorPatrones(VistaPatrones vista) {
         this(vista, null);
@@ -39,6 +40,8 @@ public class ControladorPatrones {
     }
 
     private void comenzar() {
+        relojSiguiente.stop();
+        vista.ocultarCuentaAtras();
         vista.detenerConfeti();
         if (perdio) {
             modelo.nuevoJuego();
@@ -52,7 +55,8 @@ public class ControladorPatrones {
 
         vista.limpiarCasillas();
         vista.setFase("Memoriza el patrón");
-        vista.getBtnComenzar().setEnabled(false);
+        vista.getBtnComenzar().setText("COMENZAR");
+        vista.getBtnComenzar().setVisible(false);
 
         paso = 0;
         encendida = null;
@@ -85,14 +89,24 @@ public class ControladorPatrones {
             if (modelo.patronCompleto()) ganarRonda();
         } else {
             vista.getCasilla(fila, columna).setEstado(VistaPatrones.Casilla.Estado.ERROR);
-            terminarPorError("Fallaste. Pulsa COMENZAR para reintentar");
+            terminarPorError("Fallaste. Pulsa REINTENTAR para volver a empezar");
         }
     }
 
     private void pasarTiempo() {
         modelo.restarTiempo(0.1);
         mostrarTiempos();
-        if (modelo.tiempoAgotado()) terminarPorError("Se acabó el tiempo. Pulsa COMENZAR para reintentar");
+        if (modelo.tiempoAgotado()) terminarPorError("Se acabó el tiempo. Pulsa REINTENTAR para volver a empezar");
+    }
+
+    private void pasarCuentaAtras() {
+        modelo.restarCuentaAtras(0.05);
+        if (modelo.cuentaAtrasTerminada()) {
+            relojSiguiente.stop();
+            comenzar();                    // comenzar() ya oculta la capa
+        } else {
+            vista.mostrarCuentaAtras(modelo.getTiempoSiguienteRonda());
+        }
     }
 
     private void ganarRonda() {
@@ -100,23 +114,30 @@ public class ControladorPatrones {
         modelo.siguienteRonda();
         vista.setNivel(modelo.getNivel());
         vista.setRonda(modelo.getRonda());
-        vista.setFase("¡Correcto! Pulsa COMENZAR para la siguiente ronda");
+        vista.setFase("¡Correcto!");
         vista.lanzarConfeti();
+
+        modelo.iniciarCuentaAtras();
+        vista.mostrarCuentaAtras(modelo.getTiempoSiguienteRonda());
+        relojSiguiente.start();
     }
 
     private void terminarPorError(String mensaje) {
         detener();
         perdio = true;
         vista.setFase(mensaje);
+        vista.getBtnComenzar().setText("REINTENTAR");
+        vista.getBtnComenzar().setVisible(true);
     }
 
     private void detener() {
         jugando = false;
         relojJuego.stop();
-        vista.getBtnComenzar().setEnabled(true);
     }
 
     private void salir() {
+        relojSiguiente.stop();
+        vista.ocultarCuentaAtras();
         vista.detenerConfeti();
         relojMostrar.stop();
         relojJuego.stop();
