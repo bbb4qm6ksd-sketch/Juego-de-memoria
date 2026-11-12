@@ -49,7 +49,10 @@ public class ControladorLogin {
         ModeloPremios modeloPremios = new ModeloPremios();
         ControladorPremios controladorPremios = new ControladorPremios(premios, modeloPremios);
 
-        ControladorClasico clasico = new ControladorClasico(tablero, usuario, "Jugador 2");
+        ModeloTienda modeloTienda = new ModeloTienda(usuario);
+        new ControladorTienda(menu, modeloTienda);
+
+        ControladorClasico clasico = new ControladorClasico(tablero, usuario, "Jugador 2", modeloTienda);
 
         menu.getBtnClasico().addActionListener(e -> {
             Sonidos.cambiarMusica(Sonidos.Pista.JUEGO);
@@ -104,3 +107,4 @@ public class ControladorLogin {
         menu.setVisible(true);
     }
 }
+

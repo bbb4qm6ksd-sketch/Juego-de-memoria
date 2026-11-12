@@ -10,6 +10,7 @@ public class ControladorClasico {
 
     private final VistaTablero vista;
     private final ModeloClasico modelo = new ModeloClasico();
+    private final ModeloTienda tienda;
     private final String[] nombres = new String[ModeloClasico.JUGADORES];
 
     private final Timer relojTurno = new Timer(100, e -> pasarTiempo());
@@ -27,7 +28,12 @@ public class ControladorClasico {
     private int cursorCol = 0;
 
     public ControladorClasico(VistaTablero vista, String jugador1, String jugador2) {
+        this(vista, jugador1, jugador2, null);
+    }
+
+    public ControladorClasico(VistaTablero vista, String jugador1, String jugador2, ModeloTienda tienda) {
         this.vista = vista;
+        this.tienda = tienda;
         nombres[0] = jugador1;
         nombres[1] = jugador2;
         pausaFallo.setRepeats(false);
@@ -230,6 +236,11 @@ public class ControladorClasico {
             mensaje = "¡Gana " + nombres[ganador] + " con " + modelo.getIntentos(ganador)
                     + " intentos!  (" + nombres[1 - ganador] + ": " + modelo.getIntentos(1 - ganador) + ")";
         }
+        if (tienda != null) {
+            int estrellas = ModeloTienda.calcularEstrellas(modelo.getIntentos(0));
+            tienda.agregarEstrellas(estrellas);
+            mensaje += " Se sumaron " + estrellas + " estrellas a tu tienda.";
+        }
         vista.setMensaje(titulo);
         Sonidos.reproducir(Sonidos.Efecto.VICTORIA);
         vista.lanzarConfeti();
@@ -265,3 +276,4 @@ public class ControladorClasico {
 
 
 }
+

@@ -12,6 +12,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.awt.font.FontRenderContext;
 import java.awt.font.LineMetrics;
 import java.awt.geom.Area;
@@ -25,6 +26,8 @@ public class VistaPantallaPrincipal extends JFrame {
     private final JButton btnPremios = new BotonEstrella("PREMIOS", false);
     private final JButton btnCerrarSesion = Tema.botonTexto("CERRAR SESIÓN");
     private final JButton btnSonido = Tema.botonTexto("SONIDO: ON");
+    private final JButton btnTienda = Tema.botonTexto("TIENDA");
+
     private CardLayout tarjetas;
     private JPanel pantallas;
 
@@ -48,6 +51,7 @@ public class VistaPantallaPrincipal extends JFrame {
         pantallas.add(crearBienvenida(usuario), "bienvenida");
         pantallas.add(crearContenido(), "opciones");
 
+
         fondo.add(crearEncabezado(usuario), BorderLayout.NORTH);
         fondo.add(pantallas, BorderLayout.CENTER);
         fondo.add(crearPie(), BorderLayout.SOUTH);
@@ -70,6 +74,7 @@ public class VistaPantallaPrincipal extends JFrame {
 
         btnCerrarSesion.setForeground(Tema.SECUNDARIO);
         usuarioPanel.add(nombre);
+        usuarioPanel.add(btnTienda);
         usuarioPanel.add(btnSonido);
         usuarioPanel.add(btnCerrarSesion);
         encabezado.add(marca, BorderLayout.WEST);
@@ -221,15 +226,24 @@ public class VistaPantallaPrincipal extends JFrame {
         tarjetas.first(pantallas);
     }
 
-    private void mostrarOpciones() {
-        tarjetas.next(pantallas);
+    public void mostrarOpciones() {
+        tarjetas.show(pantallas, "opciones");
     }
+
+    public void instalarTienda(VistaTienda vista) {
+        pantallas.add(vista, "tienda");
+        pantallas.revalidate();
+        pantallas.repaint();
+    }
+    public void mostrarTienda() { tarjetas.show(pantallas, "tienda"); }
+
 
     public JButton getBtnClasico() { return btnClasico; }
     public JButton getBtnPatrones() { return btnPatrones; }
     public JButton getBtnPremios() { return btnPremios; }
     public JButton getBtnCerrarSesion() { return btnCerrarSesion; }
     public JButton getBtnSonido() { return btnSonido; }
+    public JButton getBtnTienda() { return btnTienda; }
     private static Path2D estrella(double cx, double cy, double re, double ri) {
         Path2D.Double p = new Path2D.Double();
         for (int i = 0; i < 10; i++) {
@@ -977,3 +991,4 @@ public class VistaPantallaPrincipal extends JFrame {
     }
 
 }
+
