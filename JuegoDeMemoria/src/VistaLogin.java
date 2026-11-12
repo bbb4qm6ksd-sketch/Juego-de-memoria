@@ -3,6 +3,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.LineMetrics;
+import java.awt.geom.Area;
+import java.awt.geom.RoundRectangle2D;
 
 
 public class VistaLogin extends JFrame {

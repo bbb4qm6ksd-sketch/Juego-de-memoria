@@ -41,7 +41,7 @@ public class VistaPremios extends JFrame {
         eyebrow.setFont(fuentes.mono(Font.BOLD, 11));
         eyebrow.setForeground(Tema.HIELO);
         JLabel titulo = new JLabel("<html>Mejores <i style='color:#F6DCA2'>jugadores</i></html>");
-        titulo.setFont(fuentes.kiwiSoda(Font.PLAIN, 46));
+        titulo.setFont(fuentes.kiwiSoda(Font.PLAIN, 50));
         titulo.setForeground(Tema.TEXTO);
         JLabel formula = new JLabel("Premio = 1 / intentos × 100 × tipo de cambio");
         formula.setFont(Tema.sans(Font.PLAIN, 13));

@@ -52,7 +52,7 @@ public class VistaRegistro extends JDialog {
 
         form.add(alinear(etiqueta("NUEVA CUENTA", fuentes.mono(Font.BOLD, 11), Tema.HIELO)));
         form.add(Box.createVerticalStrut(14));
-        form.add(alinear(etiqueta("Crea tu cuenta", fuentes.romantic(Font.PLAIN, 40), Tema.TEXTO)));
+        form.add(alinear(etiqueta("Crea tu cuenta", fuentes.mono(Font.PLAIN, 40), Tema.TEXTO)));
         form.add(Box.createVerticalStrut(28));
         form.add(alinear(etiqueta("USUARIO",fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO)));
         form.add(alinear(txtUsuario));

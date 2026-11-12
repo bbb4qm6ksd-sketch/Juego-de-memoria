@@ -69,6 +69,17 @@ public class Tema extends JPanel {
         return b;
     }
 
+
+    public static double parpadeo(double seg, double periodo, double fase) {
+        return 0.2 + 0.8 * (0.5 + 0.5 * Math.sin(2 * Math.PI * (seg / periodo + fase)));
+    }
+
+
+    public static float derivar(float pos, float vel, float dt) {
+        pos -= vel * dt;
+        return pos < 0f ? pos + 1f : pos;
+    }
+
     public static void estilizarCampo(JTextField campo) {
         campo.setOpaque(false);
         campo.setForeground(TEXTO);
@@ -110,6 +121,7 @@ public class Tema extends JPanel {
 
 
     private BufferedImage fondoCache;
+
     private boolean mostrarOrion = false;
     private boolean animado = true;
     private long inicioNs = System.nanoTime();
@@ -211,7 +223,7 @@ public class Tema extends JPanel {
         double seg = animado ? (System.nanoTime() - inicioNs) / 1e9 : 1e6;   // 1e6 = ya terminado
 
         for (int i = 0; i < cantidad; i++) {
-            double f = animado ? 0.2 + 0.8 * (0.5 + 0.5 * Math.sin(2 * Math.PI * (seg / periodo[i] + fase[i]))) : 1.0;
+            double f = animado ? parpadeo(seg, periodo[i], fase[i]) : 1.0;
             int alfa = (int) Math.min(255, 255 * brilloBase[i] * f);
             g2.setColor(new Color(255, 255, 255, alfa));
             g2.fill(new Ellipse2D.Float(sx[i] * w, sy[i] * h, tam[i], tam[i]));

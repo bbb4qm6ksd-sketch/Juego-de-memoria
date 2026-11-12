@@ -5,13 +5,7 @@ import java.text.Normalizer;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Carta del tablero. Solo se encarga de DIBUJARSE segun su estado visual.
- * Que estado tiene en cada momento lo decide el controlador.
- *
- * Cada constelacion tiene su propio color: las dos cartas de una pareja comparten color,
- * asi es mas facil reconocerlas. Las cartas OCULTAS no muestran color (no delatan nada).
- */
+
 public class Carta extends JButton {
 
     public enum Estado { OCULTA, VOLTEADA, ENCONTRADA }
@@ -19,6 +13,7 @@ public class Carta extends JButton {
     // ---------- Un color por constelacion (clave = nombre sin tildes y en minusculas) ----------
     private static final Map<String, Color> COLORES = new HashMap<>();
     private static final Color COLOR_POR_DEFECTO = Tema.HIELO;
+
 
     static {
         color(0x5CD8FF, "cisne", "cygnus");                    // celeste
@@ -61,24 +56,78 @@ public class Carta extends JButton {
     private Icon imagen;
     private Color acento = COLOR_POR_DEFECTO;
     private Patron patron = Patron.para("");
+    private boolean resaltada = false;
+    private static final int DURACION_FLIP_MS = 300;
+
+    private Estado mostrado = Estado.OCULTA;   // cara que se ve en la primera mitad del giro ///////
+    private double flip = 1;                   // 0 a 1; 1 = sin animación
+    private long inicioNs;
+    private final Timer animacion = new Timer(15, e -> animar()); //////
 
     public Carta() {
         setContentAreaFilled(false);
         setBorderPainted(false);
         setFocusPainted(false);
         setOpaque(false);
+        setFocusable(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
-    public void setEstado(Estado estado) { this.estado = estado; repaint(); }
+    public void setEstado(Estado nuevo) {
+        // solo gira si cambia entre boca abajo y boca arriba
+        boolean cambiaCara = (estado == Estado.OCULTA) != (nuevo == Estado.OCULTA);
+        estado = nuevo;
+
+        if (cambiaCara) {
+            flip = 0;
+            inicioNs = System.nanoTime();
+            animacion.start();
+        } else {
+            if (!animacion.isRunning()) mostrado = nuevo;
+            repaint();
+        }
+    }
+
+    private void animar() {
+        flip = Math.min(1, (System.nanoTime() - inicioNs) / (DURACION_FLIP_MS * 1e6));
+        if (flip >= 1) {
+            animacion.stop();
+            mostrado = estado;
+        }
+        repaint();
+    }
+
+    // Qué cara se dibuja ahora: la vieja en la primera mitad, la nueva en la segunda
+    private Estado cara() {
+        return flip < 0.5 ? mostrado : estado;
+    }
     public Estado getEstado()            { return estado; }
     public void setImagen(Icon imagen)   { this.imagen = imagen; repaint(); }
+    public void setResaltada(boolean resaltada) {
+        this.resaltada = resaltada;
+        repaint();
+    }
+
+
 
     public void setNombre(String nombre) {
         this.nombre = nombre == null ? "" : nombre;
         this.acento = colorDe(this.nombre);
         this.patron = Patron.para(this.nombre);
         repaint();
+    }
+
+    // Dibuja una constelación suelta (sin carta ni marco) en el área indicada. Sirve para fondos y decoraciones.
+    public static void dibujarMiniatura(Graphics2D g2, String nombre, int x, int y, int ancho, int alto, float opacidad) {
+        Carta c = new Carta();
+        c.setNombre(nombre);
+        c.estado = Estado.VOLTEADA;          // se asigna directo para no disparar la animación de giro
+
+        Graphics2D g = (Graphics2D) g2.create();
+        g.translate(x, y);
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacidad));
+        c.dibujarConstelacion(g, ancho, alto);
+        g.dispose();
     }
 
     // ---------- Utilidades de color ----------
@@ -101,8 +150,14 @@ public class Carta extends JButton {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         int w = getWidth(), h = getHeight();
-        boolean oculta = estado == Estado.OCULTA;
-        boolean encontrada = estado == Estado.ENCONTRADA;
+        boolean oculta = cara() == Estado.OCULTA;
+        boolean encontrada = cara() == Estado.ENCONTRADA;
+
+// efecto de giro: se achica el ancho desde el centro
+        double escalaX = Math.max(0.02, Math.abs(Math.cos(Math.PI * flip)));
+        g2.translate(w / 2.0, h / 2.0);
+        g2.scale(escalaX, 1 - 0.05 * (1 - escalaX));   // leve achique vertical = efecto 3D
+        g2.translate(-w / 2.0, -h / 2.0);
 
         RoundRectangle2D forma = new RoundRectangle2D.Float(1, 1, w - 3, h - 3, 18, 18);
 
@@ -132,6 +187,18 @@ public class Carta extends JButton {
 
         if (oculta) dibujarEstrella(g2, w / 2f, h / 2f);
         else        dibujarContenido(g2, w, h);
+        if (oculta) dibujarEstrella(g2, w / 2f, h / 2f);
+        else        dibujarContenido(g2, w, h);
+
+// cursor del teclado
+        if (resaltada) {
+            g2.setColor(alfa(Tema.HIELO, 70));
+            g2.setStroke(new BasicStroke(6f));
+            g2.draw(forma);
+            g2.setColor(Color.WHITE);
+            g2.setStroke(new BasicStroke(2.5f));
+            g2.draw(forma);
+        }
         g2.dispose();
     }
 
@@ -178,7 +245,7 @@ public class Carta extends JButton {
         int margen = Math.max(12, lado / 7);
         double escalaX = Math.max(1, w - margen * 2);
         double escalaY = Math.max(1, alto - margen * 2);
-        boolean encontrada = estado == Estado.ENCONTRADA;
+        boolean encontrada = cara() == Estado.ENCONTRADA;
 
         // halo detras de la figura
         float cx = w / 2f, cy = alto / 2f;

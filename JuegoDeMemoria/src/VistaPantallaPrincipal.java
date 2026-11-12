@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.awt.font.FontRenderContext;
 import java.awt.font.LineMetrics;
+import java.awt.geom.Area;
+import java.awt.geom.RoundRectangle2D;
 
 
 //Botones
@@ -134,11 +136,10 @@ public class VistaPantallaPrincipal extends JFrame {
         JPanel titulos = new JPanel();
         titulos.setOpaque(false);
         titulos.setLayout(new BoxLayout(titulos, BoxLayout.Y_AXIS));
-        JLabel eyebrow   = etiqueta("OBSERVATORIO  *  EDICIÓN NOCTURNA", fuentes.mono(Font.BOLD, 11), Tema.HIELO);
+
         JLabel titulo    = etiqueta("¿A dónde quieres ir?", fuentes.kiwiSoda(Font.PLAIN, 52), Tema.TEXTO);
         JLabel subtitulo = etiqueta("Elige una opción para continuar tu observación.", fuentes.mono(Font.PLAIN, 13), Tema.SECUNDARIO);
-        for (JComponent c : new JComponent[]{eyebrow, titulo, subtitulo}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
-        titulos.add(eyebrow);
+        for (JComponent c : new JComponent[]{titulo, subtitulo}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
         titulos.add(Box.createVerticalStrut(12));
         titulos.add(titulo);
         titulos.add(Box.createVerticalStrut(8));
@@ -147,22 +148,27 @@ public class VistaPantallaPrincipal extends JFrame {
         //Las tres tarjetas
         JPanel opciones = new JPanel(new GridLayout(1, 3, 24, 0));
         opciones.setOpaque(false);
-        opciones.add(crearTarjeta("01  *  MODO CLÁSICO", "Memoriza las constelaciones",
+        opciones.add(crearTarjeta(" MODO CLÁSICO", "Memoriza las constelaciones",
                 "Dos jugadores, cada uno con su tablero de 6×6. Encuentra las 18 parejas con el menor número de intentos.",
-                btnClasico, true));
-        opciones.add(crearTarjeta("02  *  MODO PATRONES", "Repite el patrón",
+                btnClasico, true, true, false, false));
+        opciones.add(crearTarjeta(" MODO PATRONES", "Repite el patrón",
                 "Un jugador. Memoriza la secuencia de casillas que se ilumina y repítela en orden, con una más en cada ronda.",
-                btnPatrones, true));
-        opciones.add(crearTarjeta("03  *  CLASIFICACIÓN", "Top 5 premios",
+                btnPatrones, true, false, true, false));
+        opciones.add(crearTarjeta("  CLASIFICACIÓN", "Top 5 premios",
                 "Consulta los mejores resultados y descubre quién lidera el observatorio.",
-                btnPremios, false));
+                btnPremios, false, false, false, true));
+
         contenido.add(titulos, BorderLayout.NORTH);
         contenido.add(opciones, BorderLayout.CENTER);
         return contenido;
     }
 
-    private JPanel crearTarjeta(String categoria, String titulo, String descripcion, JButton boton, boolean principal) {
+    private JPanel crearTarjeta(String categoria, String titulo, String descripcion, JButton boton,
+                                boolean principal, boolean conConstelaciones, boolean conPatron, boolean conPodio) {
         PanelOpcion tarjeta = new PanelOpcion(principal);
+        tarjeta.setConstelaciones(conConstelaciones);
+        tarjeta.setPatron(conPatron);
+        tarjeta.setPodio(conPodio);
         tarjeta.setLayout(new BorderLayout(0, 18));
         tarjeta.setBorder(new EmptyBorder(28, 30, 28, 30));
 
@@ -186,6 +192,9 @@ public class VistaPantallaPrincipal extends JFrame {
 
         tarjeta.add(textos, BorderLayout.CENTER);
         tarjeta.add(boton, BorderLayout.SOUTH);
+
+        tarjeta.agregarZonaLibre(lblCategoria, encabezado, detalle);  // el bloque de texto
+        tarjeta.agregarZonaLibre(boton);                              // el botón
         return tarjeta;
     }
 
@@ -244,18 +253,399 @@ public class VistaPantallaPrincipal extends JFrame {
     }
 
     private static class PanelOpcion extends JPanel {
+        private static final String[] CONSTELACIONES = {
+                "Orión", "Escorpio", "Cisne", "Géminis", "Cruz del Sur", "Casiopea",
+                "Osa Mayor", "Lira", "Leo", "Tauro", "Andrómeda", "Pegaso",
+                "Acuario", "Aries", "Cáncer", "Virgo", "Sagitario", "Capricornio"};
+
         private final boolean destacado;
-        PanelOpcion(boolean destacado) { this.destacado = destacado; setOpaque(false); }
+        private boolean conConstelaciones = false;
+        private BufferedImage cache;// el fondo se dibuja una vez y se reutiliza
+
+        private static final int MARGEN_LIBRE = 10;                  // aire alrededor del texto y del botón
+        private final List<JComponent[]> grupos = new ArrayList<>(); // grupos de componentes que deben quedar sin dibujo
+        private List<Rectangle> zonasUsadas = new ArrayList<>();     // zonas con las que se hizo el cache
+        private BufferedImage[] miniaturas;                     // una imagen por constelación
+        private int ladoMini, anchoUsado, altoUsado;
+        private final long inicioNs = System.nanoTime();
+        private long ultimoNs = System.nanoTime();
+        private double tiempo = 0;    // segundos de animación: solo avanza con el mouse encima
+        private float nivel = 0f;     // 0 = sin hover, 1 = con hover (transición suave)
+
+        // por constelación: posición (0 a 1), velocidad, periodo y fase del parpadeo (igual que en Tema)
+        private final float[] pos = new float[18], vel = new float[18], periodo = new float[18], fase = new float[18];
+        private boolean conPatron = false;
+        private boolean conPodio = false;
+        private static final double SEG_VUELTA_PODIO = 6.0;   // lo que tarda la estrella en dar una vuelta
+        private static final int[] SECUENCIA = {0, 4, 2, 5, 8, 7, 3, 1, 6};   // orden en que se iluminan (casillas 0 a 8)
+        private static final double SEG_POR_ESTRELLA = 0.6, SEG_PAUSA = 1.0;
+
+        private final Timer animacion = new Timer(16, e -> tic());
+
+        private void tic() {
+            long ahora = System.nanoTime();
+            float dt = Math.min((ahora - ultimoNs) / 1e9f, 0.1f);
+            ultimoNs = ahora;
+            if (!isShowing()) return;
+
+            float meta = mouseEncima() ? 1f : 0f;
+            float previo = nivel;
+            nivel += (meta - nivel) * Math.min(1f, dt * 8f);
+            if (Math.abs(meta - nivel) < 0.01f) nivel = meta;
+
+            if (nivel > 0f) {                 // animar mientras esté encima o se esté apagando
+                tiempo += dt;
+                if (conConstelaciones) avanzar(dt);
+            }
+            if (nivel > 0f || previo > 0f) repaint();
+        }
+
+        private boolean mouseEncima() {
+            PointerInfo pi = MouseInfo.getPointerInfo();
+            if (pi == null) return false;
+            Point p = pi.getLocation();
+            SwingUtilities.convertPointFromScreen(p, this);
+            return contains(p);
+        }
+
+        // Mismo esquema que Tema.actualizar(): cada constelación a su velocidad
+        private void avanzar(float dt) {
+            for (int i = 0; i < pos.length; i++) pos[i] = Tema.derivar(pos[i], vel[i], dt);
+        }
+
+        private float factorBrillo() { return 0.55f + 0.45f * nivel; }   // opacidad del dibujo: tenue sin hover
+
+        PanelOpcion(boolean destacado) {
+            this.destacado = destacado;
+            setOpaque(false);
+            animacion.start();
+        }
+
+        void setConstelaciones(boolean activo) { this.conConstelaciones = activo; }
+        void setPatron(boolean activo)         { this.conPatron = activo; }
+        void setPodio(boolean activo)          { this.conPodio = activo; }
+
+
+        // Cada llamada define una zona libre: el rectángulo que envuelve a esos componentes
+        void agregarZonaLibre(JComponent... componentes) { grupos.add(componentes); }
+
+        private List<Rectangle> calcularZonas() {
+            List<Rectangle> zonas = new ArrayList<>();
+            for (JComponent[] grupo : grupos) {
+                Rectangle union = null;
+                for (JComponent c : grupo) {
+                    if (c.getWidth() == 0) continue;   // aún no se ha acomodado
+                    Rectangle r = SwingUtilities.convertRectangle(c.getParent(), c.getBounds(), this);
+                    union = (union == null) ? r : union.union(r);
+                }
+                if (union != null) {
+                    union.grow(MARGEN_LIBRE, MARGEN_LIBRE);
+                    zonas.add(union);
+                }
+            }
+            return zonas;
+        }
+
         @Override protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             int w = getWidth() - 1, h = getHeight() - 1;
-            g2.setColor(destacado ? new Color(0x101A34) : new Color(0x0B1020));
+
+            // fondo: se aclara con el hover
+            Color fondo = destacado ? new Color(0x101A34) : new Color(0x0B1020);
+            g2.setColor(mezclar(fondo, new Color(0x22346B), nivel * 0.7f));
             g2.fillRoundRect(0, 0, w, h, 28, 28);
-            g2.setColor(destacado ? new Color(0x52699B) : Tema.LINEA);
+
+            if (conConstelaciones) dibujarConstelaciones(g2, w, h);
+
+            Graphics2D gd = (Graphics2D) g2.create();
+            gd.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, factorBrillo()));
+            if (conPatron) dibujarPatron(gd, w, h);
+            if (conPodio) dibujarPodio(gd, w, h);
+            gd.dispose();
+
+            // borde con resplandor
+            for (int i = 1; i <= 4; i++) {
+                g2.setStroke(new BasicStroke(i * 2.5f));
+                g2.setColor(new Color(169, 188, 255, (int) (nivel * 40 / i)));
+                g2.drawRoundRect(0, 0, w, h, 28, 28);
+            }
+            g2.setStroke(new BasicStroke(1f + nivel));
+            g2.setColor(mezclar(destacado ? new Color(0x52699B) : Tema.LINEA, Tema.HIELO, nivel));
             g2.drawRoundRect(0, 0, w, h, 28, 28);
             g2.dispose();
+        }
+
+        // Se dibuja DESPUÉS del texto y el botón: así las tarjetas sin hover se ven más apagadas
+        @Override protected void paintChildren(Graphics g) {
+            super.paintChildren(g);
+            float apagado = 1f - nivel;
+            if (apagado <= 0f) return;
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(new Color(6, 9, 20, (int) (90 * apagado)));
+            g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 28, 28);
+            g2.dispose();
+        }
+
+
+        private void crearMiniaturas(int w, int h) {
+            int columnas = 3, filas = 6;
+            ladoMini = (int) Math.min(w / (float) columnas, h / (float) filas);
+            miniaturas = new BufferedImage[CONSTELACIONES.length];
+            for (int i = 0; i < CONSTELACIONES.length; i++) {
+                miniaturas[i] = new BufferedImage(ladoMini, ladoMini, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D gi = miniaturas[i].createGraphics();
+                gi.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                Carta.dibujarMiniatura(gi, CONSTELACIONES[i], 0, 0, ladoMini, ladoMini, 1f);
+                gi.dispose();
+            }
+            anchoUsado = w;
+            altoUsado = h;
+
+            // valores iniciales (solo la primera vez), con la misma semilla que usa Tema
+            if (vel[0] == 0f) {
+                java.util.Random r = new java.util.Random(7);
+                for (int i = 0; i < pos.length; i++) {
+                    int fila = i / columnas;
+                    pos[i] = ((i % columnas) + 0.5f) / columnas;                 // repartidas en su fila
+                    vel[i] = 0.012f + (fila / (float) (filas - 1)) * 0.05f;      // filas de abajo = más cerca = más rápidas
+                    periodo[i] = 2f + r.nextFloat() * 4f;
+                    fase[i] = r.nextFloat();
+                }
+            }
+        }
+
+        private void dibujarConstelaciones(Graphics2D g2, int w, int h) {
+            if (w <= 0 || h <= 0) return;
+            if (miniaturas == null || w != anchoUsado || h != altoUsado) crearMiniaturas(w, h);
+
+            // zona visible = tarjeta menos los rectángulos del texto y del botón
+            Area visible = new Area(new RoundRectangle2D.Float(0, 0, w, h, 28, 28));
+            for (Rectangle r : calcularZonas()) {
+                visible.subtract(new Area(new RoundRectangle2D.Float(r.x, r.y, r.width, r.height, 24, 24)));
+            }
+
+            Graphics2D g = (Graphics2D) g2.create();
+            g.clip(visible);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int filas = 6;
+            float altoCelda = h / (float) filas;
+            float recorrido = w + ladoMini;                       // entran por la derecha y salen por la izquierda
+            double seg = tiempo;
+
+            for (int i = 0; i < miniaturas.length; i++) {
+                int fila = i / 3;
+                int x = Math.round(pos[i] * recorrido - ladoMini);
+                int y = Math.round((fila + 0.5f) * altoCelda - ladoMini / 2f);
+
+                float base = 0.10f + 0.25f * fila / (filas - 1);
+                float brillo = (float) Tema.parpadeo(seg, periodo[i], fase[i]);
+                g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER,
+                        base * (0.5f + 0.5f * brillo) * factorBrillo()));
+                g.drawImage(miniaturas[i], x, y, null);
+            }
+            g.dispose();
+        }
+
+        // Cuadrícula 3x3 de estrellas; una secuencia se ilumina y crece una estrella por ronda.
+        private void dibujarPatron(Graphics2D g2, int w, int h) {
+            List<Rectangle> zonas = calcularZonas();
+            if (zonas.size() < 2) return;                          // aún no se acomodó el layout
+
+            // espacio libre = entre el final del texto y el inicio del botón
+            Rectangle texto = zonas.get(0), boton = zonas.get(zonas.size() - 1);
+            int arriba = texto.y + texto.height, abajo = boton.y;
+            int lado = Math.min(w - 80, abajo - arriba - 30);
+            if (lado < 90) return;
+            double cx = w / 2.0, cy = (arriba + abajo) / 2.0, paso = lado / 3.0;
+            float r = (float) (lado * 0.035);
+
+            // en qué ronda y en qué paso de la secuencia estamos
+            double t = tiempo;
+            int n = 1;
+            double dentro = 0;
+            for (; n <= SECUENCIA.length; n++) {
+                double dur = n * SEG_POR_ESTRELLA + SEG_PAUSA;
+                if (t % ciclo() < dur + inicioRonda(n)) { dentro = (t % ciclo()) - inicioRonda(n); break; }
+            }
+            if (n > SECUENCIA.length) n = SECUENCIA.length;
+            int actual = dentro < n * SEG_POR_ESTRELLA ? (int) (dentro / SEG_POR_ESTRELLA) : -1;   // -1 = pausa
+            double fraccion = actual >= 0 ? (dentro / SEG_POR_ESTRELLA) - actual : 0;
+            int hasta = actual >= 0 ? actual : n - 1;              // último paso ya mostrado
+
+            // posición de cada casilla y su lugar en la secuencia
+            double[] px = new double[9], py = new double[9];
+            int[] orden = new int[9];
+            java.util.Arrays.fill(orden, -1);
+            for (int i = 0; i < 9; i++) {
+                px[i] = cx + (i % 3 - 1) * paso;
+                py[i] = cy + (i / 3 - 1) * paso;
+            }
+            for (int k = 0; k < SECUENCIA.length; k++) orden[SECUENCIA[k]] = k;
+
+            Graphics2D g = (Graphics2D) g2.create();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            // líneas del tramo ya recorrido
+            g.setStroke(new BasicStroke(1.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g.setColor(new Color(169, 188, 255, 90));
+            for (int k = 1; k <= hasta; k++) {
+                int a = SECUENCIA[k - 1], b = SECUENCIA[k];
+                g.draw(new java.awt.geom.Line2D.Double(px[a], py[a], px[b], py[b]));
+            }
+
+            // estrellas
+            for (int i = 0; i < 9; i++) {
+                boolean iluminada = orden[i] >= 0 && orden[i] <= hasta;
+                boolean esActual = actual >= 0 && orden[i] == actual;
+
+                if (esActual) {                                    // la que sigue en el patrón: brilla fuerte
+                    double pulso = 0.4 + 0.6 * Math.sin(Math.PI * fraccion);
+                    float rg = (float) (r * 6 * (0.6 + 0.4 * pulso));
+                    g.setPaint(new RadialGradientPaint((float) px[i], (float) py[i], rg, new float[]{0f, 1f},
+                            new Color[]{new Color(246, 220, 162, (int) (200 * pulso)), new Color(246, 220, 162, 0)}));
+                    g.fill(new java.awt.geom.Ellipse2D.Double(px[i] - rg, py[i] - rg, rg * 2, rg * 2));
+                    AffineTransform viejo = g.getTransform();
+                    g.translate(px[i], py[i]);
+                    g.scale(1.0 + 0.5 * pulso, 1.0 + 0.5 * pulso);
+                    g.setColor(Tema.ESTRELLA);
+                    g.fill(estrella(0, 0, r * 1.6, r * 0.7));
+                    g.setTransform(viejo);
+                } else if (iluminada) {                            // ya mostradas en esta ronda
+                    g.setColor(new Color(169, 188, 255, 200));
+                    g.fill(estrella(px[i], py[i], r * 1.3, r * 0.55));
+                } else {                                           // apagadas
+                    g.setColor(new Color(255, 255, 255, 70));
+                    g.fill(new java.awt.geom.Ellipse2D.Double(px[i] - r * 0.6, py[i] - r * 0.6, r * 1.2, r * 1.2));
+                }
+            }
+            g.dispose();
+        }
+
+        // Podio de 5 puestos (orden: 4º, 2º, 1º, 3º, 5º); una estrella fugaz recorre su contorno.
+        private void dibujarPodio(Graphics2D g2, int w, int h) {
+            List<Rectangle> zonas = calcularZonas();
+            if (zonas.size() < 2) return;
+            Rectangle texto = zonas.get(0), boton = zonas.get(zonas.size() - 1);
+            int arriba = texto.y + texto.height, abajo = boton.y;
+            int disponible = abajo - arriba - 30;
+            if (disponible < 90) return;
+
+            // medidas
+            final int N = 5;
+            int ancho = Math.min(w - 80, (int) (disponible * 1.9));
+            double bw = ancho / (double) N;
+            double x0 = (w - ancho) / 2.0, base = abajo - 15;
+
+            // alturas por columna (izq. a der.) y puesto que representa cada una
+            double[] fraccion = {0.34, 0.62, 0.78, 0.48, 0.22};
+            String[] num = {"4", "2", "1", "3", "5"};
+            double[] alt = new double[N];
+            for (int i = 0; i < N; i++) alt[i] = disponible * fraccion[i];
+
+            // contorno: sube por la izquierda, recorre las cimas y baja por la derecha
+            List<double[]> lista = new ArrayList<>();
+            lista.add(new double[]{x0, base});
+            for (int i = 0; i < N; i++) {
+                lista.add(new double[]{x0 + i * bw, base - alt[i]});
+                lista.add(new double[]{x0 + (i + 1) * bw, base - alt[i]});
+            }
+            lista.add(new double[]{x0 + N * bw, base});
+            lista.add(new double[]{x0, base});                       // cierra el bucle
+            double[][] pts = lista.toArray(new double[0][]);
+
+            double[] acum = new double[pts.length];                  // longitud acumulada de la ruta
+            for (int i = 1; i < pts.length; i++)
+                acum[i] = acum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+            double perimetro = acum[acum.length - 1];
+
+            Graphics2D g = (Graphics2D) g2.create();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+            // silueta tenue + divisiones internas
+            Path2D.Double silueta = new Path2D.Double();
+            silueta.moveTo(pts[0][0], pts[0][1]);
+            for (int i = 1; i < pts.length; i++) silueta.lineTo(pts[i][0], pts[i][1]);
+            g.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g.setColor(new Color(169, 188, 255, 90));
+            g.draw(silueta);
+            g.setColor(new Color(169, 188, 255, 45));
+            for (int i = 1; i < N; i++) {
+                double xd = x0 + i * bw;
+                g.draw(new Line2D.Double(xd, base - Math.min(alt[i - 1], alt[i]), xd, base));
+            }
+
+            // números de los puestos
+            g.setFont(fuentes.mono(Font.BOLD, Math.max(12, (int) (bw * 0.38))));
+            FontMetrics fm = g.getFontMetrics();
+            g.setColor(new Color(169, 188, 255, 120));
+            for (int i = 0; i < N; i++) {
+                double cx = x0 + (i + 0.5) * bw;
+                g.drawString(num[i], (float) (cx - fm.stringWidth(num[i]) / 2.0),
+                        (float) (base - alt[i] + fm.getAscent() + 10));
+            }
+
+            // estrella sobre el primer puesto (columna central)
+            double seg = (System.nanoTime() - inicioNs) / 1e9;
+            double brillo = 0.75 + 0.25 * Math.sin(seg * 2.0);
+            double sx = x0 + 2.5 * bw, sy = base - alt[2] - 14;
+            g.setPaint(new RadialGradientPaint((float) sx, (float) sy, 18f, new float[]{0f, 1f},
+                    new Color[]{new Color(246, 220, 162, (int) (110 * brillo)), new Color(246, 220, 162, 0)}));
+            g.fill(new Ellipse2D.Double(sx - 18, sy - 18, 36, 36));
+            g.setColor(Tema.ESTRELLA);
+            g.fill(estrella(sx, sy, 8, 3.4));
+
+            // estrella fugaz: solo con el mouse encima
+            if (nivel > 0.02f) {
+                double d = (seg % SEG_VUELTA_PODIO) / SEG_VUELTA_PODIO * perimetro;
+                int pasos = 45;
+                double largoCola = perimetro * 0.18, salto = largoCola / pasos;
+                double r0 = Math.max(4, ancho * 0.015);
+                for (int k = pasos; k >= 1; k--) {
+                    double[] a = puntoEnRuta(pts, acum, d - k * salto);
+                    double[] b = puntoEnRuta(pts, acum, d - (k - 1) * salto);
+                    double q = (pasos - k + 1) / (double) pasos;
+                    Line2D.Double l = new Line2D.Double(a[0], a[1], b[0], b[1]);
+                    g.setColor(new Color(225, 235, 255, (int) (Math.pow(q, 1.5) * 70)));
+                    g.setStroke(new BasicStroke((float) (r0 * 2.0 * q), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                    g.draw(l);
+                    g.setColor(new Color(255, 255, 255, (int) (Math.pow(q, 1.3) * 230)));
+                    g.setStroke(new BasicStroke((float) (r0 * 0.6 * q), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                    g.draw(l);
+                }
+                double[] cab = puntoEnRuta(pts, acum, d);
+                EstrellaFugaz.cabeza(g, cab[0], cab[1], r0, System.nanoTime() / 9e8);
+            }
+            g.dispose();
+        }
+
+
+        // Punto de la ruta a una distancia d del inicio (la ruta es un bucle, así que d se "da la vuelta")
+        private static double[] puntoEnRuta(double[][] pts, double[] acum, double d) {
+            double total = acum[acum.length - 1];
+            d = ((d % total) + total) % total;
+            int i = 1;
+            while (i < acum.length - 1 && acum[i] < d) i++;
+            double f = (d - acum[i - 1]) / (acum[i] - acum[i - 1]);
+            return new double[]{pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * f,
+                    pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * f};
+        }
+
+        // duración total de un ciclo completo (todas las rondas) y dónde empieza cada ronda
+        private static double ciclo() {
+            double total = 0;
+            for (int n = 1; n <= SECUENCIA.length; n++) total += n * SEG_POR_ESTRELLA + SEG_PAUSA;
+            return total;
+        }
+
+        private static double inicioRonda(int n) {
+            double total = 0;
+            for (int k = 1; k < n; k++) total += k * SEG_POR_ESTRELLA + SEG_PAUSA;
+            return total;
         }
     }
 
@@ -558,7 +948,7 @@ public class VistaPantallaPrincipal extends JFrame {
         }
 
         //La estrella: brillo, destello de 4 puntas y cuerpo dorado
-        private void cabeza(Graphics2D c, double x, double y, double r, double giro) {
+        private static void cabeza(Graphics2D c, double x, double y, double r, double giro) {
             float rg = (float) (r * 3.4);
             c.setPaint(new RadialGradientPaint((float) x, (float) y, rg, new float[]{0f, .4f, 1f},
                     new Color[]{new Color(255, 255, 255, 130), new Color(215, 228, 255, 40), new Color(215, 228, 255, 0)}));

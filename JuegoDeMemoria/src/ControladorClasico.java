@@ -1,5 +1,7 @@
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
+import java.awt.KeyboardFocusManager;
+import java.awt.event.KeyEvent;
 
 
 public class ControladorClasico {
@@ -19,6 +21,11 @@ public class ControladorClasico {
     private long ultimoNs = System.nanoTime();
     private int ultimoSegundo = -1;
 
+    // Cursor del teclado: en qué tablero y en qué carta está
+    private int cursorJugador = 0;
+    private int cursorFila = 0;
+    private int cursorCol = 0;
+
     public ControladorClasico(VistaTablero vista, String jugador1, String jugador2) {
         this.vista = vista;
         nombres[0] = jugador1;
@@ -37,6 +44,8 @@ public class ControladorClasico {
             }
         }
         vista.getBtnAccion().addActionListener(e -> nuevaPartida());
+        KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                .addKeyEventDispatcher(e -> manejarTecla(e));
     }
 
     // ---------- Ciclo de la partida ----------
@@ -70,6 +79,7 @@ public class ControladorClasico {
         relojTurno.stop();
         pausaFallo.stop();
         bloqueado = true;
+        marcarCursor(false);
     }
 
     private void arrancarReloj() {
@@ -123,6 +133,40 @@ public class ControladorClasico {
                 pausaFallo.restart();
                 break;
         }
+    }
+
+    // ---------- Teclado ----------
+
+    // Devuelve true si la tecla se usó (así nadie más la procesa)
+    private boolean manejarTecla(KeyEvent e) {
+        if (e.getID() != KeyEvent.KEY_PRESSED || bloqueado) return false;
+
+        int tecla = e.getKeyCode();
+
+        // Espacio = confirmar: es lo mismo que hacer clic en la carta del cursor
+        if (tecla == KeyEvent.VK_SPACE) {
+            pulsarCarta(cursorJugador, cursorFila, cursorCol);
+            return true;
+        }
+
+        // WASD o flechas = mover el cursor
+        int df = 0, dc = 0;
+        if (tecla == KeyEvent.VK_UP    || tecla == KeyEvent.VK_W) df = -1;
+        else if (tecla == KeyEvent.VK_DOWN  || tecla == KeyEvent.VK_S) df = 1;
+        else if (tecla == KeyEvent.VK_LEFT  || tecla == KeyEvent.VK_A) dc = -1;
+        else if (tecla == KeyEvent.VK_RIGHT || tecla == KeyEvent.VK_D) dc = 1;
+        else return false;   // otra tecla: no hacemos nada
+
+        marcarCursor(false);   // quita el resaltado de la carta actual
+        cursorFila = (cursorFila + df + ModeloClasico.FILAS) % ModeloClasico.FILAS;
+        cursorCol  = (cursorCol  + dc + ModeloClasico.COLUMNAS) % ModeloClasico.COLUMNAS;
+        marcarCursor(true);    // resalta la nueva
+        return true;
+    }
+
+    // Enciende o apaga el resaltado de la carta donde está el cursor
+    private void marcarCursor(boolean activo) {
+        vista.getCarta(cursorJugador, cursorFila, cursorCol).setResaltada(activo);
     }
 
     // Pasados unos instantes de un fallo: se tapan las cartas y juega el otro.
@@ -199,6 +243,13 @@ public class ControladorClasico {
         vista.setJugadorActivo(activo);
         vista.setMensaje("Turno de " + nombres[activo] + ".");
         mostrarTiempo();
+
+        // el cursor pasa al tablero del jugador que tiene el turno
+        marcarCursor(false);
+        cursorJugador = activo;
+        cursorFila = 0;
+        cursorCol = 0;
+        marcarCursor(true);
     }
 
     private void actualizarMarcadores(int jugador) {
