@@ -61,6 +61,16 @@ public class ModeloPremios {
         cargar();
     }
 
+    /** Devuelve el mejor registro persistido del jugador o -1 si todavía no existe. */
+    public int getMejorIntento(String jugador) {
+        if (jugador == null) return -1;
+        for (Registro registro : registros) {
+            if (registro.jugador.equalsIgnoreCase(jugador.trim())) return registro.intentos;
+        }
+        return -1;
+    }
+
+
     // se hace el calculo del premio segun la formula
     public static double calcularPremio(int intentos, double cambioDolar) {
         if (intentos <= 0) return 0;

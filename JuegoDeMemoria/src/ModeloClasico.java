@@ -11,7 +11,6 @@ public class ModeloClasico {
     public static final int PAREJAS = FILAS * COLUMNAS / 2;      // 18
     public static final double TIEMPO_TURNO = 10.0;
     public static final double BONO_ACIERTO = 7.0;
-
     public enum Resultado { IGNORADA, PRIMERA, ACIERTO, FALLO }
 
     // Las 18 constelaciones (Carta.java sabe dibujar cada una por su nombre)
@@ -25,8 +24,10 @@ public class ModeloClasico {
     private final boolean[][][] encontradas = new boolean[JUGADORES][FILAS][COLUMNAS];
     private final int[] intentos = new int[JUGADORES];
     private final int[] parejas = new int[JUGADORES];
-
+    private int tamanoMatriz = 6;
+    private int parejasMaximas = PAREJAS;
     private int jugadorActivo = 0;
+    private int ganador = -1;
     private int primeraFila = -1;
     private int primeraColumna = -1;
     private double tiempo = TIEMPO_TURNO;
@@ -37,16 +38,26 @@ public class ModeloClasico {
     }
 
     public void nuevaPartida() {
+        nuevaPartida(tamanoMatriz);
+    }
+
+    public void nuevaPartida(int tamano) {
+        tamanoMatriz = (tamano == 2 || tamano == 4 || tamano == 6) ? tamano : 6;
+        parejasMaximas = tamanoMatriz * tamanoMatriz / 2;
+        ganador = -1;
         for (int j = 0; j < JUGADORES; j++) {
             List<String> baraja = new ArrayList<>();
-            for (String nombre : CONSTELACIONES) {
+            for (int i = 0; i < parejasMaximas; i++) {
+                String nombre = CONSTELACIONES[i];
                 baraja.add(nombre);
                 baraja.add(nombre);
             }
             Collections.shuffle(baraja);                 // cada jugador se baraja por separado
             for (int f = 0; f < FILAS; f++) {
                 for (int c = 0; c < COLUMNAS; c++) {
-                    nombres[j][f][c] = baraja.get(f * COLUMNAS + c);
+                    int indice = f * tamanoMatriz + c;
+                    nombres[j][f][c] = f < tamanoMatriz && c < tamanoMatriz && indice < baraja.size()
+                            ? baraja.get(indice) : null;
                     encontradas[j][f][c] = false;
                 }
             }
@@ -65,7 +76,9 @@ public class ModeloClasico {
      *  FALLO    -> segunda carta, no coincide (el controlador cede el turno)
      */
     public Resultado voltear(int jugador, int fila, int columna) {
-        if (jugador != jugadorActivo || encontradas[jugador][fila][columna] || partidaTerminada()) {
+        if (fila < 0 || columna < 0 || fila >= tamanoMatriz || columna >= tamanoMatriz
+                || nombres[jugador][fila][columna] == null || jugador != jugadorActivo
+                || encontradas[jugador][fila][columna] || partidaTerminada()) {
             return Resultado.IGNORADA;
         }
         if (primeraFila < 0) {
@@ -85,6 +98,7 @@ public class ModeloClasico {
             parejas[jugador]++;
             tiempo += BONO_ACIERTO;
             tiempoMaximo += BONO_ACIERTO;
+            if (parejas[jugador] >= parejasMaximas && ganador < 0) ganador = jugador;
         }
         primeraFila = -1;
         primeraColumna = -1;
@@ -94,7 +108,7 @@ public class ModeloClasico {
     //Pasa el turno al otro jugador (si el otro ya termino su tablero, sigue el mismo).
     public void cambiarTurno() {
         int otro = 1 - jugadorActivo;
-        if (parejas[otro] < PAREJAS) {
+        if (!jugadorTermino(otro)) {
             jugadorActivo = otro;
         }
         reiniciarTurno();
@@ -116,17 +130,16 @@ public class ModeloClasico {
     }
 
     public boolean jugadorTermino(int jugador) {
-        return parejas[jugador] >= PAREJAS;
+        return parejas[jugador] >= parejasMaximas;
     }
 
     public boolean partidaTerminada() {
-        return jugadorTermino(0) && jugadorTermino(1);
+        return ganador >= 0;
     }
 
-    //Ganador (0 o 1) segun menos intentos, o -1 si hay empate. Usar solo con la partida terminada.
+    // El primer jugador en completar todas sus parejas gana.
     public int getGanador() {
-        if (intentos[0] == intentos[1]) return -1;
-        return intentos[0] < intentos[1] ? 0 : 1;
+        return ganador;
     }
 
 
@@ -140,4 +153,6 @@ public class ModeloClasico {
     public int getJugadorActivo()                               { return jugadorActivo; }
     public double getTiempo()                                   { return tiempo; }
     public double getTiempoMaximo()                             { return tiempoMaximo; }
+    public int getTamanoMatriz()                                 { return tamanoMatriz; }
+    public int getParejasMaximas()                               { return parejasMaximas; }
 }

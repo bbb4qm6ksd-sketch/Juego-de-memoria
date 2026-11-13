@@ -6,6 +6,7 @@ public class ControladorPatrones {
     private final VistaPatrones vista;
     private final ModeloPatrones modelo = new ModeloPatrones();
     private final Runnable alSalir;
+    private final ModeloTienda tienda;
 
     private boolean jugando = false;
     private boolean perdio = false;
@@ -17,12 +18,17 @@ public class ControladorPatrones {
     private final Timer relojSiguiente = new Timer(50, e -> pasarCuentaAtras());
 
     public ControladorPatrones(VistaPatrones vista) {
-        this(vista, null);
+        this(vista, null, null);
     }
 
     public ControladorPatrones(VistaPatrones vista, Runnable alSalir) {
+        this(vista, alSalir, null);
+    }
+
+    public ControladorPatrones(VistaPatrones vista, Runnable alSalir, ModeloTienda tienda) {
         this.vista = vista;
         this.alSalir = alSalir;
+        this.tienda = tienda;
 
         vista.setNivel(modelo.getNivel());
         vista.setRonda(modelo.getRonda());
@@ -111,10 +117,15 @@ public class ControladorPatrones {
 
     private void ganarRonda() {
         detener();
+        int estrellasGanadas = 0;
+        if (tienda != null) {
+            estrellasGanadas = ModeloTienda.calcularEstrellasPatrones(modelo.getNivel());
+            tienda.agregarEstrellas(estrellasGanadas);
+        }
         modelo.siguienteRonda();
         vista.setNivel(modelo.getNivel());
         vista.setRonda(modelo.getRonda());
-        vista.setFase("¡Correcto!");
+        vista.setFase(tienda == null ? "¡Correcto!" : "¡Correcto! +" + estrellasGanadas + " estrellas");
         vista.lanzarConfeti();
 
         modelo.iniciarCuentaAtras();

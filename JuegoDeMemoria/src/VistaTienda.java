@@ -2,23 +2,32 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.*;
+import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 
-/** Pantalla de tienda integrada en la ventana principal. */
+
 public class VistaTienda extends JPanel {
     public enum CategoriaTienda {
         ACCESORIOS("ACCESORIOS", "JÚPITER"), TIEMPO("TIEMPO EXTRA", "SATURNO"), PUNTOS("PUNTOS EXTRA", "MARTE");
         final String titulo, planeta;
         CategoriaTienda(String titulo, String planeta) { this.titulo=titulo; this.planeta=planeta; }
     }
+    private enum TipoAccesorio {
+        ANTENAS("antenas", "ANTENAS"), CASCO("casco", "CASCO"), CAPA("capa", "CAPA"),
+        HALO("halo", "HALO"), MOCHILA("mochila", "MOCHILA"), VISOR("visor", "VISOR");
+        final String id, titulo;
+        TipoAccesorio(String id, String titulo) { this.id=id; this.titulo=titulo; }
+    }
     private final JLabel lblSaldo = etiqueta("0", fuentes.kiwiSoda(Font.BOLD, 26), Tema.ESTRELLA);
     private final JLabel lblMensaje = etiqueta(" ", fuentes.mono(Font.BOLD, 12), Tema.HIELO);
     private final JButton volver = Tema.botonTexto("← MENÚ PRINCIPAL");
     private final VistaPantallaPrincipal principal;
     private final Map<CategoriaTienda,JPanel> listas = new EnumMap<>(CategoriaTienda.class);
+    private final Map<TipoAccesorio,JPanel> grillasAccesorios = new EnumMap<>(TipoAccesorio.class);
     private final Map<String,Tarjeta> articulos = new LinkedHashMap<>();
+    private static final Map<String,BufferedImage> CACHE_IMAGENES = new HashMap<>();
     private final AvatarPreview avatarPreview = new AvatarPreview();
     private final CardLayout layout = new CardLayout();
     private final JPanel paginas = new JPanel(layout);
@@ -47,7 +56,7 @@ public class VistaTienda extends JPanel {
         JPanel p=new JPanel(new BorderLayout()); p.setOpaque(false);
         p.add(etiqueta("ASTROMATCH  •  OBSERVATORIO",fuentes.mono(Font.BOLD,11),Tema.SECUNDARIO),BorderLayout.WEST);
         JPanel saldoPanel=new JPanel(new FlowLayout(FlowLayout.RIGHT,12,0)); saldoPanel.setOpaque(false);
-        saldoPanel.add(etiqueta("SALDO",fuentes.mono(Font.BOLD,12),Tema.SECUNDARIO)); saldoPanel.add(lblSaldo); saldoPanel.add(volver); p.add(saldoPanel,BorderLayout.EAST); return p;
+        saldoPanel.add(etiqueta("ESTRELLAS DISPONIBLES",fuentes.mono(Font.BOLD,12),Tema.SECUNDARIO)); saldoPanel.add(lblSaldo); saldoPanel.add(volver); p.add(saldoPanel,BorderLayout.EAST); return p;
     }
 
     private JPanel crearSistemaSolar() {
@@ -57,27 +66,77 @@ public class VistaTienda extends JPanel {
     }
 
     private JPanel crearCatalogo(CategoriaTienda cat) {
-        JPanel p=new JPanel(new BorderLayout(0,16)); p.setOpaque(false);
-        JLabel titulo=etiqueta(cat.titulo,fuentes.kiwiSoda(Font.PLAIN,38),Tema.TEXTO);
-        JLabel subt=etiqueta("Artículos disponibles en "+cat.planeta+"  •  compra con tus estrellas",fuentes.mono(Font.PLAIN,12),Tema.SECUNDARIO);
-        JPanel top=new JPanel(new BorderLayout(0,8));top.setOpaque(false);JPanel labels=new JPanel();labels.setOpaque(false);labels.setLayout(new BoxLayout(labels,BoxLayout.Y_AXIS));titulo.setAlignmentX(Component.LEFT_ALIGNMENT);subt.setAlignmentX(Component.LEFT_ALIGNMENT);labels.add(titulo);labels.add(Box.createVerticalStrut(5));labels.add(subt);JButton atras=Tema.botonTexto("← SISTEMA SOLAR");atras.addActionListener(e->layout.show(paginas,"solar"));top.add(labels,BorderLayout.CENTER);top.add(atras,BorderLayout.EAST);
-        JPanel lista=new JPanel();lista.setOpaque(false);lista.setLayout(new BoxLayout(lista,BoxLayout.Y_AXIS));JScrollPane scroll=new JScrollPane(lista);scroll.setOpaque(false);scroll.getViewport().setOpaque(false);scroll.setBorder(null);scroll.getVerticalScrollBar().setUnitIncrement(18);
-        listas.put(cat,lista);if(cat==CategoriaTienda.ACCESORIOS){lista.add(avatarPreview);lista.add(Box.createVerticalStrut(18));}p.add(top,BorderLayout.NORTH);p.add(scroll,BorderLayout.CENTER);return p;
+        JPanel pagina = new JPanel(new BorderLayout(0, 16)); pagina.setOpaque(false);
+        JLabel titulo = etiqueta(cat.titulo, fuentes.kiwiSoda(Font.PLAIN, 38), Tema.TEXTO);
+        JLabel subtitulo = etiqueta("Artículos de " + cat.planeta + " - compra con tus estrellas", fuentes.mono(Font.PLAIN, 12), Tema.SECUNDARIO);
+        JPanel etiquetas = new JPanel(); etiquetas.setOpaque(false); etiquetas.setLayout(new BoxLayout(etiquetas, BoxLayout.Y_AXIS));
+        titulo.setAlignmentX(Component.LEFT_ALIGNMENT); subtitulo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        etiquetas.add(titulo); etiquetas.add(Box.createVerticalStrut(5)); etiquetas.add(subtitulo);
+        JButton atras = Tema.botonTexto("← SISTEMA SOLAR"); atras.addActionListener(e -> layout.show(paginas, "solar"));
+        JPanel cabecera = new JPanel(new BorderLayout()); cabecera.setOpaque(false);
+        cabecera.add(etiquetas, BorderLayout.CENTER); cabecera.add(atras, BorderLayout.EAST);
+        pagina.add(cabecera, BorderLayout.NORTH);
+
+        if (cat == CategoriaTienda.ACCESORIOS) {
+            pagina.add(crearEditorAccesorios(), BorderLayout.CENTER);
+        } else {
+            JPanel lista = new JPanel(new GridLayout(1, 3, 18, 0)); lista.setOpaque(false);
+            JScrollPane scroll = crearScroll(lista);
+            listas.put(cat, lista); pagina.add(scroll, BorderLayout.CENTER);
+        }
+        return pagina;
+    }
+
+    private JPanel crearEditorAccesorios() {
+        JPanel editor = new JPanel(new GridLayout(1, 2, 22, 0)); editor.setOpaque(false);
+        editor.add(avatarPreview);
+        JPanel selector = new JPanel(new BorderLayout(0, 12)); selector.setOpaque(false);
+        JPanel botones = new JPanel(new GridLayout(1, TipoAccesorio.values().length, 5, 0)); botones.setOpaque(false);
+        CardLayout paginasAccesorios = new CardLayout();
+        JPanel opciones = new JPanel(paginasAccesorios); opciones.setOpaque(false);
+        for (TipoAccesorio tipo : TipoAccesorio.values()) {
+            JButton boton = Tema.botonTexto(tipo.titulo);
+            boton.setFont(fuentes.mono(Font.BOLD, 11));
+            boton.addActionListener(e -> paginasAccesorios.show(opciones, tipo.name()));
+            botones.add(boton);
+            JPanel grid = new JPanel(new GridLayout(0, 4, 8, 8)); grid.setOpaque(false);
+            grillasAccesorios.put(tipo, grid);
+            opciones.add(crearScroll(grid), tipo.name());
+        }
+        selector.add(botones, BorderLayout.NORTH); selector.add(opciones, BorderLayout.CENTER);
+        editor.add(selector); return editor;
+    }
+
+    private JScrollPane crearScroll(JPanel contenido) {
+        JScrollPane scroll = new JScrollPane(contenido, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setOpaque(false); scroll.getViewport().setOpaque(false); scroll.setBorder(null); scroll.getVerticalScrollBar().setUnitIncrement(16);
+        return scroll;
     }
 
     public void setAlComprar(Consumer<String> accion){alComprar=accion;}
     public void mostrarTienda(){layout.show(paginas,"solar");}
-    public void setSaldo(int nuevo){saldo=nuevo;lblSaldo.setText(String.valueOf(nuevo));for(Tarjeta t:articulos.values())t.setAsequible(nuevo>=t.precio);}
-    public void agregarArticulo(String id,CategoriaTienda cat,String nombre,String descripcion,int precio,boolean unico){Tarjeta t=new Tarjeta(cat,nombre,descripcion,precio,unico,()->{if(alComprar!=null)alComprar.accept(id);});articulos.put(id,t);listas.get(cat).add(t);listas.get(cat).add(Box.createVerticalStrut(12));t.setAsequible(saldo>=precio);}
+    public void setSaldo(int nuevo){saldo=nuevo;lblSaldo.setText(String.valueOf(nuevo));for(Tarjeta t:articulos.values())t.setSaldo(nuevo);}
+    public void agregarArticulo(String id,CategoriaTienda cat,String nombre,String descripcion,int precio,boolean unico,int valor){
+        BufferedImage compuesto = cat == CategoriaTienda.ACCESORIOS ? componerAvatar(Collections.singleton(id)) : null;
+        Tarjeta t = new Tarjeta(cat, nombre, descripcion, precio, valor, unico, compuesto, () -> { if (alComprar != null) alComprar.accept(id); });
+        articulos.put(id, t);
+        if (cat == CategoriaTienda.ACCESORIOS) {
+            TipoAccesorio tipo = tipoAccesorio(id);
+            if (tipo != null) grillasAccesorios.get(tipo).add(t);
+        } else {
+            listas.get(cat).add(t);
+        }
+        t.setSaldo(saldo);
+    }
     public void marcarComprado(String id){Tarjeta t=articulos.get(id);if(t!=null)t.setComprado(true);}
-    public void setAccesoriosEquipados(Set<String> ids){avatarPreview.setAccesorios(ids);}
+    public void setAccesoriosEquipados(Set<String> ids){
+        avatarPreview.setAccesorios(ids);
+        for(Map.Entry<String,Tarjeta> e:articulos.entrySet()) e.getValue().setEquipado(ids.contains(e.getKey()));
+    }
     public void limpiarTienda(){
         articulos.clear();
-        for(Map.Entry<CategoriaTienda,JPanel> e:listas.entrySet()){
-            JPanel p=e.getValue();p.removeAll();
-            if(e.getKey()==CategoriaTienda.ACCESORIOS){p.add(avatarPreview);p.add(Box.createVerticalStrut(18));}
-            p.revalidate();p.repaint();
-        }
+        for (JPanel lista : listas.values()) { lista.removeAll(); lista.revalidate(); lista.repaint(); }
+        for (JPanel grid : grillasAccesorios.values()) { grid.removeAll(); grid.revalidate(); grid.repaint(); }
     }
     public void mostrarMensajeTienda(String texto,boolean error){lblMensaje.setForeground(error?Tema.ERROR:Tema.ESTRELLA);lblMensaje.setText(texto);if(temporizador!=null)temporizador.stop();temporizador=new javax.swing.Timer(3500,e->lblMensaje.setText(" "));temporizador.setRepeats(false);temporizador.start();}
 
@@ -154,34 +213,113 @@ public class VistaTienda extends JPanel {
         final CategoriaTienda categoria;final String nombre,seccion;final Color color;final double orbita,angulo,velocidad;final int diam;final Rectangle bounds=new Rectangle();
         Planeta(CategoriaTienda c,String n,String s,Color color,double o,double a,int d,double v){categoria=c;nombre=n;seccion=s;this.color=color;orbita=o;angulo=a;diam=d;velocidad=v;}
     }
+    private static TipoAccesorio tipoAccesorio(String id) {
+        for (TipoAccesorio tipo : TipoAccesorio.values()) if (id.startsWith("accesorio_" + tipo.id + "_")) return tipo;
+        return null;
+    }
+
+    private static BufferedImage cargarImagen(String recurso) {
+        synchronized (CACHE_IMAGENES) {
+            BufferedImage cached = CACHE_IMAGENES.get(recurso);
+            if (cached != null) return cached;
+            try (java.io.InputStream in = VistaTienda.class.getResourceAsStream(recurso)) {
+                BufferedImage imagen = in == null ? null : javax.imageio.ImageIO.read(in);
+                if (imagen != null) CACHE_IMAGENES.put(recurso, imagen);
+                return imagen;
+            } catch (java.io.IOException e) { return null; }
+        }
+    }
+
+    private static BufferedImage componerAvatar(Set<String> ids) {
+        BufferedImage base = cargarImagen("/avatar_astronauta/base/astronauta_base.png");
+        if (base == null) return null;
+        BufferedImage resultado = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = resultado.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        dibujarCapas(g, ids, true);
+        g.drawImage(base, 0, 0, null);
+        dibujarCapas(g, ids, false);
+        g.dispose();
+        return resultado;
+    }
+
+    private static void dibujarCapas(Graphics2D g, Set<String> ids, boolean atras) {
+        String[] orden = atras ? new String[]{"capa", "mochila"} : new String[]{"antenas", "casco", "visor", "halo"};
+        for (String ranura : orden) for (String id : ids) {
+            TipoAccesorio tipo = tipoAccesorio(id);
+            if (tipo == null || !tipo.id.equals(ranura)) continue;
+            String ruta = "/avatar_astronauta/" + tipo.id + "/accesorio_" + tipo.id + "_" + id.substring(id.lastIndexOf('_') + 1) + ".png";
+            BufferedImage capa = cargarImagen(ruta);
+            if (capa != null) g.drawImage(capa, 0, 0, null);
+        }
+    }
+
     private static final class AvatarPreview extends JPanel {
         private Set<String> accesorios = Collections.emptySet();
-        AvatarPreview(){setOpaque(false);setPreferredSize(new Dimension(700,220));setMaximumSize(new Dimension(Integer.MAX_VALUE,220));setAlignmentX(Component.LEFT_ALIGNMENT);}
-        void setAccesorios(Set<String> ids){accesorios=new LinkedHashSet<>(ids);repaint();}
+        private BufferedImage imagenActual;
+        AvatarPreview(){setOpaque(false);setPreferredSize(new Dimension(430,500));setMinimumSize(new Dimension(280,360));imagenActual=componerAvatar(accesorios);}
+        void setAccesorios(Set<String> ids){accesorios=new LinkedHashSet<>(ids);imagenActual=componerAvatar(accesorios);repaint();}
         @Override protected void paintComponent(Graphics g){
             super.paintComponent(g);Graphics2D x=(Graphics2D)g.create();x.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);x.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            int cx=getWidth()/2,cy=getHeight()/2+8;x.setColor(new Color(4,12,34,155));x.fillRoundRect(4,4,getWidth()-8,getHeight()-8,24,24);x.setColor(Tema.LINEA);x.drawRoundRect(4,4,getWidth()-9,getHeight()-9,24,24);
-            x.setFont(fuentes.mono(Font.BOLD,12));x.setColor(Tema.HIELO);x.drawString("TU AVATAR - ACCESORIOS EQUIPADOS",24,30);
-            // Mochila y capa quedan detrás del astronauta.
-            if(accesorios.contains("accesorio_capa")){x.setColor(new Color(105,91,201));Path2D capa=new Path2D.Double();capa.moveTo(cx-28,cy+12);capa.curveTo(cx-74,cy+32,cx-62,cy+77,cx-50,cy+87);capa.lineTo(cx+48,cy+87);capa.curveTo(cx+67,cy+48,cx+57,cy+28,cx+28,cy+12);capa.closePath();x.fill(capa);}
-            if(accesorios.contains("accesorio_mochila")){x.setColor(new Color(205,89,45));x.fillRoundRect(cx+28,cy+15,34,58,13,13);x.setColor(new Color(255,190,75));x.fillRoundRect(cx+35,cy+59,20,18,8,8);}
-            // Traje, casco y cara del avatar base.
-            x.setPaint(new GradientPaint(cx-38,cy+10,new Color(0xF4F7FF),cx+38,cy+95,new Color(0xA9BCFF)));x.fillRoundRect(cx-42,cy+10,84,88,38,38);x.setColor(new Color(0xD4E5FF));x.fillRoundRect(cx-29,cy+23,58,40,22,22);
-            x.setPaint(new GradientPaint(cx-38,cy-52,new Color(0xFFF0D1),cx+38,cy+25,new Color(0xDCA77D)));x.fill(new Ellipse2D.Double(cx-39,cy-61,78,78));
-            if(accesorios.contains("accesorio_casco")){x.setColor(new Color(178,220,255,105));x.fill(new Arc2D.Double(cx-48,cy-70,96,90,0,180,Arc2D.PIE));x.setColor(new Color(212,236,255,210));x.setStroke(new BasicStroke(3));x.draw(new Arc2D.Double(cx-48,cy-70,96,90,0,180,Arc2D.OPEN));}
-            if(accesorios.contains("accesorio_visor")){x.setColor(new Color(36,96,139,220));x.fillRoundRect(cx-38,cy-24,76,24,13,13);x.setColor(new Color(153,232,255,220));x.setStroke(new BasicStroke(2));x.drawLine(cx-28,cy-18,cx-4,cy-18);}
-            if(accesorios.contains("accesorio_antenas")){x.setColor(new Color(196,214,245));x.setStroke(new BasicStroke(3));x.drawLine(cx-18,cy-56,cx-28,cy-81);x.drawLine(cx+18,cy-56,cx+28,cy-81);x.setColor(new Color(255,218,112));x.fill(new Ellipse2D.Double(cx-33,cy-87,11,11));x.fill(new Ellipse2D.Double(cx+22,cy-87,11,11));}
-            if(accesorios.contains("accesorio_halo")){x.setColor(new Color(255,218,112,220));x.setStroke(new BasicStroke(4));x.draw(new Ellipse2D.Double(cx-43,cy-88,86,19));}
-            x.setColor(Tema.SECUNDARIO);x.setFont(fuentes.mono(Font.PLAIN,11));x.drawString(accesorios.isEmpty()?"Compra accesorios para personalizarlo":"Accesorios aplicados automáticamente",24,getHeight()-20);
-            x.dispose();
+            x.setColor(new Color(4,12,34,165));x.fillRoundRect(4,4,getWidth()-8,getHeight()-8,24,24);x.setColor(Tema.LINEA);x.drawRoundRect(4,4,getWidth()-9,getHeight()-9,24,24);
+            x.setFont(fuentes.mono(Font.BOLD,12));x.setColor(Tema.HIELO);x.drawString("TU ASTRONAUTA",20,26);
+            BufferedImage imagen=imagenActual;
+            if(imagen!=null){double escala=Math.min((getWidth()-34.0)/imagen.getWidth(),(getHeight()-62.0)/imagen.getHeight());int w=(int)(imagen.getWidth()*escala),h=(int)(imagen.getHeight()*escala);x.drawImage(imagen,(getWidth()-w)/2,(getHeight()-h)/2+8,w,h,null);}
+            else {x.setColor(Tema.SECUNDARIO);x.drawString("No se encontraron los recursos del avatar",20,52);}
+            x.setColor(Tema.SECUNDARIO);x.setFont(fuentes.mono(Font.PLAIN,10));x.drawString(accesorios.isEmpty()?"Elige diseños para personalizarlo":"Los accesorios comprados se equipan aquí",20,getHeight()-17);x.dispose();
         }
     }
 
     private static class Tarjeta extends JPanel {
-        final int precio;final boolean unico;final JButton comprar=Tema.botonTexto("COMPRAR");boolean adquirido;
-        Tarjeta(CategoriaTienda c,String nombre,String desc,int precio,boolean unico,Runnable click){this.precio=precio;this.unico=unico;setOpaque(false);setBorder(new EmptyBorder(15,18,15,18));setLayout(new BorderLayout(14,10));JLabel n=etiqueta(nombre,fuentes.mono(Font.BOLD,16),Tema.TEXTO),d=etiqueta("<html><body style='width:450px'>"+desc+"</body></html>",fuentes.mono(Font.PLAIN,12),Tema.SECUNDARIO);JPanel info=new JPanel();info.setOpaque(false);info.setLayout(new BoxLayout(info,BoxLayout.Y_AXIS));info.add(n);info.add(Box.createVerticalStrut(6));info.add(d);JPanel pie=new JPanel(new BorderLayout());pie.setOpaque(false);pie.add(etiqueta(precio+" ESTRELLAS",fuentes.mono(Font.BOLD,12),Tema.ESTRELLA),BorderLayout.WEST);pie.add(comprar,BorderLayout.EAST);comprar.addActionListener(e->click.run());add(info,BorderLayout.CENTER);add(pie,BorderLayout.SOUTH);}
-        void setAsequible(boolean b){if(!adquirido)comprar.setEnabled(b);}void setComprado(boolean b){if(unico){adquirido=b;comprar.setText(b?"COMPRADO":"COMPRAR");comprar.setEnabled(!b);}}
-        protected void paintComponent(Graphics g){Graphics2D x=(Graphics2D)g.create();x.setColor(new Color(8,13,32,190));x.fillRoundRect(0,0,getWidth()-1,getHeight()-1,20,20);x.setColor(Tema.LINEA);x.drawRoundRect(0,0,getWidth()-1,getHeight()-1,20,20);x.dispose();}
+        final int precio; final int valor; final boolean unico; final CategoriaTienda categoria;
+        final JButton comprar=Tema.botonTexto("COMPRAR");
+        final JLabel disponibilidad=etiqueta("",fuentes.mono(Font.BOLD,10),Tema.SECUNDARIO);
+        boolean adquirido, equipado, asequible;
+
+        Tarjeta(CategoriaTienda categoria,String nombre,String descripcion,int precio,int valor,boolean unico,BufferedImage imagen,Runnable click){
+            this.precio=precio;this.valor=valor;this.unico=unico;this.categoria=categoria;
+            setOpaque(false);setBorder(new EmptyBorder(14,14,14,14));setLayout(new BorderLayout(8,8));
+            if(imagen!=null){
+                JLabel dibujo=new JLabel(new ImageIcon(escalar(imagen,112,126)));dibujo.setHorizontalAlignment(SwingConstants.CENTER);add(dibujo,BorderLayout.CENTER);setPreferredSize(new Dimension(145,194));
+                JPanel datos=new JPanel();datos.setOpaque(false);datos.setLayout(new BoxLayout(datos,BoxLayout.Y_AXIS));
+                JLabel n=etiqueta(nombre,fuentes.mono(Font.BOLD,10),Tema.TEXTO);n.setAlignmentX(Component.CENTER_ALIGNMENT);
+                JLabel p=etiqueta(precio+" ESTRELLAS",fuentes.mono(Font.BOLD,9),Tema.ESTRELLA);p.setAlignmentX(Component.CENTER_ALIGNMENT);
+                datos.add(n);datos.add(Box.createVerticalStrut(3));datos.add(p);datos.add(disponibilidad);disponibilidad.setAlignmentX(Component.CENTER_ALIGNMENT);add(datos,BorderLayout.NORTH);
+            } else {
+                JPanel contenido=new JPanel();contenido.setOpaque(false);contenido.setLayout(new BoxLayout(contenido,BoxLayout.Y_AXIS));
+                IconoExtra icono=new IconoExtra(categoria);icono.setAlignmentX(Component.CENTER_ALIGNMENT);contenido.add(icono);
+                contenido.add(Box.createVerticalStrut(9));
+                JLabel nombreLbl=etiqueta(nombre.toUpperCase(),fuentes.mono(Font.BOLD,17),Tema.TEXTO);nombreLbl.setAlignmentX(Component.CENTER_ALIGNMENT);contenido.add(nombreLbl);
+                String cantidad="+"+valor+(categoria==CategoriaTienda.TIEMPO?" SEGUNDOS":" PUNTOS");
+                JLabel cantidadLbl=etiqueta(cantidad,fuentes.kiwiSoda(Font.BOLD,29),categoria==CategoriaTienda.TIEMPO?Tema.HIELO:Tema.ESTRELLA);cantidadLbl.setAlignmentX(Component.CENTER_ALIGNMENT);contenido.add(Box.createVerticalStrut(5));contenido.add(cantidadLbl);
+                JLabel detalle=etiqueta("<html><div style='text-align:center;width:210px'>"+descripcion+"</div></html>",fuentes.mono(Font.PLAIN,11),Tema.SECUNDARIO);detalle.setAlignmentX(Component.CENTER_ALIGNMENT);contenido.add(Box.createVerticalStrut(6));contenido.add(detalle);
+                JLabel costo=etiqueta("COSTO: "+precio+" ESTRELLAS",fuentes.mono(Font.BOLD,12),Tema.ESTRELLA);costo.setAlignmentX(Component.CENTER_ALIGNMENT);contenido.add(Box.createVerticalStrut(10));contenido.add(costo);
+                disponibilidad.setAlignmentX(Component.CENTER_ALIGNMENT);contenido.add(Box.createVerticalStrut(5));contenido.add(disponibilidad);add(contenido,BorderLayout.CENTER);
+                setPreferredSize(new Dimension(260,330));
+            }
+            comprar.setFont(fuentes.mono(Font.BOLD,11));comprar.addActionListener(e->click.run());add(comprar,BorderLayout.SOUTH);
+        }
+        private static BufferedImage escalar(BufferedImage fuente,int ancho,int alto){
+            BufferedImage mini=new BufferedImage(ancho,alto,BufferedImage.TYPE_INT_ARGB);Graphics2D g=mini.createGraphics();g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);g.drawImage(fuente,0,0,ancho,alto,null);g.dispose();return mini;
+        }
+        void setSaldo(int saldo){asequible=saldo>=precio;actualizarBoton();if(adquirido)disponibilidad.setText(equipado?"EN USO":"COMPRADO");else if(asequible)disponibilidad.setText("SALDO SUFICIENTE");else disponibilidad.setText("TE FALTAN "+(precio-saldo)+" ESTRELLAS");disponibilidad.setForeground(asequible?Tema.HIELO:Tema.ERROR);}
+        void setComprado(boolean b){adquirido=b;actualizarBoton();}
+        void setEquipado(boolean b){equipado=b;actualizarBoton();}
+        private void actualizarBoton(){comprar.setText(equipado?"RETIRAR":(adquirido?"EQUIPAR":"COMPRAR"));comprar.setEnabled(adquirido||asequible);}
+        @Override protected void paintComponent(Graphics g){Graphics2D x=(Graphics2D)g.create();x.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);x.setColor(new Color(8,13,32,195));x.fillRoundRect(0,0,getWidth()-1,getHeight()-1,22,22);x.setColor(adquirido?Tema.ESTRELLA:Tema.LINEA);x.drawRoundRect(0,0,getWidth()-1,getHeight()-1,22,22);x.dispose();}
+    }
+
+    private static class IconoExtra extends JComponent {
+        private final CategoriaTienda tipo;
+        IconoExtra(CategoriaTienda tipo){this.tipo=tipo;setPreferredSize(new Dimension(74,74));setMaximumSize(new Dimension(74,74));}
+        @Override protected void paintComponent(Graphics g){
+            Graphics2D x=(Graphics2D)g.create();x.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);int d=64,cx=getWidth()/2,cy=getHeight()/2;
+            Color acento=tipo==CategoriaTienda.TIEMPO?Tema.HIELO:Tema.ESTRELLA;
+            x.setPaint(new RadialGradientPaint(new Point(cx,cy),d/2,new float[]{0f,1f},new Color[]{new Color(acento.getRed(),acento.getGreen(),acento.getBlue(),100),new Color(acento.getRed(),acento.getGreen(),acento.getBlue(),15)}));x.fill(new Ellipse2D.Double(cx-d/2,cy-d/2,d,d));x.setColor(acento);x.setStroke(new BasicStroke(3f));
+            if(tipo==CategoriaTienda.TIEMPO){x.draw(new Ellipse2D.Double(cx-20,cy-20,40,40));x.drawLine(cx,cy-13,cx,cy);x.drawLine(cx,cy,cx+12,cy+7);x.fill(new Ellipse2D.Double(cx-3,cy-3,6,6));}
+            else {Path2D estrella=new Path2D.Double();for(int i=0;i<10;i++){double a=-Math.PI/2+i*Math.PI/5,r=i%2==0?23:10,px=cx+Math.cos(a)*r,py=cy+Math.sin(a)*r;if(i==0)estrella.moveTo(px,py);else estrella.lineTo(px,py);}estrella.closePath();x.fill(estrella);}
+            x.dispose();
+        }
     }
     private static JLabel etiqueta(String t,Font f,Color c){JLabel l=new JLabel(t);l.setFont(f);l.setForeground(c);return l;}
 }

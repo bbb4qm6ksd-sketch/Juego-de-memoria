@@ -19,7 +19,7 @@ public class ControladorTienda {
     private void cargarCatalogo() {
         vista.limpiarTienda();
         for (Articulo a : modelo.getCatalogo()) {
-            vista.agregarArticulo(a.getId(), categoria(a.getTipo()), a.getNombre(), a.getDescripcion(), a.getPrecio(), a.isUnico());
+            vista.agregarArticulo(a.getId(), categoria(a.getTipo()), a.getNombre(), a.getDescripcion(), a.getPrecio(), a.isUnico(), a.getValor());
             if (a.isUnico() && modelo.yaComprado(a.getId())) vista.marcarComprado(a.getId());
         }
     }
@@ -28,16 +28,36 @@ public class ControladorTienda {
 
     private void alComprar(String id) {
         Articulo a = modelo.buscar(id);
+        if (a == null) { vista.mostrarMensajeTienda("Ese artículo ya no existe", true); return; }
+        if (a.getTipo() == Articulo.Tipo.ACCESORIO) {
+            if (!modelo.yaComprado(id)) {
+                ModeloTienda.Resultado resultado = modelo.comprar(id);
+                if (resultado == ModeloTienda.Resultado.SALDO_INSUFICIENTE) {
+                    vista.mostrarMensajeTienda("Saldo insuficiente: te faltan " + (a.getPrecio()-modelo.getSaldo()) + " estrellas", true);
+                    return;
+                }
+            } else if (modelo.getAccesoriosEquipados().contains(id)) {
+                modelo.quitarAccesorio(id);
+            } else {
+                modelo.equiparAccesorio(id);
+            }
+            refrescar();
+            vista.marcarComprado(id);
+            vista.setAccesoriosEquipados(modelo.getAccesoriosEquipados());
+            vista.mostrarMensajeTienda(modelo.getAccesoriosEquipados().contains(id)
+                    ? "¡" + a.getNombre() + " equipado en tu astronauta!"
+                    : "Accesorio retirado del astronauta", false);
+            return;
+        }
         ModeloTienda.Resultado r = modelo.comprar(id);
         switch (r) {
             case EXITO:
                 refrescar();
-                if (a.isUnico()) { vista.marcarComprado(id); vista.setAccesoriosEquipados(modelo.getAccesoriosEquipados()); vista.mostrarMensajeTienda("¡" + a.getNombre() + " se agregó y equipó en tu avatar!", false); }
-                else if (a.getTipo() == Articulo.Tipo.TIEMPO) vista.mostrarMensajeTienda("¡Compra exitosa! Tiempo extra acumulado: " + modelo.getSegundosExtra() + " s", false);
+                if (a.getTipo() == Articulo.Tipo.TIEMPO) vista.mostrarMensajeTienda("¡Compra exitosa! Tiempo extra acumulado: " + modelo.getSegundosExtra() + " s", false);
                 else vista.mostrarMensajeTienda("¡Compra exitosa! Puntos extra acumulados: " + modelo.getPuntosExtra(), false);
                 break;
             case SALDO_INSUFICIENTE: vista.mostrarMensajeTienda("Saldo insuficiente: te faltan " + (a.getPrecio()-modelo.getSaldo()) + " estrellas", true); break;
-            case YA_COMPRADO: vista.mostrarMensajeTienda("Ya tienes ese avatar", true); break;
+            case YA_COMPRADO: vista.mostrarMensajeTienda("Ya tienes ese artículo", true); break;
             default: vista.mostrarMensajeTienda("Ese artículo ya no existe", true);
         }
     }
@@ -50,3 +70,4 @@ public class ControladorTienda {
     }
     public ModeloTienda getModelo() { return modelo; }
 }
+

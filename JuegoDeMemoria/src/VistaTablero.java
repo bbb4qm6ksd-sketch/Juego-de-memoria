@@ -15,6 +15,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import java.awt.Window;
 
 
 
@@ -27,6 +28,7 @@ public class VistaTablero extends JFrame {
 
     private final Carta[][][] cartas = new Carta[JUGADORES][FILAS][COLUMNAS];
     private final JPanel[] panelesJugador = new JPanel[JUGADORES];
+    private final JPanel[] matricesJugador = new JPanel[JUGADORES];
     private final JLabel[] lblNombre = new JLabel[JUGADORES];
     private final JLabel[] lblIntentos = new JLabel[JUGADORES];
     private final JLabel[] lblParejas = new JLabel[JUGADORES];
@@ -37,13 +39,18 @@ public class VistaTablero extends JFrame {
     private final JLabel lblTiempo = new JLabel("10");
     private final BarraTiempo barra = new BarraTiempo();
 
-    private final JPanel zona = new JPanel();
+    private final JPanel zona = new JPanel(new CardLayout());
+    private final JPanel pantallas = new JPanel(new CardLayout());
+    private final JButton btnFacil = new BotonPill("FÁCIL  ·  2 × 2", true);
+    private final JButton btnMedio = new BotonPill("MEDIO  ·  4 × 4", true);
+    private final JButton btnDificil = new BotonPill("DIFÍCIL  ·  6 × 6", true);
 
     private final JLabel lblMensaje = new JLabel(" ");
     private final JButton btnAccion = new BotonPill("REINICIAR", true);
     private final JButton btnSalir = Tema.botonTexto("SALIR");
 
     // ---------- Confeti ----------
+    private JComponent superficie;
     private Confeti confeti;
     private long ultimoConfetiNs;
     private final Timer timerConfeti = new Timer(16, e -> {
@@ -56,14 +63,17 @@ public class VistaTablero extends JFrame {
                 ((Timer) e.getSource()).stop();
             }
         }
-        repaint();
+        if (superficie != null) superficie.repaint();
     });
 
     public void lanzarConfeti() {
-        confeti = new Confeti(getWidth(), getHeight());
+        int ancho = superficie == null ? getWidth() : superficie.getWidth();
+        int alto = superficie == null ? getHeight() : superficie.getHeight();
+        confeti = new Confeti(Math.max(1, ancho), Math.max(1, alto));
         confeti.iniciar();
         ultimoConfetiNs = System.nanoTime();
         timerConfeti.start();
+        if (superficie != null) superficie.repaint();
     }
 
     public void mostrarMensajeFinal(String titulo, String detalle) {
@@ -81,28 +91,33 @@ public class VistaTablero extends JFrame {
         panel.add(lblTitulo, BorderLayout.CENTER);
         panel.add(lblDetalle, BorderLayout.SOUTH);
 
-        JOptionPane.showMessageDialog(this, panel, "AstroMatch", JOptionPane.PLAIN_MESSAGE);
+        Window ventana = SwingUtilities.getWindowAncestor(getContentPane());
+        JOptionPane.showMessageDialog(ventana == null ? this : ventana, panel,
+                "AstroMatch", JOptionPane.PLAIN_MESSAGE);
     }
 
     public void detenerConfeti() {
         timerConfeti.stop();
         confeti = null;
-        repaint();
-    }
-
-    @Override
-    public void paint(Graphics g) {
-        super.paint(g);
-        if (confeti != null) {
-            confeti.dibujar((Graphics2D) g);
-        }
+        if (superficie != null) superficie.repaint();
     }
 
     public VistaTablero() {
         super("AstroMatch");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        Tema fondo = new Tema(140, new Color(0x141F47), Tema.FONDO);
+        Tema fondo = new Tema(140, new Color(0x141F47), Tema.FONDO) {
+            @Override
+            protected void paintChildren(Graphics g) {
+                super.paintChildren(g);
+                if (confeti != null) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    confeti.dibujar(g2);
+                    g2.dispose();
+                }
+            }
+        };
+        superficie = fondo;
         fondo.setLayout(new BorderLayout(0, 18));
         fondo.setBorder(new EmptyBorder(24, 32, 24, 32));
         setContentPane(fondo);
@@ -115,14 +130,16 @@ public class VistaTablero extends JFrame {
 
         JPanel centro = new JPanel(new BorderLayout(0, 16));
         centro.setOpaque(false);
-        centro.add(zona, BorderLayout.CENTER);
+        pantallas.setOpaque(false);
+        pantallas.add(crearSelectorNiveles(), "niveles");
+        pantallas.add(zona, "tablero");
+        centro.add(pantallas, BorderLayout.CENTER);
 
         add(crearEncabezado(), BorderLayout.NORTH);
         add(centro, BorderLayout.CENTER);
         add(crearPie(), BorderLayout.SOUTH);
 
-        zona.setLayout(new GridLayout(1, JUGADORES, 24, 0));
-        for (JPanel panel : panelesJugador) zona.add(panel);
+        for (int j = 0; j < JUGADORES; j++) zona.add(panelesJugador[j], "jugador" + j);
         lblEyebrow.setText("MODO CLÁSICO  *  2 JUGADORES");
         lblTitulo.setText("<html>Encuentra las <i style='color:#A9BCFF'>constelaciones</i></html>");
         setTitle("AstroMatch - Modo clásico");
@@ -131,6 +148,7 @@ public class VistaTablero extends JFrame {
         setSize(Math.min(1280, pantalla.width - 60), Math.min(820, pantalla.height - 80));
         setLocationRelativeTo(null);
         setJugadorActivo(0);
+        mostrarSelectorNiveles();
 
     }
 
@@ -205,6 +223,7 @@ public class VistaTablero extends JFrame {
 
         JPanel matriz = new JPanel(new GridLayout(FILAS, COLUMNAS, 6, 6));
         matriz.setOpaque(false);
+        matricesJugador[j] = matriz;
         for (int f = 0; f < FILAS; f++) {
             for (int c = 0; c < COLUMNAS; c++) {
                 Carta carta = new Carta();
@@ -217,6 +236,131 @@ public class VistaTablero extends JFrame {
         panel.add(matriz, BorderLayout.CENTER);
         return panel;
     }
+
+    private JPanel crearSelectorNiveles() {
+        JPanel panel = new JPanel(new BorderLayout(0, 30));
+        panel.setOpaque(false);
+        panel.setBorder(new EmptyBorder(35, 24, 35, 24));
+
+        JLabel titulo = new JLabel("Elige la dificultad", SwingConstants.CENTER);
+        titulo.setFont(fuentes.kiwiSoda(Font.PLAIN, 38));
+        titulo.setForeground(Tema.TEXTO);
+        JLabel detalle = new JLabel("Selecciona el tamaño del tablero para comenzar", SwingConstants.CENTER);
+        detalle.setFont(fuentes.mono(Font.PLAIN, 13));
+        detalle.setForeground(Tema.SECUNDARIO);
+        JPanel encabezado = new JPanel(new GridLayout(2, 1, 0, 8));
+        encabezado.setOpaque(false);
+        encabezado.add(titulo);
+        encabezado.add(detalle);
+
+        JPanel opciones = new JPanel(new GridLayout(1, 3, 22, 0));
+        opciones.setOpaque(false);
+        opciones.add(crearOpcionNivel("NIVEL 01", "Ideal para comenzar", btnFacil));
+        opciones.add(crearOpcionNivel("NIVEL 02", "Un reto intermedio", btnMedio));
+        opciones.add(crearOpcionNivel("NIVEL 03", "Pon a prueba tu memoria", btnDificil));
+        panel.add(encabezado, BorderLayout.NORTH);
+        panel.add(opciones, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel crearOpcionNivel(String numero, String descripcion, JButton boton) {
+        JPanel opcion = new JPanel(new BorderLayout(0, 18));
+        opcion.setOpaque(false);
+        opcion.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(Tema.LINEA, 1, true), new EmptyBorder(24, 18, 24, 18)));
+        JLabel nivel = new JLabel(numero, SwingConstants.CENTER);
+        nivel.setFont(fuentes.mono(Font.BOLD, 12));
+        nivel.setForeground(Tema.HIELO);
+        JLabel texto = new JLabel("<html><div style='text-align:center'>" + descripcion + "</div></html>", SwingConstants.CENTER);
+        texto.setFont(Tema.sans(Font.PLAIN, 13));
+        texto.setForeground(Tema.SECUNDARIO);
+        opcion.add(nivel, BorderLayout.NORTH);
+        opcion.add(texto, BorderLayout.CENTER);
+        opcion.add(boton, BorderLayout.SOUTH);
+        return opcion;
+    }
+
+    public String solicitarNombreJugador2(String nombreInicial) {
+        Window ventana = SwingUtilities.getWindowAncestor(getContentPane());
+        JDialog dialogo = new JDialog(ventana, "Segundo jugador", Dialog.ModalityType.APPLICATION_MODAL);
+        dialogo.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        Tema fondo = new Tema(90, new Color(0x141F47), Tema.FONDO);
+        fondo.setLayout(new BorderLayout(0, 18));
+        fondo.setBorder(new EmptyBorder(28, 32, 26, 32));
+
+        JLabel titulo = new JLabel("Identifica al jugador 2", SwingConstants.CENTER);
+        titulo.setFont(fuentes.kiwiSoda(Font.PLAIN, 28));
+        titulo.setForeground(Tema.TEXTO);
+        JLabel instruccion = new JLabel("Su nombre aparecerá durante la partida", SwingConstants.CENTER);
+        instruccion.setFont(fuentes.mono(Font.PLAIN, 11));
+        instruccion.setForeground(Tema.SECUNDARIO);
+        JTextField campo = new JTextField(nombreInicial == null ? "" : nombreInicial, 20);
+        campo.setFont(Tema.sans(Font.PLAIN, 16));
+        campo.setForeground(Tema.TEXTO);
+        campo.setCaretColor(Tema.ESTRELLA);
+        campo.setBackground(new Color(0x0A1028));
+        campo.setBorder(BorderFactory.createCompoundBorder(new LineBorder(Tema.LINEA, 1, true),
+                new EmptyBorder(10, 12, 10, 12)));
+
+        JPanel centro = new JPanel(new GridLayout(2, 1, 0, 10));
+        centro.setOpaque(false);
+        centro.add(instruccion);
+        centro.add(campo);
+        JButton aceptar = new BotonPill("CONTINUAR", true);
+        JButton cancelar = Tema.botonTexto("CANCELAR");
+        JPanel acciones = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
+        acciones.setOpaque(false);
+        acciones.add(cancelar);
+        acciones.add(aceptar);
+        String[] resultado = {null};
+        aceptar.addActionListener(e -> {
+            if (!campo.getText().trim().isEmpty()) {
+                resultado[0] = campo.getText().trim();
+                dialogo.dispose();
+            }
+        });
+        cancelar.addActionListener(e -> dialogo.dispose());
+        campo.addActionListener(e -> aceptar.doClick());
+
+        fondo.add(titulo, BorderLayout.NORTH);
+        fondo.add(centro, BorderLayout.CENTER);
+        fondo.add(acciones, BorderLayout.SOUTH);
+        dialogo.setContentPane(fondo);
+        dialogo.getRootPane().setDefaultButton(aceptar);
+        dialogo.pack();
+        dialogo.setMinimumSize(new Dimension(430, 250));
+        dialogo.setLocationRelativeTo(this);
+        dialogo.setVisible(true);
+        return resultado[0];
+    }
+
+    public void mostrarSelectorNiveles() {
+        ((CardLayout) pantallas.getLayout()).show(pantallas, "niveles");
+        btnAccion.setVisible(false);
+    }
+
+    public void mostrarTablero(int tamano) {
+        for (int j = 0; j < JUGADORES; j++) {
+            JPanel matriz = matricesJugador[j];
+            matriz.removeAll();
+            matriz.setLayout(new GridLayout(tamano, tamano, 6, 6));
+            for (int f = 0; f < tamano; f++) {
+                for (int c = 0; c < tamano; c++) {
+                    matriz.add(cartas[j][f][c]);
+                }
+            }
+            matriz.revalidate();
+            matriz.repaint();
+        }
+        String nivel = tamano == 2 ? "FÁCIL" : tamano == 4 ? "MEDIO" : "DIFÍCIL";
+        lblEyebrow.setText("MODO CLÁSICO  *  " + nivel + "  *  " + tamano + " × " + tamano);
+        ((CardLayout) pantallas.getLayout()).show(pantallas, "tablero");
+        btnAccion.setVisible(true);
+    }
+
+    public JButton getBtnFacil() { return btnFacil; }
+    public JButton getBtnMedio() { return btnMedio; }
+    public JButton getBtnDificil() { return btnDificil; }
 
     private static JLabel etiquetaDato(String texto) {
         JLabel l = new JLabel(texto);
@@ -255,7 +399,17 @@ public class VistaTablero extends JFrame {
     public JButton getBtnSalir()                              { return btnSalir; }
 
     public void setNombreJugador(int jugador, String nombre)  { lblNombre[jugador].setText(nombre); }
-    public void setMensaje(String mensaje)                    { lblMensaje.setText(mensaje); }
+    public void setMensaje(String mensaje) {
+        lblMensaje.setText(mensaje);
+        lblMensaje.setFont(fuentes.mono(Font.PLAIN, 14));
+        lblMensaje.setForeground(Tema.SECUNDARIO);
+    }
+
+    public void mostrarFelicitacion(String mensaje) {
+        lblMensaje.setText(mensaje);
+        lblMensaje.setFont(fuentes.mono(Font.ITALIC, 22));
+        lblMensaje.setForeground(Tema.ESTRELLA);
+    }
 
     public void setIntentos(int jugador, int intentos)        { lblIntentos[jugador].setText("INTENTOS  " + intentos); }
     public void setParejas(int jugador, int encontradas, int total) {
@@ -266,6 +420,7 @@ public class VistaTablero extends JFrame {
         for (int j = 0; j < JUGADORES; j++) {
             marcarPanel(panelesJugador[j], j == jugador ? Tema.ESTRELLA : Tema.LINEA);
         }
+        ((CardLayout) zona.getLayout()).show(zona, "jugador" + jugador);
         lblTurno.setText("TURNO DE  " + lblNombre[jugador].getText().toUpperCase());
     }
 

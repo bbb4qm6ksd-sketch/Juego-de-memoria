@@ -29,20 +29,32 @@ public class ModeloTienda {
         cargar();
     }
 
-    //Catalogo
+    // Catálogo visual: cada diseño corresponde a una capa PNG original.
     private void crearCatalogo() {
-        catalogo.add(new Articulo("accesorio_antenas", Articulo.Tipo.ACCESORIO, "Antenas estelares", "Dos antenas con puntas luminosas", 50, 0));
-        catalogo.add(new Articulo("accesorio_visor", Articulo.Tipo.ACCESORIO, "Visor cósmico", "Un visor para explorar galaxias lejanas", 70, 0));
-        catalogo.add(new Articulo("accesorio_casco", Articulo.Tipo.ACCESORIO, "Casco lunar", "Casco resistente para tu próxima misión", 110, 0));
-        catalogo.add(new Articulo("accesorio_capa", Articulo.Tipo.ACCESORIO, "Capa nebular", "Una capa con polvo de estrellas", 130, 0));
-        catalogo.add(new Articulo("accesorio_halo", Articulo.Tipo.ACCESORIO, "Halo orbital", "Un halo brillante que flota sobre el avatar", 150, 0));
-        catalogo.add(new Articulo("accesorio_mochila", Articulo.Tipo.ACCESORIO, "Mochila cohete", "Propulsor para recorrer el espacio", 180, 0));
-
-        catalogo.add(new Articulo("tiempo_5",  Articulo.Tipo.TIEMPO, "+5 segundos",  "Suma 5 segundos a tu tiempo por jugada",  40, 5));
-        catalogo.add(new Articulo("tiempo_10", Articulo.Tipo.TIEMPO, "+10 segundos", "Suma 10 segundos a tu tiempo por jugada", 70, 10));
-
-        catalogo.add(new Articulo("puntos_1", Articulo.Tipo.PUNTOS, "+1 punto",  "Resta 1 intento a tu puntaje final",  60, 1));
-        catalogo.add(new Articulo("puntos_3", Articulo.Tipo.PUNTOS, "+3 puntos", "Resta 3 intentos a tu puntaje final", 150, 3));
+        String[][] secciones = {
+                {"antenas", "Antenas", "Antenas estelares"},
+                {"casco", "Casco", "Casco de astronauta"},
+                {"capa", "Capa", "Capa espacial"},
+                {"halo", "Halo", "Halo orbital"},
+                {"mochila", "Mochila", "Mochila propulsora"},
+                {"visor", "Visor", "Visor cósmico"}
+        };
+        for (String[] seccion : secciones) {
+            for (int i = 1; i <= 10; i++) {
+                String numero = String.format("%02d", i);
+                String id = "accesorio_" + seccion[0] + "_" + numero;
+                catalogo.add(new Articulo(id, Articulo.Tipo.ACCESORIO,
+                        seccion[1] + " " + numero,
+                        seccion[2] + " - diseño " + numero,
+                        45 + (i - 1) * 5, 0));
+            }
+        }
+        catalogo.add(new Articulo("tiempo_5", Articulo.Tipo.TIEMPO, "+5 segundos", "Agrega 5 segundos a tu reserva de tiempo extra", 45, 5));
+        catalogo.add(new Articulo("tiempo_10", Articulo.Tipo.TIEMPO, "+10 segundos", "Agrega 10 segundos a tu reserva de tiempo extra", 80, 10));
+        catalogo.add(new Articulo("tiempo_15", Articulo.Tipo.TIEMPO, "+15 segundos", "Agrega 15 segundos a tu reserva de tiempo extra", 110, 15));
+        catalogo.add(new Articulo("puntos_5", Articulo.Tipo.PUNTOS, "+5 puntos", "Agrega 5 puntos a tu reserva de puntos extra", 55, 5));
+        catalogo.add(new Articulo("puntos_10", Articulo.Tipo.PUNTOS, "+10 puntos", "Agrega 10 puntos a tu reserva de puntos extra", 100, 10));
+        catalogo.add(new Articulo("puntos_15", Articulo.Tipo.PUNTOS, "+15 puntos", "Agrega 15 puntos a tu reserva de puntos extra", 145, 15));
     }
 
     public List<Articulo> getCatalogo() { return Collections.unmodifiableList(catalogo); }
@@ -72,7 +84,7 @@ public class ModeloTienda {
         switch (a.getTipo()) {
             case ACCESORIO:
                 accesoriosComprados.add(id);
-                accesoriosEquipados.add(id); // El accesorio se aplica al avatar único.
+                equiparAccesorioSinGuardar(id);
                 break;
             case TIEMPO:
                 segundosExtra += a.getValor();
@@ -87,7 +99,20 @@ public class ModeloTienda {
 
     public boolean equiparAccesorio(String id) {
         if (!accesoriosComprados.contains(id)) return false;
-        accesoriosEquipados.add(id); guardar(); return true;
+        equiparAccesorioSinGuardar(id);
+        guardar();
+        return true;
+    }
+
+    private void equiparAccesorioSinGuardar(String id) {
+        String ranura = ranuraAccesorio(id);
+        accesoriosEquipados.removeIf(equipado -> ranuraAccesorio(equipado).equals(ranura));
+        accesoriosEquipados.add(id);
+    }
+
+    private static String ranuraAccesorio(String id) {
+        int ultimoGuion = id.lastIndexOf('_');
+        return ultimoGuion > "accesorio_".length() ? id.substring("accesorio_".length(), ultimoGuion) : id;
     }
     public boolean quitarAccesorio(String id) {
         if (!accesoriosEquipados.remove(id)) return false;
@@ -104,6 +129,11 @@ public class ModeloTienda {
     /** Menos intentos = más estrellas. Ajusta la fórmula a tu gusto. */
     public static int calcularEstrellas(int intentos) {
         return Math.max(10, 120 - intentos * 3);
+    }
+
+    /** Recompensa creciente por cada ronda completada en el modo patrones. */
+    public static int calcularEstrellasPatrones(int nivelCompletado) {
+        return Math.min(100, Math.max(10, 10 + nivelCompletado * 5));
     }
 
     //Uso de consumibles (lo llaman los controladores de los modos de juego)
@@ -140,15 +170,26 @@ public class ModeloTienda {
             puntosExtra = Integer.parseInt(p.getProperty("puntosExtra", "0"));
             accesoriosComprados.clear(); accesoriosEquipados.clear();
             String lista = p.getProperty("accesoriosComprados", "");
-            for (String id : lista.split(",")) {
+            for (String guardado : lista.split(",")) {
+                String id = migrarIdAccesorio(guardado);
                 Articulo a = buscar(id);
                 if (a != null && a.getTipo() == Articulo.Tipo.ACCESORIO) accesoriosComprados.add(id);
             }
             String equipados = p.getProperty("accesoriosEquipados", "");
-            for (String id : equipados.split(",")) if (accesoriosComprados.contains(id)) accesoriosEquipados.add(id);
+            for (String guardado : equipados.split(",")) {
+                String id = migrarIdAccesorio(guardado);
+                if (accesoriosComprados.contains(id)) equiparAccesorioSinGuardar(id);
+            }
         } catch (IOException | NumberFormatException e) {
             System.err.println("No se pudo leer la tienda de " + usuario + ": " + e.getMessage());
         }
+    }
+
+    private static String migrarIdAccesorio(String id) {
+        if (!id.startsWith("accesorio_") || id.matches("accesorio_.+_\\d{2}")) return id;
+        String ranura = id.substring("accesorio_".length());
+        if (Arrays.asList("antenas", "casco", "capa", "halo", "mochila", "visor").contains(ranura)) return id + "_01";
+        return id;
     }
 
     private void guardar() {

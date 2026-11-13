@@ -1,4 +1,6 @@
 import javax.swing.JOptionPane;
+import java.awt.Container;
+import java.awt.Dimension;
 
 public class ControladorLogin {
 
@@ -44,6 +46,9 @@ public class ControladorLogin {
     }
     private void abrirMenu(String usuario) {
         VistaPantallaPrincipal menu = new VistaPantallaPrincipal(usuario);
+        Container contenidoMenu = menu.getContentPane();
+        Dimension tamanoMenu = menu.getSize();
+        String tituloMenu = menu.getTitle();
         VistaTablero tablero = new VistaTablero();
         VistaPremios premios = new VistaPremios();
         ModeloPremios modeloPremios = new ModeloPremios();
@@ -52,24 +57,40 @@ public class ControladorLogin {
         ModeloTienda modeloTienda = new ModeloTienda(usuario);
         new ControladorTienda(menu, modeloTienda);
 
-        ControladorClasico clasico = new ControladorClasico(tablero, usuario, "Jugador 2", modeloTienda);
+        ControladorClasico clasico = new ControladorClasico(tablero, usuario, "Jugador 2", modeloTienda, modeloPremios);
 
         menu.getBtnClasico().addActionListener(e -> {
             Sonidos.cambiarMusica(Sonidos.Pista.JUEGO);
-            clasico.nuevaPartida();
-            menu.setVisible(false);
-            tablero.setVisible(true);
+            menu.setContentPane(tablero.getContentPane());
+            menu.setTitle("AstroMatch - Modo clásico");
+            menu.setSize(tablero.getSize());
+            menu.setLocationRelativeTo(null);
+            menu.revalidate();
+            menu.repaint();
+            menu.setVisible(true);
+            String jugador2 = tablero.solicitarNombreJugador2("Jugador 2");
+            if (jugador2 == null || jugador2.trim().isEmpty()) {
+                menu.setContentPane(contenidoMenu);
+                menu.setTitle(tituloMenu);
+                menu.setSize(tamanoMenu);
+                menu.setLocationRelativeTo(null);
+                menu.revalidate();
+                menu.repaint();
+                Sonidos.cambiarMusica(Sonidos.Pista.MENU);
+                return;
+            }
+            clasico.setNombreJugador2(jugador2);
+            tablero.mostrarSelectorNiveles();
         });
 
         // Modo patrones: cada vez que se pulsa JUGAR se crea una vista nueva y se le conecta su controlador
         menu.getBtnPatrones().addActionListener(e -> {
             Sonidos.cambiarMusica(Sonidos.Pista.JUEGO);
             VistaPatrones patrones = new VistaPatrones();
-            patrones.setJugador(usuario);
             new ControladorPatrones(patrones, () -> {
                 Sonidos.cambiarMusica(Sonidos.Pista.MENU);   // al salir, vuelve la música del menú
                 menu.setVisible(true);
-            });
+            }, modeloTienda);
             menu.setVisible(false);
             patrones.setVisible(true);
         });
@@ -90,7 +111,12 @@ public class ControladorLogin {
         tablero.getBtnSalir().addActionListener(e -> {
             Sonidos.cambiarMusica(Sonidos.Pista.MENU);
             clasico.detener();
-            tablero.setVisible(false);
+            menu.setContentPane(contenidoMenu);
+            menu.setTitle(tituloMenu);
+            menu.setSize(tamanoMenu);
+            menu.setLocationRelativeTo(null);
+            menu.revalidate();
+            menu.repaint();
             menu.setVisible(true);
         });
         premios.getBtnVolver().addActionListener(e -> {

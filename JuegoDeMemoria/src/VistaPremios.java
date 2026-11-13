@@ -12,6 +12,7 @@ public class VistaPremios extends JFrame {
     private static final double[] PESOS = {0.12, 0.44, 0.18, 0.26};
     private final JLabel[][] celdas = new JLabel[PUESTOS][4];
     private final JLabel lblCambio = new JLabel("Tipo de cambio: —");
+    private final JLabel lblFormula = new JLabel("Premio = 1 / intentos × 100 × tipo de cambio");
     private final JButton btnVolver = new VistaTablero.BotonPill("VOLVER", true);
 
     public VistaPremios() {
@@ -43,20 +44,19 @@ public class VistaPremios extends JFrame {
         JLabel titulo = new JLabel("<html>Mejores <i style='color:#F6DCA2'>jugadores</i></html>");
         titulo.setFont(fuentes.kiwiSoda(Font.PLAIN, 50));
         titulo.setForeground(Tema.TEXTO);
-        JLabel formula = new JLabel("Premio = 1 / intentos × 100 × tipo de cambio");
-        formula.setFont(Tema.sans(Font.PLAIN, 13));
-        formula.setForeground(Tema.SECUNDARIO);
+        lblFormula.setFont(Tema.sans(Font.PLAIN, 13));
+        lblFormula.setForeground(Tema.SECUNDARIO);
         lblCambio.setFont(Tema.sans(Font.BOLD, 12));
         lblCambio.setForeground(Tema.ESTRELLA);
 
-        for (JComponent c : new JComponent[]{eyebrow, titulo, formula, lblCambio}) {
+        for (JComponent c : new JComponent[]{eyebrow, titulo, lblFormula, lblCambio}) {
             c.setAlignmentX(Component.LEFT_ALIGNMENT);
         }
         p.add(eyebrow);
         p.add(Box.createVerticalStrut(6));
         p.add(titulo);
         p.add(Box.createVerticalStrut(10));
-        p.add(formula);
+        p.add(lblFormula);
         p.add(Box.createVerticalStrut(4));
         p.add(lblCambio);
         return p;
