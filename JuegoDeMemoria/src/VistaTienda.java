@@ -53,15 +53,52 @@ public class VistaTienda extends JPanel {
     }
 
     private JPanel crearCabecera() {
-        JPanel p=new JPanel(new BorderLayout()); p.setOpaque(false);
-        p.add(etiqueta("ASTROMATCH  •  OBSERVATORIO",fuentes.mono(Font.BOLD,11),Tema.SECUNDARIO),BorderLayout.WEST);
-        JPanel saldoPanel=new JPanel(new FlowLayout(FlowLayout.RIGHT,12,0)); saldoPanel.setOpaque(false);
-        saldoPanel.add(etiqueta("ESTRELLAS DISPONIBLES",fuentes.mono(Font.BOLD,12),Tema.SECUNDARIO)); saldoPanel.add(lblSaldo); saldoPanel.add(volver); p.add(saldoPanel,BorderLayout.EAST); return p;
+        JPanel p = new JPanel(new BorderLayout());
+        p.setOpaque(false);
+
+        p.add(
+                etiqueta("ASTROMATCH  •  OBSERVATORIO",
+                        fuentes.mono(Font.BOLD, 11),
+                        Tema.SECUNDARIO),
+                BorderLayout.WEST
+        );
+
+        JPanel saldoPanel = new JPanel(
+                new FlowLayout(FlowLayout.RIGHT, 12, 0)
+        );
+        saldoPanel.setOpaque(false);
+
+        saldoPanel.add(
+                etiqueta("ESTRELLAS DISPONIBLES",
+                        fuentes.mono(Font.BOLD, 12),
+                        Tema.SECUNDARIO)
+        );
+
+        BufferedImage imagenEstrella =
+                prepararImagen("/iconos/estrella.png", 40);
+
+        JPanel saldoConMoneda = new JPanel(
+                new FlowLayout(FlowLayout.LEFT, 3, 0)
+        );
+        saldoConMoneda.setOpaque(false);
+
+        if (imagenEstrella != null) {
+            MonedaAnimada iconoEstrella = new MonedaAnimada(imagenEstrella);
+            iconoEstrella.setToolTipText("Estrellas disponibles");
+            saldoConMoneda.add(iconoEstrella);
+        }
+
+        saldoConMoneda.add(lblSaldo);
+        saldoPanel.add(saldoConMoneda);
+        saldoPanel.add(volver);
+
+        p.add(saldoPanel, BorderLayout.EAST);
+        return p;
     }
 
     private JPanel crearSistemaSolar() {
         JPanel p=new JPanel(new BorderLayout()); p.setOpaque(false);
-        JLabel guia=etiqueta("ELIGE UN PLANETA PARA EXPLORAR SUS ARTÍCULOS",fuentes.mono(Font.PLAIN,12),Tema.SECUNDARIO); guia.setHorizontalAlignment(SwingConstants.CENTER);
+        JLabel guia=etiqueta("ELIGE UN PLANETA PARA EXPLORAR SUS ARTÍCULOS",fuentes.kiwiSoda(Font.PLAIN,18),Tema.TEXTO); guia.setHorizontalAlignment(SwingConstants.CENTER);
         p.add(guia,BorderLayout.NORTH); p.add(new MapaSolar(),BorderLayout.CENTER); return p;
     }
 
@@ -143,74 +180,256 @@ public class VistaTienda extends JPanel {
     private final class MapaSolar extends JPanel {
         private final java.util.List<Planeta> planetas = new ArrayList<>();
         private double fase = 0;
-        private final javax.swing.Timer animacion = new javax.swing.Timer(35, e -> { fase += 0.008; repaint(); });
+        private final javax.swing.Timer animacion = new javax.swing.Timer(35, e -> {
+            fase += 0.002;
+            repaint();
+        });
+
+        private final BufferedImage imagenSol = prepararImagen("/planetas/sol.png", 190);
+        private Planeta planetaHover;
+
         MapaSolar() {
-            setOpaque(false); setPreferredSize(new Dimension(900, 570));
+            setOpaque(false);
+            setPreferredSize(new Dimension(900, 570));
             // Un único planeta por cada sección, repartidos alrededor del Sol.
-            planetas.add(new Planeta(CategoriaTienda.ACCESORIOS,"JÚPITER","ACCESORIOS",new Color(0xE58A3A),1.35,-90,128,.50));
-            planetas.add(new Planeta(CategoriaTienda.TIEMPO,"SATURNO","TIEMPO EXTRA",new Color(0xD6A45E),1.35,30,116,.50));
-            planetas.add(new Planeta(CategoriaTienda.PUNTOS,"MARTE","PUNTOS EXTRA",new Color(0xD84F32),1.35,150,108,.50));
-            addMouseListener(new java.awt.event.MouseAdapter(){public void mouseClicked(java.awt.event.MouseEvent e){for(Planeta p:planetas)if(p.bounds.contains(e.getPoint())){layout.show(paginas,p.categoria.name());break;}}});
-            addMouseMotionListener(new java.awt.event.MouseMotionAdapter(){public void mouseMoved(java.awt.event.MouseEvent e){boolean hit=false;for(Planeta p:planetas)hit|=p.bounds.contains(e.getPoint());setCursor(Cursor.getPredefinedCursor(hit?Cursor.HAND_CURSOR:Cursor.DEFAULT_CURSOR));}});
-            addHierarchyListener(e->{if((e.getChangeFlags()&java.awt.event.HierarchyEvent.SHOWING_CHANGED)!=0){if(isShowing())animacion.start();else animacion.stop();}});
+            planetas.add(new Planeta(CategoriaTienda.ACCESORIOS, "JÚPITER", "ACCESORIOS", new Color(0xE58A3A), 1.65, -90, 128, .50));
+            planetas.add(new Planeta(CategoriaTienda.TIEMPO, "SATURNO", "TIEMPO EXTRA", new Color(0xD6A45E), 1.65, 30, 116, .50));
+            planetas.add(new Planeta(CategoriaTienda.PUNTOS, "MARTE", "PUNTOS EXTRA", new Color(0xD84F32), 1.65, 150, 108, .50));
+            addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    for (Planeta p : planetas)
+                        if (p.bounds.contains(e.getPoint())) {
+                            layout.show(paginas, p.categoria.name());
+                            break;
+                        }
+                }
+            });
+
+            addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+                public void mouseMoved(java.awt.event.MouseEvent e) {
+                    Planeta sobre = null;
+
+                    for (Planeta p : planetas) {
+                        if (p.bounds.contains(e.getPoint())) {
+                            sobre = p;
+                            break;
+                        }
+                    }
+
+                    if (sobre != planetaHover) {
+                        planetaHover = sobre;
+                        repaint();
+                    }
+
+                    setCursor(Cursor.getPredefinedCursor(
+                            sobre != null ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR
+                    ));
+                }
+
+                public void mouseExited(java.awt.event.MouseEvent e) {
+                    planetaHover = null;
+                    setCursor(Cursor.getDefaultCursor());
+                    repaint();
+                }
+
+            });
+
+
+
+            addHierarchyListener(e -> {
+                if ((e.getChangeFlags() & java.awt.event.HierarchyEvent.SHOWING_CHANGED) != 0) {
+                    if (isShowing()) animacion.start();
+                    else animacion.stop();
+                }
+            });
+
+
         }
-        @Override protected void paintComponent(Graphics g){
-            super.paintComponent(g); Graphics2D x=(Graphics2D)g.create();
-            x.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);x.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            double cx=getWidth()/2.0,cy=getHeight()/2.0,maxR=Math.min(getWidth()*.43,getHeight()*.43);
-            for(int i=1;i<=5;i++){double rx=maxR*(.30+i*.21),ry=rx*.52;x.setColor(new Color(117,150,224,45));x.setStroke(new BasicStroke(1.3f));x.draw(new Ellipse2D.Double(cx-rx,cy-ry,rx*2,ry*2));}
-            for(Planeta p:planetas){double a=Math.toRadians(p.angulo+fase*p.velocidad*180),rx=maxR*p.orbita;dibujarPlaneta(x,p,(int)(cx+Math.cos(a)*rx),(int)(cy+Math.sin(a)*rx*.52));}
-            dibujarSol(x,cx,cy);x.dispose();
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D x = (Graphics2D) g.create();
+            x.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            x.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            double cx = getWidth() / 2.0, cy = getHeight() / 2.0,
+                    maxR = Math.min(getWidth() * .34, getHeight() * .34);
+            for (int i = 1; i <= 5; i++) {
+                double rx = maxR * (.30 + i * .27), ry = rx * .60;
+                x.setColor(new Color(117, 150, 224, 45));
+                x.setStroke(new BasicStroke(1.3f));
+                x.draw(new Ellipse2D.Double(cx - rx, cy - ry, rx * 2, ry * 2));
+            }
+            dibujarResplandorSol(x, cx, cy);
+
+            for (Planeta p : planetas) {
+                double a = Math.toRadians(p.angulo + fase * p.velocidad * 180), rx = maxR * p.orbita;
+                dibujarPlaneta(
+                        x,
+                        p,
+                        (int) (cx + Math.cos(a) * rx),
+                        (int) (cy + Math.sin(a) * rx * .60),
+                        p == planetaHover
+                );
+            }
+            dibujarSol(x, cx, cy);
+            x.dispose();
         }
-        private void dibujarSol(Graphics2D x,double cx,double cy){
-            int r=58;
-            x.setPaint(new RadialGradientPaint(new Point2D.Double(cx,cy),132,new float[]{0f,.55f,1f},new Color[]{new Color(255,199,58,105),new Color(255,130,24,42),new Color(255,130,24,0)}));
-            x.fill(new Ellipse2D.Double(cx-132,cy-132,264,264));
-            // Corona irregular con destellos finos, como plasma alrededor del disco.
-            Path2D corona=new Path2D.Double();int pasos=120;
-            for(int i=0;i<pasos;i++){double a=2*Math.PI*i/pasos;double pulso=5*Math.sin(a*9)+3*Math.sin(a*17)+2*Math.cos(a*23);double rr=r+12+pulso;if(i==0)corona.moveTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);else corona.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);}corona.closePath();
-            x.setPaint(new GradientPaint((float)cx-r,(float)cy-r,new Color(0xFFCE3B),(float)cx+r,(float)cy+r,new Color(0xF26A12)));x.fill(corona);
-            Ellipse2D disco=new Ellipse2D.Double(cx-r,cy-r,r*2,r*2);
-            x.setPaint(new RadialGradientPaint(new Point2D.Double(cx-r*.28,cy-r*.34),r*1.8f,new float[]{0f,.55f,1f},new Color[]{new Color(0xFFF27A),new Color(0xFFB51D),new Color(0xE95D0C)}));x.fill(disco);
-            x.setClip(disco);
-            x.setColor(new Color(255,239,130,95));
-            for(int i=0;i<8;i++){double ox=Math.sin(i*2.2)*r*.55,oy=Math.cos(i*1.7)*r*.48,rr=4+(i%3)*2;x.fill(new Ellipse2D.Double(cx+ox-rr,cy+oy-rr,rr*2.4,rr*1.2));}
-            x.setColor(new Color(255,95,18,100));x.setStroke(new BasicStroke(2.5f));
-            for(int i=0;i<5;i++){double y=cy-r*.6+i*16;x.draw(new Arc2D.Double(cx-r*.9,y,r*1.8,12,15,145,Arc2D.OPEN));}
-            x.setClip(null);
-            x.setFont(fuentes.kiwiSoda(Font.BOLD,13));String t="TIENDA ESTELAR";FontMetrics fm=x.getFontMetrics();int tw=fm.stringWidth(t);
-            x.setColor(new Color(82,37,12,225));x.fillRoundRect((int)cx-tw/2-7,(int)cy-11,tw+14,22,9,9);x.setColor(new Color(255,246,209));x.drawString(t,(int)cx-tw/2,(int)cy+5);
+        private void dibujarResplandorSol(Graphics2D x, double cx, double cy) {
+            float radio = 165f;
+
+            x.setPaint(new RadialGradientPaint(
+                    new Point2D.Double(cx, cy),
+                    radio,
+                    new float[]{0f, 0.55f, 1f},
+                    new Color[]{
+                            new Color(255, 190, 55, 105),
+                            new Color(255, 125, 25, 45),
+                            new Color(255, 100, 15, 0)
+                    }
+            ));
+
+            x.fill(new Ellipse2D.Double(
+                    cx - radio, cy - radio,
+                    radio * 2, radio * 2
+            ));
         }
-        private void dibujarPlaneta(Graphics2D x,Planeta p,int cx,int cy){
-            int r=p.diam/2;
-            Ellipse2D bola=new Ellipse2D.Double(cx-r,cy-r,p.diam,p.diam);
-            // Anillo posterior de Saturno.
-            if(p.nombre.equals("SATURNO")){x.setPaint(new GradientPaint(cx-r-10,cy,new Color(224,192,128,150),cx+r+12,cy,new Color(139,98,61,225)));x.setStroke(new BasicStroke(7f));x.draw(new Ellipse2D.Double(cx-r-15,cy-r*.28,r*2+30,r*.8));}
-            x.setPaint(new RadialGradientPaint(new Point2D.Double(cx-r*.35,cy-r*.42),p.diam*1.35f,new float[]{0f,.6f,1f},new Color[]{p.color.brighter(),p.color,new Color(Math.max(0,p.color.getRed()/3),Math.max(0,p.color.getGreen()/3),Math.max(0,p.color.getBlue()/3))}));x.fill(bola);
-            x.setClip(bola);
-            if(p.nombre.equals("JÚPITER")||p.nombre.equals("SATURNO")||p.nombre.equals("NEPTUNO")){
-                Color banda=p.nombre.equals("JÚPITER")?new Color(117,61,35,105):new Color(245,220,166,85);
-                for(int i=0;i<7;i++){double yy=cy-r+i*p.diam/7.0; x.setColor(i%2==0?banda:new Color(255,235,190,48));Path2D franja=new Path2D.Double();franja.moveTo(cx-r,yy);franja.curveTo(cx-r*.3,yy-5,cx+r*.25,yy+6,cx+r,yy-2);franja.lineTo(cx+r,yy+6);franja.curveTo(cx+r*.3,yy+12,cx-r*.2,yy+2,cx-r,yy+7);franja.closePath();x.fill(franja);}
-                if(p.nombre.equals("JÚPITER")){x.setColor(new Color(160,67,40,180));x.fill(new Ellipse2D.Double(cx+r*.18,cy+r*.10,r*.45,r*.22));x.setColor(new Color(255,193,128,125));x.draw(new Ellipse2D.Double(cx+r*.18,cy+r*.10,r*.45,r*.22));}
+
+        private void dibujarSol(Graphics2D x, double cx, double cy) {
+            if (imagenSol != null) {
+                int xSol = (int) cx - imagenSol.getWidth() / 2;
+                int ySol = (int) cy - imagenSol.getHeight() / 2;
+                x.drawImage(imagenSol, xSol, ySol, null);
             }
-            if(p.nombre.equals("TIERRA")){
-                x.setColor(new Color(71,150,80));Path2D tierra=new Path2D.Double();tierra.moveTo(cx-r*.72,cy-r*.1);tierra.curveTo(cx-r*.35,cy-r*.78,cx-r*.05,cy-r*.35,cx+r*.08,cy-r*.55);tierra.curveTo(cx+r*.5,cy-r*.48,cx+r*.25,cy-r*.12,cx+r*.66,cy+r*.02);tierra.curveTo(cx+r*.35,cy+r*.22,cx+r*.4,cy+r*.6,cx+r*.05,cy+r*.68);tierra.curveTo(cx-r*.18,cy+r*.38,cx-r*.35,cy+r*.2,cx-r*.72,cy-r*.1);tierra.closePath();x.fill(tierra);
-                x.setColor(new Color(235,245,245,125));x.setStroke(new BasicStroke(2f));x.draw(new Arc2D.Double(cx-r*.65,cy-r*.45,r*1.3,r*.95,15,125,Arc2D.OPEN));
+
+            int centroX = (int) cx;
+            int lineaBase = (int) cy + (imagenSol != null
+                    ? imagenSol.getHeight() / 2 + 32
+                    : 75);
+
+            dibujarEtiqueta(
+                    x,
+                    "TIENDA ESTELAR",
+                    centroX,
+                    lineaBase,
+                    18,
+                    true
+            );
+        }
+
+        private Rectangle dibujarEtiqueta(
+                Graphics2D x, String texto, int centroX, int lineaBase,
+                int tamanoFuente, boolean principal) {
+
+            Font fuente = fuentes.kiwiSoda(Font.BOLD, tamanoFuente);
+            x.setFont(fuente);
+            FontMetrics fm = x.getFontMetrics();
+
+            int ancho = fm.stringWidth(texto);
+            int alto = fm.getHeight();
+            int margenX = principal ? 18 : 12;
+            int margenY = principal ? 10 : 7;
+            int cajaX = centroX - ancho / 2 - margenX;
+            int cajaY = lineaBase - fm.getAscent() - margenY;
+            int cajaAncho = ancho + margenX * 2;
+            int cajaAlto = alto + margenY * 2;
+
+            // Sombra
+            x.setColor(new Color(0, 0, 0, 150));
+            x.fillRoundRect(cajaX + 3, cajaY + 4, cajaAncho, cajaAlto, 18, 18);
+
+            // Placa con degradado
+            Color inicio = principal
+                    ? new Color(255, 205, 72)
+                    : new Color(54, 91, 150);
+            Color fin = principal
+                    ? new Color(190, 91, 22)
+                    : new Color(22, 37, 75);
+
+            x.setPaint(new GradientPaint(cajaX, cajaY, inicio, cajaX, cajaY + cajaAlto, fin));
+            x.fillRoundRect(cajaX, cajaY, cajaAncho, cajaAlto, 18, 18);
+
+            // Borde
+            x.setColor(principal ? new Color(255, 239, 166) : new Color(153, 211, 255));
+            x.setStroke(new BasicStroke(principal ? 2.5f : 1.5f));
+            x.drawRoundRect(cajaX, cajaY, cajaAncho, cajaAlto, 18, 18);
+
+            // Texto
+            x.setColor(Color.WHITE);
+            x.drawString(texto, centroX - ancho / 2, lineaBase);
+
+            return new Rectangle(cajaX, cajaY, cajaAncho, cajaAlto);
+        }
+
+        private void dibujarPlaneta(
+                Graphics2D x, Planeta p, int cx, int cy, boolean resaltado) {
+            int r = p.diam / 2;
+            if (!p.spriteIntentado) {
+                p.sprite = prepararSprite(p);
+                p.spriteIntentado = true;
             }
-            if(p.nombre.equals("MARTE")||p.nombre.equals("LUNA")){
-                Random rand=new Random(p.nombre.hashCode());for(int i=0;i<8;i++){double ox=(rand.nextDouble()*1.35-.68)*r,oy=(rand.nextDouble()*1.35-.68)*r,cr=2+rand.nextDouble()*4;x.setColor(new Color(45,31,31,55));x.fill(new Ellipse2D.Double(cx+ox-cr,cy+oy-cr,cr*2,cr*1.5));x.setColor(new Color(255,208,170,45));x.draw(new Arc2D.Double(cx+ox-cr,cy+oy-cr,cr*2,cr*1.5,15,150,Arc2D.OPEN));}
+            if (p.sprite != null) {
+                Color c = p.color;
+                float escala = resaltado ? 1.12f : 1f;
+                float radioHalo = r * (resaltado ? 2.0f : 1.6f);
+                int alpha = resaltado ? 145 : 90;
+
+                x.setPaint(new RadialGradientPaint(
+                        new Point2D.Double(cx, cy),
+                        radioHalo,
+                        new float[]{0f, .6f, 1f},
+                        new Color[]{
+                                new Color(c.getRed(), c.getGreen(), c.getBlue(), alpha),
+                                new Color(c.getRed(), c.getGreen(), c.getBlue(), 60),
+                                new Color(c.getRed(), c.getGreen(), c.getBlue(), 0)
+                        }
+                ));
+
+                x.fill(new Ellipse2D.Double(
+                        cx - radioHalo, cy - radioHalo,
+                        radioHalo * 2, radioHalo * 2
+                ));
+
+                int ancho = (int) (p.sprite.getWidth() * escala);
+                int alto = (int) (p.sprite.getHeight() * escala);
+
+                x.drawImage(
+                        p.sprite,
+                        cx - ancho / 2,
+                        cy - alto / 2,
+                        ancho,
+                        alto,
+                        null
+                );
             }
-            // Sombreado nocturno y brillo atmosférico.
-            x.setPaint(new GradientPaint(cx-r*.5f,cy-r*.8f,new Color(255,255,255,38),cx+r,cy+r,new Color(4,8,24,175)));x.fill(bola);x.setClip(null);
-            x.setColor(new Color(175,218,255,210));x.setStroke(new BasicStroke(1.4f));x.draw(bola);
-            // Anillo delantero de Saturno.
-            if(p.nombre.equals("SATURNO")){x.setColor(new Color(229,193,132,220));x.setStroke(new BasicStroke(3f));x.draw(new Arc2D.Double(cx-r-15,cy-r*.28,r*2+30,r*.8,190,160,Arc2D.OPEN));}
-            String t=p.nombre+" - "+p.seccion;x.setFont(fuentes.mono(Font.BOLD,9));FontMetrics fm=x.getFontMetrics();int tw=fm.stringWidth(t);boolean encima=cy<getHeight()/2;int yy=encima?cy-r-8:cy+r+16;int yCaja=encima?yy-fm.getAscent()-3:yy-fm.getAscent()-3;x.setColor(new Color(6,10,28,225));x.fillRoundRect(cx-tw/2-6,yCaja,tw+12,fm.getHeight()+6,9,9);x.setColor(Tema.TEXTO);x.drawString(t,cx-tw/2,yy);p.bounds.setBounds(cx-tw/2-10,Math.min(cy-r-6,yCaja-3),tw+20,(cy+r+6)-(Math.min(cy-r-6,yCaja-3))+6);
+
+// La etiqueta y el área clicable se calculan aunque falte la imagen.
+            String texto = p.nombre + " - " + p.seccion;
+            boolean encima = cy < getHeight() / 2;
+            int lineaBase = encima ? cy - r - 12 : cy + r + 24;
+
+            Rectangle etiqueta = dibujarEtiqueta(
+                    x,
+                    texto,
+                    cx,
+                    lineaBase,
+                    11,
+                    false
+            );
+
+            Rectangle areaPlaneta = new Rectangle(
+                    cx - r - 10,
+                    cy - r - 10,
+                    p.diam + 20,
+                    p.diam + 20
+            );
+
+            p.bounds.setBounds(areaPlaneta.union(etiqueta));
         }
     }
-
     private static final class Planeta {
         final CategoriaTienda categoria;final String nombre,seccion;final Color color;final double orbita,angulo,velocidad;final int diam;final Rectangle bounds=new Rectangle();
+        BufferedImage sprite; boolean spriteIntentado;
         Planeta(CategoriaTienda c,String n,String s,Color color,double o,double a,int d,double v){categoria=c;nombre=n;seccion=s;this.color=color;orbita=o;angulo=a;diam=d;velocidad=v;}
     }
     private static TipoAccesorio tipoAccesorio(String id) {
@@ -230,7 +449,59 @@ public class VistaTienda extends JPanel {
         }
     }
 
-    private static BufferedImage componerAvatar(Set<String> ids) {
+    private static final double FACTOR_SATURNO = 1.93;   // la imagen incluye los anillos
+
+    /** Carga la textura del planeta y la deja ya escalada al tamaño con que se dibuja. */
+    private static BufferedImage prepararSprite(Planeta p) {
+        String nombre = java.text.Normalizer.normalize(p.nombre, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "").toLowerCase();               // "JÚPITER" -> "jupiter"
+        BufferedImage origen = cargarImagen("/planetas/" + nombre + ".png");
+        if (origen == null) return null;
+
+        int ancho = (int) Math.round(p.diam * (p.nombre.equals("SATURNO") ? FACTOR_SATURNO : 1.0));
+        int alto = (int) Math.round(ancho * (double) origen.getHeight() / origen.getWidth());
+
+        BufferedImage actual = origen;
+        while (actual.getWidth() / 2 > ancho) {                         // reducción por mitades
+            BufferedImage mitad = new BufferedImage(actual.getWidth() / 2, actual.getHeight() / 2, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g = mitad.createGraphics();
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g.drawImage(actual, 0, 0, mitad.getWidth(), mitad.getHeight(), null);
+            g.dispose();
+            actual = mitad;
+        }
+        BufferedImage fin = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = fin.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.drawImage(actual, 0, 0, ancho, alto, null);
+        g.dispose();
+        return fin;
+    }
+
+    private static BufferedImage prepararImagen(String recurso, int ancho) {
+        BufferedImage origen = cargarImagen(recurso);
+        if (origen == null) return null;
+
+        int alto = (int) Math.round(
+                ancho * (double) origen.getHeight() / origen.getWidth()
+        );
+
+        BufferedImage escalada =
+                new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_ARGB);
+
+        Graphics2D g = escalada.createGraphics();
+        g.setRenderingHint(
+                RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_BICUBIC
+        );
+        g.drawImage(origen, 0, 0, ancho, alto, null);
+        g.dispose();
+
+        return escalada;
+    }
+
+    static BufferedImage componerAvatar(Set<String> ids) {
         BufferedImage base = cargarImagen("/avatar_astronauta/base/astronauta_base.png");
         if (base == null) return null;
         BufferedImage resultado = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -272,41 +543,168 @@ public class VistaTienda extends JPanel {
 
     private static class Tarjeta extends JPanel {
         final int precio; final int valor; final boolean unico; final CategoriaTienda categoria;
-        final JButton comprar=Tema.botonTexto("COMPRAR");
+        final VistaTablero.BotonPill comprar =
+                new VistaTablero.BotonPill("COMPRAR", true, true);
         final JLabel disponibilidad=etiqueta("",fuentes.mono(Font.BOLD,10),Tema.SECUNDARIO);
+
         boolean adquirido, equipado, asequible;
 
-        Tarjeta(CategoriaTienda categoria,String nombre,String descripcion,int precio,int valor,boolean unico,BufferedImage imagen,Runnable click){
-            this.precio=precio;this.valor=valor;this.unico=unico;this.categoria=categoria;
-            setOpaque(false);setBorder(new EmptyBorder(14,14,14,14));setLayout(new BorderLayout(8,8));
-            if(imagen!=null){
-                JLabel dibujo=new JLabel(new ImageIcon(escalar(imagen,112,126)));dibujo.setHorizontalAlignment(SwingConstants.CENTER);add(dibujo,BorderLayout.CENTER);setPreferredSize(new Dimension(145,194));
-                JPanel datos=new JPanel();datos.setOpaque(false);datos.setLayout(new BoxLayout(datos,BoxLayout.Y_AXIS));
-                JLabel n=etiqueta(nombre,fuentes.mono(Font.BOLD,10),Tema.TEXTO);n.setAlignmentX(Component.CENTER_ALIGNMENT);
-                JLabel p=etiqueta(precio+" ESTRELLAS",fuentes.mono(Font.BOLD,9),Tema.ESTRELLA);p.setAlignmentX(Component.CENTER_ALIGNMENT);
-                datos.add(n);datos.add(Box.createVerticalStrut(3));datos.add(p);datos.add(disponibilidad);disponibilidad.setAlignmentX(Component.CENTER_ALIGNMENT);add(datos,BorderLayout.NORTH);
+        Tarjeta(CategoriaTienda categoria,String nombre,String descripcion,int precio,int valor,boolean unico,BufferedImage imagen,Runnable click) {
+            this.precio = precio;
+            this.valor = valor;
+            this.unico = unico;
+            this.categoria = categoria;
+
+            disponibilidad.setHorizontalAlignment(SwingConstants.CENTER);
+
+            setOpaque(false);
+            setBorder(new EmptyBorder(14, 14, 14, 14));
+            setLayout(new BorderLayout(8, 8));
+            if (imagen != null) {
+                JLabel dibujo = new JLabel(new ImageIcon(escalar(imagen, 112, 126)));
+                dibujo.setHorizontalAlignment(SwingConstants.CENTER);
+                add(dibujo, BorderLayout.CENTER);
+                setPreferredSize(new Dimension(145, 194));
+                JPanel datos = new JPanel();
+                datos.setOpaque(false);
+                datos.setLayout(new BoxLayout(datos, BoxLayout.Y_AXIS));
+                JLabel n = etiqueta(nombre, fuentes.mono(Font.BOLD, 10), Tema.TEXTO);
+                n.setAlignmentX(Component.CENTER_ALIGNMENT);
+                JLabel p = etiqueta(precio + " ESTRELLAS", fuentes.mono(Font.BOLD, 9), Tema.ESTRELLA);
+                p.setAlignmentX(Component.CENTER_ALIGNMENT);
+                datos.add(n);
+                datos.add(Box.createVerticalStrut(3));
+                datos.add(p);
+                datos.add(disponibilidad);
+                disponibilidad.setAlignmentX(Component.CENTER_ALIGNMENT);
+                add(datos, BorderLayout.NORTH);
             } else {
-                JPanel contenido=new JPanel();contenido.setOpaque(false);contenido.setLayout(new BoxLayout(contenido,BoxLayout.Y_AXIS));
-                IconoExtra icono=new IconoExtra(categoria);icono.setAlignmentX(Component.CENTER_ALIGNMENT);contenido.add(icono);
+                JPanel contenido = new JPanel();
+                contenido.setOpaque(false);
+                contenido.setLayout(new BoxLayout(contenido, BoxLayout.Y_AXIS));
+                IconoExtra icono = new IconoExtra(categoria);
+                icono.setAlignmentX(Component.CENTER_ALIGNMENT);
+                contenido.add(icono);
                 contenido.add(Box.createVerticalStrut(9));
-                JLabel nombreLbl=etiqueta(nombre.toUpperCase(),fuentes.mono(Font.BOLD,17),Tema.TEXTO);nombreLbl.setAlignmentX(Component.CENTER_ALIGNMENT);contenido.add(nombreLbl);
-                String cantidad="+"+valor+(categoria==CategoriaTienda.TIEMPO?" SEGUNDOS":" PUNTOS");
-                JLabel cantidadLbl=etiqueta(cantidad,fuentes.kiwiSoda(Font.BOLD,29),categoria==CategoriaTienda.TIEMPO?Tema.HIELO:Tema.ESTRELLA);cantidadLbl.setAlignmentX(Component.CENTER_ALIGNMENT);contenido.add(Box.createVerticalStrut(5));contenido.add(cantidadLbl);
-                JLabel detalle=etiqueta("<html><div style='text-align:center;width:210px'>"+descripcion+"</div></html>",fuentes.mono(Font.PLAIN,11),Tema.SECUNDARIO);detalle.setAlignmentX(Component.CENTER_ALIGNMENT);contenido.add(Box.createVerticalStrut(6));contenido.add(detalle);
-                JLabel costo=etiqueta("COSTO: "+precio+" ESTRELLAS",fuentes.mono(Font.BOLD,12),Tema.ESTRELLA);costo.setAlignmentX(Component.CENTER_ALIGNMENT);contenido.add(Box.createVerticalStrut(10));contenido.add(costo);
-                disponibilidad.setAlignmentX(Component.CENTER_ALIGNMENT);contenido.add(Box.createVerticalStrut(5));contenido.add(disponibilidad);add(contenido,BorderLayout.CENTER);
-                setPreferredSize(new Dimension(260,330));
+                String cantidad = "+" + valor + (categoria == CategoriaTienda.TIEMPO ? " SEGUNDOS" : " PUNTOS");
+                JLabel cantidadLbl = etiqueta(cantidad, fuentes.kiwiSoda(Font.BOLD, 29), categoria == CategoriaTienda.TIEMPO ? Tema.HIELO : Tema.ESTRELLA);
+                cantidadLbl.setAlignmentX(Component.CENTER_ALIGNMENT);
+                contenido.add(Box.createVerticalStrut(5));
+                contenido.add(cantidadLbl);
+                JLabel detalle = etiqueta(
+                        "<html><div style='text-align:center;width:210px'>"
+                                + descripcion
+                                + "</div></html>",
+                        fuentes.mono(Font.PLAIN, 11),
+                        Tema.SECUNDARIO
+                );
+                detalle.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+                Dimension altoDetalle = new Dimension(230, 38);
+                detalle.setPreferredSize(altoDetalle);
+                detalle.setMinimumSize(altoDetalle);
+                detalle.setMaximumSize(altoDetalle);
+
+                contenido.add(Box.createVerticalStrut(6));
+                contenido.add(detalle);
+                JLabel costo = etiqueta("COSTO: " + precio + " ESTRELLAS", fuentes.mono(Font.BOLD, 12), Tema.ESTRELLA);
+                costo.setAlignmentX(Component.CENTER_ALIGNMENT);
+                contenido.add(Box.createVerticalStrut(10));
+                contenido.add(costo);
+                costo.setHorizontalAlignment(SwingConstants.CENTER);
+                disponibilidad.setAlignmentX(Component.CENTER_ALIGNMENT);
+                contenido.add(Box.createVerticalStrut(5));
+                contenido.add(disponibilidad);
+                add(contenido, BorderLayout.CENTER);
+                setPreferredSize(new Dimension(260, 330));
             }
-            comprar.setFont(fuentes.mono(Font.BOLD,11));comprar.addActionListener(e->click.run());add(comprar,BorderLayout.SOUTH);
+
+            comprar.addActionListener(e -> click.run());
+            add(comprar, BorderLayout.SOUTH);
         }
+
         private static BufferedImage escalar(BufferedImage fuente,int ancho,int alto){
             BufferedImage mini=new BufferedImage(ancho,alto,BufferedImage.TYPE_INT_ARGB);Graphics2D g=mini.createGraphics();g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);g.drawImage(fuente,0,0,ancho,alto,null);g.dispose();return mini;
         }
+
         void setSaldo(int saldo){asequible=saldo>=precio;actualizarBoton();if(adquirido)disponibilidad.setText(equipado?"EN USO":"COMPRADO");else if(asequible)disponibilidad.setText("SALDO SUFICIENTE");else disponibilidad.setText("TE FALTAN "+(precio-saldo)+" ESTRELLAS");disponibilidad.setForeground(asequible?Tema.HIELO:Tema.ERROR);}
         void setComprado(boolean b){adquirido=b;actualizarBoton();}
         void setEquipado(boolean b){equipado=b;actualizarBoton();}
-        private void actualizarBoton(){comprar.setText(equipado?"RETIRAR":(adquirido?"EQUIPAR":"COMPRAR"));comprar.setEnabled(adquirido||asequible);}
-        @Override protected void paintComponent(Graphics g){Graphics2D x=(Graphics2D)g.create();x.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);x.setColor(new Color(8,13,32,195));x.fillRoundRect(0,0,getWidth()-1,getHeight()-1,22,22);x.setColor(adquirido?Tema.ESTRELLA:Tema.LINEA);x.drawRoundRect(0,0,getWidth()-1,getHeight()-1,22,22);x.dispose();}
+
+        private void actualizarBoton() {
+            comprar.setText(equipado ? "RETIRAR" : (adquirido ? "EQUIPAR" : "COMPRAR"));
+
+            boolean habilitado = adquirido || asequible;
+            comprar.setEnabled(habilitado);
+            comprar.setForeground(Color.BLACK);
+        }
+                @Override protected void paintComponent(Graphics g){Graphics2D x=(Graphics2D)g.create();x.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);x.setColor(new Color(8,13,32,195));x.fillRoundRect(0,0,getWidth()-1,getHeight()-1,22,22);x.setColor(adquirido?Tema.ESTRELLA:Tema.LINEA);x.drawRoundRect(0,0,getWidth()-1,getHeight()-1,22,22);x.dispose();}
+    }
+
+    private static final class MonedaAnimada extends JComponent {
+        private final BufferedImage imagen;
+        private double angulo;
+        private final javax.swing.Timer giro;
+
+        MonedaAnimada(BufferedImage imagen) {
+            this.imagen = imagen;
+            setPreferredSize(new Dimension(44, 36));
+
+            giro = new javax.swing.Timer(40, e -> {
+                angulo += 0.05;
+                repaint();
+            });
+
+            addHierarchyListener(e -> {
+                if ((e.getChangeFlags()
+                        & java.awt.event.HierarchyEvent.SHOWING_CHANGED) != 0) {
+                    if (isShowing()) {
+                        giro.start();
+                    } else {
+                        giro.stop();
+                    }
+                }
+            });
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            Graphics2D x = (Graphics2D) g.create();
+            x.setRenderingHint(
+                    RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BILINEAR
+            );
+            x.setRenderingHint(
+                    RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON
+            );
+
+            double giroHorizontal = Math.cos(angulo);
+            int centroX = getWidth() / 2;
+            int centroY = getHeight() / 2;
+
+            if (Math.abs(giroHorizontal) < 0.08) {
+                // Vista de canto cuando la moneda está de lado.
+                x.setColor(new Color(0xF5B900));
+                x.fillRoundRect(centroX - 2, centroY - 13, 4, 26, 4, 4);
+                x.setColor(Color.BLACK);
+                x.drawRoundRect(centroX - 2, centroY - 13, 4, 26, 4, 4);
+            } else {
+                // Se estrecha y se refleja al girar sobre su eje.
+                x.translate(centroX, centroY);
+                x.scale(giroHorizontal, 1.0);
+                x.drawImage(
+                        imagen,
+                        -imagen.getWidth() / 2,
+                        -imagen.getHeight() / 2,
+                        null
+                );
+            }
+
+            x.dispose();
+        }
     }
 
     private static class IconoExtra extends JComponent {
@@ -316,7 +714,33 @@ public class VistaTienda extends JPanel {
             Graphics2D x=(Graphics2D)g.create();x.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);int d=64,cx=getWidth()/2,cy=getHeight()/2;
             Color acento=tipo==CategoriaTienda.TIEMPO?Tema.HIELO:Tema.ESTRELLA;
             x.setPaint(new RadialGradientPaint(new Point(cx,cy),d/2,new float[]{0f,1f},new Color[]{new Color(acento.getRed(),acento.getGreen(),acento.getBlue(),100),new Color(acento.getRed(),acento.getGreen(),acento.getBlue(),15)}));x.fill(new Ellipse2D.Double(cx-d/2,cy-d/2,d,d));x.setColor(acento);x.setStroke(new BasicStroke(3f));
-            if(tipo==CategoriaTienda.TIEMPO){x.draw(new Ellipse2D.Double(cx-20,cy-20,40,40));x.drawLine(cx,cy-13,cx,cy);x.drawLine(cx,cy,cx+12,cy+7);x.fill(new Ellipse2D.Double(cx-3,cy-3,6,6));}
+            if (tipo == CategoriaTienda.TIEMPO) {
+                int radio = 21;
+
+                // Borde doble del reloj
+                x.setStroke(new BasicStroke(3.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                x.drawOval(cx - radio, cy - radio, radio * 2, radio * 2);
+
+                x.setStroke(new BasicStroke(1.4f));
+                x.drawOval(cx - radio + 5, cy - radio + 5, (radio - 5) * 2, (radio - 5) * 2);
+
+                // Marcas de las horas
+                for (int i = 0; i < 12; i++) {
+                    double angulo = Math.toRadians(i * 30 - 90);
+                    int largo = (i % 3 == 0) ? 5 : 3;
+                    int x1 = cx + (int) (Math.cos(angulo) * (radio - 5));
+                    int y1 = cy + (int) (Math.sin(angulo) * (radio - 5));
+                    int x2 = cx + (int) (Math.cos(angulo) * (radio - 5 - largo));
+                    int y2 = cy + (int) (Math.sin(angulo) * (radio - 5 - largo));
+                    x.drawLine(x1, y1, x2, y2);
+                }
+
+                // Manecillas y centro
+                x.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                x.drawLine(cx, cy, cx, cy - 13);
+                x.drawLine(cx, cy, cx + 11, cy + 7);
+                x.fillOval(cx - 3, cy - 3, 6, 6);
+            }
             else {Path2D estrella=new Path2D.Double();for(int i=0;i<10;i++){double a=-Math.PI/2+i*Math.PI/5,r=i%2==0?23:10,px=cx+Math.cos(a)*r,py=cy+Math.sin(a)*r;if(i==0)estrella.moveTo(px,py);else estrella.lineTo(px,py);}estrella.closePath();x.fill(estrella);}
             x.dispose();
         }

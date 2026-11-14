@@ -1,2 +1,4 @@
 Mari	2
 Juan	3
+alexaduran	2
+j	2
