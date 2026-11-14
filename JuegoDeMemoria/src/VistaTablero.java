@@ -38,12 +38,13 @@ public class VistaTablero extends JFrame {
     private final JLabel lblTurno = new JLabel("TURNO");
     private final JLabel lblTiempo = new JLabel("10");
     private final BarraTiempo barra = new BarraTiempo();
+    private JPanel panelReloj;
 
     private final JPanel zona = new JPanel(new CardLayout());
     private final JPanel pantallas = new JPanel(new CardLayout());
-    private final JButton btnFacil = new BotonPill("FÁCIL  ·  2 × 2", true);
-    private final JButton btnMedio = new BotonPill("MEDIO  ·  4 × 4", true);
-    private final JButton btnDificil = new BotonPill("DIFÍCIL  ·  6 × 6", true);
+    private final JButton btnFacil = new BotonPill("FÁCIL", true);
+    private final JButton btnMedio = new BotonPill("MEDIO", true);
+    private final JButton btnDificil = new BotonPill("DIFÍCIL", true);
 
     private final JLabel lblMensaje = new JLabel(" ");
     private final JButton btnAccion = new BotonPill("REINICIAR", true);
@@ -170,7 +171,8 @@ public class VistaTablero extends JFrame {
         textos.add(Box.createVerticalStrut(6));
         textos.add(lblTitulo);
 
-        encabezado.add(textos, BorderLayout.WEST);
+        panelReloj = crearRelojClasico();
+        encabezado.add(panelReloj, BorderLayout.EAST);
         encabezado.add(crearRelojClasico(), BorderLayout.EAST);
         return encabezado;
     }
@@ -255,28 +257,61 @@ public class VistaTablero extends JFrame {
 
         JPanel opciones = new JPanel(new GridLayout(1, 3, 22, 0));
         opciones.setOpaque(false);
-        opciones.add(crearOpcionNivel("NIVEL 01", "Ideal para comenzar", btnFacil));
-        opciones.add(crearOpcionNivel("NIVEL 02", "Un reto intermedio", btnMedio));
-        opciones.add(crearOpcionNivel("NIVEL 03", "Pon a prueba tu memoria", btnDificil));
+        opciones.add(crearOpcionNivel("NIVEL 01", "Ideal para comenzar", 2, btnFacil));
+        opciones.add(crearOpcionNivel("NIVEL 02", "Un reto intermedio", 4, btnMedio));
+        opciones.add(crearOpcionNivel("NIVEL 03", "Pon a prueba tu memoria", 6, btnDificil));
         panel.add(encabezado, BorderLayout.NORTH);
         panel.add(opciones, BorderLayout.CENTER);
         return panel;
     }
 
-    private JPanel crearOpcionNivel(String numero, String descripcion, JButton boton) {
+    private static javax.swing.border.Border bordeNivel(Color color) {
+        return BorderFactory.createCompoundBorder(
+                new LineBorder(color, 1, true), new EmptyBorder(24, 18, 24, 18));
+    }
+
+    private JPanel crearOpcionNivel(String numero, String descripcion, int tamano, JButton boton) {
         JPanel opcion = new JPanel(new BorderLayout(0, 18));
         opcion.setOpaque(false);
-        opcion.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(Tema.LINEA, 1, true), new EmptyBorder(24, 18, 24, 18)));
+        opcion.setBorder(bordeNivel(Tema.LINEA));
+
         JLabel nivel = new JLabel(numero, SwingConstants.CENTER);
         nivel.setFont(fuentes.mono(Font.BOLD, 12));
         nivel.setForeground(Tema.HIELO);
+
+        JLabel parejas = new JLabel((tamano * tamano / 2) + " PAREJAS", SwingConstants.CENTER);
+        parejas.setFont(fuentes.mono(Font.BOLD, 11));
+        parejas.setForeground(Tema.ESTRELLA);
+
         JLabel texto = new JLabel("<html><div style='text-align:center'>" + descripcion + "</div></html>", SwingConstants.CENTER);
         texto.setFont(Tema.sans(Font.PLAIN, 13));
         texto.setForeground(Tema.SECUNDARIO);
+
+        JPanel info = new JPanel(new GridLayout(2, 1, 0, 6));
+        info.setOpaque(false);
+        info.add(parejas);
+        info.add(texto);
+
+        JPanel centro = new JPanel(new BorderLayout(0, 16));
+        centro.setOpaque(false);
+        centro.add(new MiniTablero(tamano), BorderLayout.CENTER);
+        centro.add(info, BorderLayout.SOUTH);
+
         opcion.add(nivel, BorderLayout.NORTH);
-        opcion.add(texto, BorderLayout.CENTER);
+        opcion.add(centro, BorderLayout.CENTER);
         opcion.add(boton, BorderLayout.SOUTH);
+
+        // Hover: el borde se ilumina cuando el mouse está sobre la tarjeta
+        java.awt.event.MouseAdapter hover = new java.awt.event.MouseAdapter() {
+            private void actualizar() {
+                boolean dentro = opcion.getMousePosition(true) != null;
+                opcion.setBorder(bordeNivel(dentro ? Tema.ESTRELLA : Tema.LINEA));
+            }
+            @Override public void mouseEntered(java.awt.event.MouseEvent e) { actualizar(); }
+            @Override public void mouseExited(java.awt.event.MouseEvent e) { SwingUtilities.invokeLater(this::actualizar); }
+        };
+        opcion.addMouseListener(hover);
+        boton.addMouseListener(hover);
         return opcion;
     }
 
@@ -337,6 +372,13 @@ public class VistaTablero extends JFrame {
     public void mostrarSelectorNiveles() {
         ((CardLayout) pantallas.getLayout()).show(pantallas, "niveles");
         btnAccion.setVisible(false);
+        lblEyebrow.setText("MODO CLÁSICO  *  2 JUGADORES");
+        panelReloj.setVisible(false);
+        lblTurno.setVisible(false);
+        lblTiempo.setVisible(false);
+        barra.setVisible(false);
+        getContentPane().revalidate();
+        getContentPane().repaint();
     }
 
     public void mostrarTablero(int tamano) {
@@ -356,6 +398,7 @@ public class VistaTablero extends JFrame {
         lblEyebrow.setText("MODO CLÁSICO  *  " + nivel + "  *  " + tamano + " × " + tamano);
         ((CardLayout) pantallas.getLayout()).show(pantallas, "tablero");
         btnAccion.setVisible(true);
+        panelReloj.setVisible(true);
     }
 
     public JButton getBtnFacil() { return btnFacil; }
@@ -454,6 +497,43 @@ public class VistaTablero extends JFrame {
             g2.fillRoundRect(0, 0, w, h, h, h);
             g2.setColor(fraccion < 0.25 ? Tema.ERROR : Tema.HIELO);
             g2.fillRoundRect(0, 0, (int) (w * fraccion), h, h, h);
+            g2.dispose();
+        }
+    }
+
+    public static class MiniTablero extends JComponent {
+
+        private final int n;
+
+        public MiniTablero(int n) {
+            this.n = n;
+            setOpaque(false);
+            setPreferredSize(new Dimension(140, 140));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int lado = Math.min(getWidth(), getHeight()) - 4;
+            int gap = n >= 6 ? 4 : 6;
+            int celda = (lado - gap * (n - 1)) / n;
+            int total = celda * n + gap * (n - 1);
+            int x0 = (getWidth() - total) / 2;
+            int y0 = (getHeight() - total) / 2;
+
+            for (int f = 0; f < n; f++) {
+                for (int c = 0; c < n; c++) {
+                    int x = x0 + c * (celda + gap);
+                    int y = y0 + f * (celda + gap);
+                    boolean destacada = (f + c) % 2 == 0;   // patrón de tablero de ajedrez
+                    g2.setColor(new Color(169, 188, 255, destacada ? 120 : 35));
+                    g2.fillRoundRect(x, y, celda, celda, 6, 6);
+                    g2.setColor(new Color(169, 188, 255, 110));
+                    g2.drawRoundRect(x, y, celda, celda, 6, 6);
+                }
+            }
             g2.dispose();
         }
     }

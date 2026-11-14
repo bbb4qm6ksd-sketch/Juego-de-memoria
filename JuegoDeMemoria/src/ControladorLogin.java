@@ -12,6 +12,7 @@ public class ControladorLogin {
         vista.getBtnIngresar().addActionListener(e -> ingresar());
         vista.getBtnCrearCuenta().addActionListener(e -> abrirRegistro());
         vista.getBtnOlvide().addActionListener(e -> abrirRecuperacion());
+        FaceID.instalarEnLogin(vista, this::abrirMenu);   // botón "ENTRAR CON FACE ID"
     }
 
     private void ingresar() {
@@ -30,6 +31,7 @@ public class ControladorLogin {
             return;
         }
         vista.limpiarError();
+        FaceID.ofrecerActivar(vista, usuario);   // si aún no tiene Face ID, ofrece activarlo
         abrirMenu(usuario);
     }
 

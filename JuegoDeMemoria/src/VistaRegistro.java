@@ -14,6 +14,7 @@ public class VistaRegistro extends JDialog {
     private final JButton btnCrear = new VistaTablero.BotonPill("CREAR CUENTA", true);
     private final JButton btnVolver = Tema.botonTexto("VOLVER");
     private final JLabel lblError = new JLabel(" ");
+    private final JCheckBox chkFaceId = new JCheckBox("Activar Face ID con mi rostro", true);
 
     public VistaRegistro(Frame dueno) {
         super(dueno, "AstroMatch - Crear cuenta", true);
@@ -26,8 +27,8 @@ public class VistaRegistro extends JDialog {
         setContentPane(fondo);
         fondo.add(crearFormulario());
 
-        setSize(520, 700);
-        setMinimumSize(new Dimension(480, 660));
+        setSize(520, 750);
+        setMinimumSize(new Dimension(480, 710));
         setLocationRelativeTo(dueno);
     }
 
@@ -65,7 +66,14 @@ public class VistaRegistro extends JDialog {
         form.add(Box.createVerticalStrut(16));
         form.add(alinear(etiqueta("CONFIRMAR CONTRASEÑA", fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO)));
         form.add(alinear(campoClave(txtConfirmar)));
-        form.add(Box.createVerticalStrut(14));
+        form.add(Box.createVerticalStrut(16));
+        chkFaceId.setOpaque(false);
+        chkFaceId.setForeground(Tema.TEXTO);
+        chkFaceId.setFont(Tema.sans(Font.PLAIN, 13));
+        chkFaceId.setFocusPainted(false);
+        chkFaceId.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        form.add(alinear(chkFaceId));
+        form.add(Box.createVerticalStrut(10));
         form.add(alinear(lblError));
         form.add(Box.createVerticalStrut(10));
         form.add(alinear(btnCrear));
@@ -149,6 +157,7 @@ public class VistaRegistro extends JDialog {
     public String getCorreo()        { return txtCorreo.getText().trim(); }
     public String getContrasena()    { return new String(txtContrasena.getPassword()); }
     public String getConfirmacion()  { return new String(txtConfirmar.getPassword()); }
+    public boolean quiereFaceId()    { return chkFaceId.isSelected(); }
     public JButton getBtnCrear()     { return btnCrear; }
     public JButton getBtnVolver()    { return btnVolver; }
 

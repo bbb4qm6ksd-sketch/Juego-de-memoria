@@ -38,6 +38,15 @@ public class ControladorRegistro {
         Sonidos.reproducir(Sonidos.Efecto.ACIERTO);
         JOptionPane.showMessageDialog(vista, "Cuenta creada. Ya puedes iniciar sesión.",
                 "AstroMatch", JOptionPane.INFORMATION_MESSAGE);
+        if (vista.quiereFaceId()) {
+            // la cuenta ya existe: se abre la cámara directamente para registrar el rostro
+            boolean listo = FaceID.registrar(vista, usuario);
+            if (!listo) {
+                JOptionPane.showMessageDialog(vista,
+                        "No se activó Face ID. Podrás activarlo cuando inicies sesión con tu contraseña.",
+                        "AstroMatch", JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
         vista.dispose();
     }
 }

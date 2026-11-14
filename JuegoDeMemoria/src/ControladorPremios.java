@@ -39,6 +39,9 @@ public class ControladorPremios {
                     }
                     List<ModeloPremios.Fila> filas = modelo.getTabla(r[0]);
                     vista.mostrarTop(filas, r[0], r[1] == 1);
+                    for (int i = 0; i < filas.size(); i++) {
+                        vista.setAvatar(i, ModeloTienda.equipadosDe(filas.get(i).jugador));
+                    }
                 } catch (Exception e) {
                     vista.mostrarErrorCambio("Error al calcular los premios.");
                 }

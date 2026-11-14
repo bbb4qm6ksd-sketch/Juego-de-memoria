@@ -154,9 +154,35 @@ public class ModeloTienda {
     }
 
     //Persistencia
-    private File archivo() {
+    private File archivo() { return archivoDe(usuario); }
+
+    private static File archivoDe(String usuario) {
         String limpio = usuario.replaceAll("[^a-zA-Z0-9_-]", "_");
         return new File(CARPETA, "tienda_" + limpio + ".properties");
+    }
+
+    /** Solo lectura: accesorios equipados de un jugador. Vacío si no tiene tienda o no equipó nada. */
+    public static Set<String> equipadosDe(String usuario) {
+        Set<String> equipados = new LinkedHashSet<>();
+        if (usuario == null || usuario.trim().isEmpty()) return equipados;
+        File f = archivoDe(usuario.trim());
+        if (!f.exists()) return equipados;
+
+        Properties p = new Properties();
+        try (InputStream in = new FileInputStream(f)) {
+            p.load(in);
+        } catch (IOException e) {
+            return equipados;
+        }
+        Set<String> comprados = new HashSet<>();
+        for (String guardado : p.getProperty("accesoriosComprados", "").split(",")) {
+            comprados.add(migrarIdAccesorio(guardado));
+        }
+        for (String guardado : p.getProperty("accesoriosEquipados", "").split(",")) {
+            String id = migrarIdAccesorio(guardado);
+            if (id.startsWith("accesorio_") && comprados.contains(id)) equipados.add(id);
+        }
+        return equipados;
     }
 
     private void cargar() {
