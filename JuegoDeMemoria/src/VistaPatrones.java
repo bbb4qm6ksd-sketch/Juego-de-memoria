@@ -61,7 +61,7 @@ public class VistaPatrones extends JFrame {
     });
 
     public void lanzarConfeti() {
-        confeti = new Confeti(getWidth(), getHeight());
+        confeti = new Confeti(capaConfeti.getWidth(), capaConfeti.getHeight());
         confeti.iniciar();
         ultimoConfetiNs = System.nanoTime();
         capaConfeti.setVisible(true);
@@ -176,10 +176,26 @@ public class VistaPatrones extends JFrame {
         setMinimumSize(new Dimension(760, 680));
         setLocationRelativeTo(null);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setGlassPane(capaConfeti);
         capaConfeti.setOpaque(false);
         capaConfeti.addMouseListener(new MouseAdapter() {});
         capaConfeti.setVisible(false);
+
+        // La capa de cuenta atrás/confeti vive dentro del contenido para que siga
+        // funcionando cuando este modo se muestra en el marco principal.
+        Container contenidoBase = getContentPane();
+        JLayeredPane capas = new JLayeredPane() {
+            @Override public void doLayout() {
+                contenidoBase.setBounds(0, 0, getWidth(), getHeight());
+                capaConfeti.setBounds(0, 0, getWidth(), getHeight());
+            }
+
+            @Override public Dimension getPreferredSize() {
+                return contenidoBase.getPreferredSize();
+            }
+        };
+        capas.add(contenidoBase, JLayeredPane.DEFAULT_LAYER);
+        capas.add(capaConfeti, JLayeredPane.PALETTE_LAYER);
+        setContentPane(capas);
     }
 
     // ---------- Barra superior: marca + jugador + salir ----------

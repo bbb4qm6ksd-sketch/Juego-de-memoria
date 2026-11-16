@@ -58,6 +58,7 @@ public class VistaPantallaPrincipal extends JFrame {
         setSize(2000, 1000);
         setMinimumSize(new Dimension(1100, 650));
         setLocationRelativeTo(null);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
     //Encabezado

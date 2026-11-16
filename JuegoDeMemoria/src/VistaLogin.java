@@ -40,6 +40,7 @@ public class VistaLogin extends JFrame {
         setSize(2000, 1000);
         setMinimumSize(new Dimension(820, 560));
         setLocationRelativeTo(null);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
     private JPanel crearPanelHero() {

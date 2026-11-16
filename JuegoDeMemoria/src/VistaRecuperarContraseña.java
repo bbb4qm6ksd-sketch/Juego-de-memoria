@@ -2,7 +2,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-public class VistaRecuperarContraseña extends JDialog {
+public class VistaRecuperarContraseña extends JPanel {
 
     private static final char ECO = '\u2022';
     public static final String PASO_USUARIO = "usuario";
@@ -27,27 +27,35 @@ public class VistaRecuperarContraseña extends JDialog {
     private final JLabel lblSubtitulo = new JLabel(" ");
     private final JLabel lblError = new JLabel(" ");
 
-    public VistaRecuperarContraseña(Frame padre) {
-        super(padre, "AstroMatch - Restablecer contraseña", true);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-
-        JPanel raiz = new JPanel(new BorderLayout());
-        raiz.setBackground(Tema.FONDO);
-        raiz.setBorder(new EmptyBorder(36, 44, 30, 44));
-        setContentPane(raiz);
-
-        raiz.add(crearEncabezado(), BorderLayout.NORTH);
+    public VistaRecuperarContraseña() {
+        setOpaque(true);
+        setBackground(Tema.FONDO);
+        setLayout(new GridBagLayout());
+        setBorder(new EmptyBorder(36, 44, 30, 44));
 
         contenido.setOpaque(false);
         contenido.add(crearPasoUsuario(), PASO_USUARIO);
         contenido.add(crearPasoClave(), PASO_CLAVE);
         contenido.add(crearPasoExito(), PASO_EXITO);
-        raiz.add(contenido, BorderLayout.CENTER);
 
         lblError.setFont(Tema.sans(Font.PLAIN, 13));
         lblError.setForeground(Tema.ERROR);
         lblError.setBorder(new EmptyBorder(10, 0, 0, 0));
-        raiz.add(lblError, BorderLayout.SOUTH);
+
+        JPanel bloque = new JPanel();
+        bloque.setOpaque(false);
+        bloque.setLayout(new BoxLayout(bloque, BoxLayout.Y_AXIS));
+        bloque.add(crearEncabezado());
+        bloque.add(contenido);
+        bloque.add(lblError);
+        bloque.setPreferredSize(new Dimension(520, bloque.getPreferredSize().height));
+        bloque.setMaximumSize(new Dimension(520, Integer.MAX_VALUE));
+
+        GridBagConstraints centrado = new GridBagConstraints();
+        centrado.gridx = 0;
+        centrado.gridy = 0;
+        centrado.anchor = GridBagConstraints.CENTER;
+        add(bloque, centrado);
 
         btnVer.addActionListener(e -> {
             boolean oculta = txtNueva.getEchoChar() != 0;
@@ -58,11 +66,10 @@ public class VistaRecuperarContraseña extends JDialog {
         });
 
         mostrarPaso(PASO_USUARIO);
-        setMinimumSize(new Dimension(440, 0));
-        pack();
-        setResizable(false);
-        setLocationRelativeTo(padre);
     }
+
+    /** Constructor compatible con llamadas antiguas; la vista se monta en el marco principal. */
+    public VistaRecuperarContraseña(Frame padre) { this(); }
 
     private JPanel crearEncabezado() {
         JPanel p = new JPanel();
@@ -170,17 +177,18 @@ public class VistaRecuperarContraseña extends JDialog {
     public void mostrarPaso(String paso) {
         cartas.show(contenido, paso);
         limpiarError();
+        JRootPane raizVentana = SwingUtilities.getRootPane(contenido);
         if (PASO_USUARIO.equals(paso)) {
             lblSubtitulo.setText("Escribe tu usuario o correo.");
-            getRootPane().setDefaultButton(btnContinuar);
+            if (raizVentana != null) raizVentana.setDefaultButton(btnContinuar);
             txtUsuario.requestFocusInWindow();
         } else if (PASO_CLAVE.equals(paso)) {
             lblSubtitulo.setText("Elige una contraseña nueva.");
-            getRootPane().setDefaultButton(btnGuardar);
+            if (raizVentana != null) raizVentana.setDefaultButton(btnGuardar);
             txtNueva.requestFocusInWindow();
         } else {
             lblSubtitulo.setText("Todo listo.");
-            getRootPane().setDefaultButton(btnFinalizar);
+            if (raizVentana != null) raizVentana.setDefaultButton(btnFinalizar);
             btnFinalizar.requestFocusInWindow();
         }
     }

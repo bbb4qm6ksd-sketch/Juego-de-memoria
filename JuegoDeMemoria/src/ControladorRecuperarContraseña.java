@@ -2,20 +2,28 @@ public class ControladorRecuperarContraseña {
 
     private final VistaRecuperarContraseña vista;
     private final ModeloRecuperarContraseña modelo;
+    private final Runnable alSalir;
 
     public ControladorRecuperarContraseña(VistaRecuperarContraseña vista, ModeloRecuperarContraseña modelo) {
+        this(vista, modelo, () -> { });
+    }
+
+    public ControladorRecuperarContraseña(VistaRecuperarContraseña vista,
+                                          ModeloRecuperarContraseña modelo, Runnable alSalir) {
         this.vista = vista;
         this.modelo = modelo;
+        this.alSalir = alSalir;
 
+        vista.mostrarPaso(VistaRecuperarContraseña.PASO_USUARIO);
         vista.getBtnContinuar().addActionListener(e -> verificarCuenta());
         vista.getBtnGuardar().addActionListener(e -> guardarClave());
         vista.getBtnAtras().addActionListener(e -> {
             vista.limpiarClaves();
             vista.mostrarPaso(VistaRecuperarContraseña.PASO_USUARIO);
         });
-        vista.getBtnCancelar().addActionListener(e -> vista.dispose());
-        vista.getBtnCancelar2().addActionListener(e -> vista.dispose());
-        vista.getBtnFinalizar().addActionListener(e -> vista.dispose());
+        vista.getBtnCancelar().addActionListener(e -> salir());
+        vista.getBtnCancelar2().addActionListener(e -> salir());
+        vista.getBtnFinalizar().addActionListener(e -> salir());
     }
 
     private void verificarCuenta() {
@@ -43,5 +51,9 @@ public class ControladorRecuperarContraseña {
     private void error(String mensaje) {
         Sonidos.reproducir(Sonidos.Efecto.ERROR);
         vista.mostrarError(mensaje);
+    }
+
+    private void salir() {
+        alSalir.run();
     }
 }

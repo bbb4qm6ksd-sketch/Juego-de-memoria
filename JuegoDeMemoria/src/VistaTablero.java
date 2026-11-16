@@ -12,7 +12,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import java.awt.Window;
@@ -78,23 +77,8 @@ public class VistaTablero extends JFrame {
     }
 
     public void mostrarMensajeFinal(String titulo, String detalle) {
-        JLabel lblTitulo = new JLabel(titulo, SwingConstants.CENTER);
-        lblTitulo.setFont(fuentes.kiwiSoda(Font.BOLD, 32));
-        lblTitulo.setForeground(Tema.TEXTO);
-
-        JLabel lblDetalle = new JLabel(detalle, SwingConstants.CENTER);
-        lblDetalle.setFont(fuentes.mono(Font.PLAIN, 13));
-        lblDetalle.setForeground(Tema.SECUNDARIO);
-
-        JPanel panel = new JPanel(new BorderLayout(0, 14));
-        panel.setBackground(new Color(0x141F47));
-        panel.setBorder(new EmptyBorder(24, 40, 24, 40));
-        panel.add(lblTitulo, BorderLayout.CENTER);
-        panel.add(lblDetalle, BorderLayout.SOUTH);
-
         Window ventana = SwingUtilities.getWindowAncestor(getContentPane());
-        JOptionPane.showMessageDialog(ventana == null ? this : ventana, panel,
-                "AstroMatch", JOptionPane.PLAIN_MESSAGE);
+        DialogoAstro.informar(ventana == null ? this : ventana, titulo, detalle);
     }
 
     public void detenerConfeti() {
@@ -317,56 +301,9 @@ public class VistaTablero extends JFrame {
 
     public String solicitarNombreJugador2(String nombreInicial) {
         Window ventana = SwingUtilities.getWindowAncestor(getContentPane());
-        JDialog dialogo = new JDialog(ventana, "Segundo jugador", Dialog.ModalityType.APPLICATION_MODAL);
-        dialogo.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        Tema fondo = new Tema(90, new Color(0x141F47), Tema.FONDO);
-        fondo.setLayout(new BorderLayout(0, 18));
-        fondo.setBorder(new EmptyBorder(28, 32, 26, 32));
-
-        JLabel titulo = new JLabel("Identifica al jugador 2", SwingConstants.CENTER);
-        titulo.setFont(fuentes.kiwiSoda(Font.PLAIN, 28));
-        titulo.setForeground(Tema.TEXTO);
-        JLabel instruccion = new JLabel("Su nombre aparecerá durante la partida", SwingConstants.CENTER);
-        instruccion.setFont(fuentes.mono(Font.PLAIN, 11));
-        instruccion.setForeground(Tema.SECUNDARIO);
-        JTextField campo = new JTextField(nombreInicial == null ? "" : nombreInicial, 20);
-        campo.setFont(Tema.sans(Font.PLAIN, 16));
-        campo.setForeground(Tema.TEXTO);
-        campo.setCaretColor(Tema.ESTRELLA);
-        campo.setBackground(new Color(0x0A1028));
-        campo.setBorder(BorderFactory.createCompoundBorder(new LineBorder(Tema.LINEA, 1, true),
-                new EmptyBorder(10, 12, 10, 12)));
-
-        JPanel centro = new JPanel(new GridLayout(2, 1, 0, 10));
-        centro.setOpaque(false);
-        centro.add(instruccion);
-        centro.add(campo);
-        JButton aceptar = new BotonPill("CONTINUAR", true);
-        JButton cancelar = Tema.botonTexto("CANCELAR");
-        JPanel acciones = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
-        acciones.setOpaque(false);
-        acciones.add(cancelar);
-        acciones.add(aceptar);
-        String[] resultado = {null};
-        aceptar.addActionListener(e -> {
-            if (!campo.getText().trim().isEmpty()) {
-                resultado[0] = campo.getText().trim();
-                dialogo.dispose();
-            }
-        });
-        cancelar.addActionListener(e -> dialogo.dispose());
-        campo.addActionListener(e -> aceptar.doClick());
-
-        fondo.add(titulo, BorderLayout.NORTH);
-        fondo.add(centro, BorderLayout.CENTER);
-        fondo.add(acciones, BorderLayout.SOUTH);
-        dialogo.setContentPane(fondo);
-        dialogo.getRootPane().setDefaultButton(aceptar);
-        dialogo.pack();
-        dialogo.setMinimumSize(new Dimension(430, 250));
-        dialogo.setLocationRelativeTo(this);
-        dialogo.setVisible(true);
-        return resultado[0];
+        return DialogoAstro.pedirTexto(ventana == null ? this : ventana,
+                "Identifica al jugador 2", "Su nombre aparecerá durante la partida",
+                nombreInicial, "CONTINUAR", "CANCELAR");
     }
 
     public void mostrarSelectorNiveles() {

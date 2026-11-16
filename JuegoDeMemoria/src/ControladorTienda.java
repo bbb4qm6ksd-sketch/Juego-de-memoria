@@ -1,4 +1,4 @@
-/** Controla la tienda y conecta su vista independiente con el modelo. */
+
 public class ControladorTienda {
     private final VistaTienda vista;
     private final ModeloTienda modelo;

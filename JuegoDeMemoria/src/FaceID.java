@@ -64,8 +64,10 @@ public final class FaceID {
 
     private static final int MUESTRAS = 5;                    // capturas que se guardan al registrar
     private static final long INTERVALO_MUESTRA_MS = 1400;    // pausa entre capturas (para cambiar de pose)
-    private static final double UMBRAL = 0.45;                // similitud coseno mínima (mayor = más estricto)
-    private static final double MARGEN = 0.05;                // ventaja mínima sobre el 2.º usuario más parecido
+    // SFace suele separar identidades con cosine similarity desde ~0.36; se deja
+    // margen para cámaras normales sin aceptar coincidencias demasiado débiles.
+    private static final double UMBRAL = 0.40;
+    private static final double MARGEN = 0.025;              // evita elegir entre dos cuentas casi empatadas
     private static final int RACHA_NECESARIA = 3;             // fotogramas seguidos que deben coincidir
     private static final double ANCHO_MIN = 0.20;             // el rostro debe ocupar al menos 20 % del ancho
     private static final long TIEMPO_MAX_MS = 45_000;         // tiempo máximo por intento
@@ -122,12 +124,10 @@ public final class FaceID {
         if (usuario == null || tieneFaceID(usuario) || RECHAZADOS.contains(usuario.toLowerCase())) {
             return;
         }
-        Object[] opciones = {"Activar Face ID", "Ahora no"};
-        int r = JOptionPane.showOptionDialog(dueno,
-                "¿Quieres activar Face ID para entrar con tu rostro, sin escribir la contraseña?",
-                "AstroMatch - Face ID", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
-                null, opciones, opciones[0]);
-        if (r == 0) {
+        boolean activar = DialogoAstro.confirmar(dueno, "Activa Face ID",
+                "¿Quieres registrar tu rostro para iniciar sesión sin escribir la contraseña?",
+                "ACTIVAR FACE ID", "AHORA NO");
+        if (activar) {
             registrar(dueno, usuario);
         } else {
             RECHAZADOS.add(usuario.toLowerCase());
@@ -324,7 +324,7 @@ public final class FaceID {
         private int alto = -1;
 
         private Motor(Path detector, Path reconocedor) {
-            this.detector = FaceDetectorYN.create(detector.toString(), "", new Size(640, 480), 0.9f, 0.3f, 5000);
+            this.detector = FaceDetectorYN.create(detector.toString(), "", new Size(640, 480), 0.75f, 0.3f, 5000);
             this.reconocedor = FaceRecognizerSF.create(reconocedor.toString(), "");
         }
 
@@ -617,7 +617,11 @@ public final class FaceID {
             });
 
             video.setPreferredSize(new Dimension(520, 390));
-            pack();
+            Dimension tamano = dueno == null ? Toolkit.getDefaultToolkit().getScreenSize() : dueno.getSize();
+            if (tamano.width < 800 || tamano.height < 600) {
+                tamano = Toolkit.getDefaultToolkit().getScreenSize();
+            }
+            setSize(tamano);
             setLocationRelativeTo(dueno);
         }
 
@@ -730,7 +734,7 @@ public final class FaceID {
         private void bucleIdentificar(VideoCapture camara, Motor motor) throws InterruptedException {
             Map<String, List<float[]>> base = cargarTodo(true);
             if (base.isEmpty()) {
-                fallo("Todavía no hay rostros registrados. Inicia sesión con tu contraseña y activa Face ID.");
+                fallo("Todavía no hay rostros registrados. Crea una cuenta y registra tu rostro para usar Face ID.");
                 return;
             }
             Mat cuadro = new Mat();
@@ -770,7 +774,7 @@ public final class FaceID {
                         candidato = null;
                         racha = 0;
                     }
-                    mostrar(espejo, d, Estado.OK, racha > 0 ? "Verificando…" : "Mantén el rostro dentro del óvalo");
+            mostrar(espejo, d, Estado.OK, racha > 0 ? "Verificando…" : "Mantén el rostro dentro del visor");
                     if (racha >= RACHA_NECESARIA) {
                         usuarioReconocido = nombreReal(candidato);
                         exito = true;
@@ -813,7 +817,7 @@ public final class FaceID {
         /** Texto de ayuda si el cuadro no sirve para reconocer, o null si el rostro es válido. */
         private String problema(Deteccion d, Mat cuadro) {
             if (d == null) {
-                return "No veo tu rostro. Colócalo dentro del óvalo.";
+                return "No veo tu rostro. Colócalo dentro del visor del casco.";
             }
             if (d.cantidad > 1) {
                 return "Solo debe aparecer una persona.";
@@ -825,7 +829,7 @@ public final class FaceID {
             float cy = d.fila[1] + d.fila[3] / 2f;
             if (Math.abs(cx - cuadro.cols() / 2f) > cuadro.cols() * 0.18
                     || Math.abs(cy - cuadro.rows() / 2f) > cuadro.rows() * 0.22) {
-                return "Centra tu rostro en el óvalo.";
+                return "Centra tu rostro dentro del visor del casco.";
             }
             return null;
         }
@@ -927,21 +931,59 @@ public final class FaceID {
             Color color = est == VentanaCamara.Estado.ERROR ? Tema.ERROR
                     : est == VentanaCamara.Estado.BUSCANDO ? Tema.HIELO : Tema.ESTRELLA;
 
-            // oscurece todo lo que queda fuera del óvalo
-            double ew = w * 0.46;
-            double eh = h * 0.80;
-            Ellipse2D ovalo = new Ellipse2D.Double((w - ew) / 2, (h - eh) / 2, ew, eh);
+            // Visor grande dentro de la silueta de un casco de astronauta.
+            // El área del visor permanece transparente para alinear el rostro.
+            double escalaCasco = Math.min(w, h);
+            double centroX = w / 2.0;
+            double centroY = h / 2.0;
+            double visorW = escalaCasco * 0.58;
+            double visorH = escalaCasco * 0.72;
+            double visorX = centroX - visorW / 2.0;
+            double visorY = centroY - visorH / 2.0;
+            RoundRectangle2D visor = new RoundRectangle2D.Double(visorX, visorY, visorW, visorH,
+                    visorW * 0.30, visorH * 0.28);
+            Path2D casco = new Path2D.Double();
+            casco.moveTo(centroX - escalaCasco * 0.27, centroY + escalaCasco * 0.25);
+            casco.curveTo(centroX - escalaCasco * 0.38, centroY + escalaCasco * 0.13,
+                    centroX - escalaCasco * 0.38, centroY - escalaCasco * 0.24,
+                    centroX - escalaCasco * 0.29, centroY - escalaCasco * 0.37);
+            casco.curveTo(centroX - escalaCasco * 0.20, centroY - escalaCasco * 0.50,
+                    centroX + escalaCasco * 0.20, centroY - escalaCasco * 0.50,
+                    centroX + escalaCasco * 0.29, centroY - escalaCasco * 0.37);
+            casco.curveTo(centroX + escalaCasco * 0.38, centroY - escalaCasco * 0.24,
+                    centroX + escalaCasco * 0.38, centroY + escalaCasco * 0.13,
+                    centroX + escalaCasco * 0.27, centroY + escalaCasco * 0.25);
+            casco.curveTo(centroX + escalaCasco * 0.17, centroY + escalaCasco * 0.39,
+                    centroX - escalaCasco * 0.17, centroY + escalaCasco * 0.39,
+                    centroX - escalaCasco * 0.27, centroY + escalaCasco * 0.25);
+            casco.closePath();
+            Path2D traje = new Path2D.Double();
+            traje.moveTo(centroX - escalaCasco * 0.25, centroY + escalaCasco * 0.24);
+            traje.curveTo(centroX - escalaCasco * 0.39, centroY + escalaCasco * 0.24,
+                    centroX - escalaCasco * 0.48, centroY + escalaCasco * 0.32,
+                    centroX - escalaCasco * 0.49, centroY + escalaCasco * 0.43);
+            traje.curveTo(centroX - escalaCasco * 0.51, centroY + escalaCasco * 0.50,
+                    centroX - escalaCasco * 0.39, centroY + escalaCasco * 0.49,
+                    centroX - escalaCasco * 0.25, centroY + escalaCasco * 0.49);
+            traje.lineTo(centroX + escalaCasco * 0.25, centroY + escalaCasco * 0.49);
+            traje.curveTo(centroX + escalaCasco * 0.39, centroY + escalaCasco * 0.49,
+                    centroX + escalaCasco * 0.51, centroY + escalaCasco * 0.50,
+                    centroX + escalaCasco * 0.49, centroY + escalaCasco * 0.43);
+            traje.curveTo(centroX + escalaCasco * 0.48, centroY + escalaCasco * 0.32,
+                    centroX + escalaCasco * 0.39, centroY + escalaCasco * 0.24,
+                    centroX + escalaCasco * 0.25, centroY + escalaCasco * 0.24);
+            traje.closePath();
             Area fuera = new Area(new Rectangle(0, 0, w, h));
-            fuera.subtract(new Area(ovalo));
+            fuera.subtract(new Area(visor));
             g.setColor(new Color(6, 9, 20, 175));
             g.fill(fuera);
 
             // línea de escaneo
             if (est == VentanaCamara.Estado.BUSCANDO || est == VentanaCamara.Estado.OK) {
                 double t = (System.nanoTime() / 1e9) % 2.4 / 2.4;
-                double y = ovalo.getY() + t * eh;
+                double y = visor.getY() + t * visor.getHeight();
                 Shape anterior = g.getClip();
-                g.clip(ovalo);
+                g.clip(visor);
                 g.setPaint(new GradientPaint(0, (float) y - 26, new Color(169, 188, 255, 0),
                         0, (float) y, new Color(169, 188, 255, 120)));
                 g.fill(new Rectangle2D.Double(0, y - 26, w, 26));
@@ -950,13 +992,44 @@ public final class FaceID {
                 g.setClip(anterior);
             }
 
-            // contorno del óvalo
+            // Silueta del casco y borde iluminado del visor.
             Stroke trazo = est == VentanaCamara.Estado.BUSCANDO
                     ? new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1f, new float[]{9f, 9f}, 0f)
                     : new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
             g.setStroke(trazo);
             g.setColor(color);
-            g.draw(ovalo);
+            g.draw(casco);
+            g.draw(visor);
+            g.setColor(new Color(198, 216, 255, 225));
+            g.setStroke(new BasicStroke(3.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g.draw(traje);
+            g.setStroke(new BasicStroke(5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g.draw(new RoundRectangle2D.Double(centroX - escalaCasco * 0.47, centroY - escalaCasco * 0.06,
+                    escalaCasco * 0.10, escalaCasco * 0.23, 16, 16));
+            g.draw(new RoundRectangle2D.Double(centroX + escalaCasco * 0.37, centroY - escalaCasco * 0.06,
+                    escalaCasco * 0.10, escalaCasco * 0.23, 16, 16));
+            g.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g.draw(new RoundRectangle2D.Double(centroX - escalaCasco * 0.14,
+                    centroY + escalaCasco * 0.39, escalaCasco * 0.28, escalaCasco * 0.07, 12, 12));
+            double punto = escalaCasco * 0.018;
+            g.fill(new Ellipse2D.Double(centroX - escalaCasco * 0.09, centroY + escalaCasco * 0.415, punto, punto));
+            g.fill(new Ellipse2D.Double(centroX - punto / 2, centroY + escalaCasco * 0.415, punto, punto));
+            g.fill(new Ellipse2D.Double(centroX + escalaCasco * 0.055, centroY + escalaCasco * 0.415, punto, punto));
+            g.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            Path2D detalleTraje = new Path2D.Double();
+            detalleTraje.moveTo(centroX - escalaCasco * 0.44, centroY + escalaCasco * 0.32);
+            detalleTraje.quadTo(centroX - escalaCasco * 0.39, centroY + escalaCasco * 0.28,
+                    centroX - escalaCasco * 0.34, centroY + escalaCasco * 0.30);
+            detalleTraje.moveTo(centroX - escalaCasco * 0.44, centroY + escalaCasco * 0.39);
+            detalleTraje.quadTo(centroX - escalaCasco * 0.39, centroY + escalaCasco * 0.35,
+                    centroX - escalaCasco * 0.33, centroY + escalaCasco * 0.36);
+            detalleTraje.moveTo(centroX + escalaCasco * 0.44, centroY + escalaCasco * 0.32);
+            detalleTraje.quadTo(centroX + escalaCasco * 0.39, centroY + escalaCasco * 0.28,
+                    centroX + escalaCasco * 0.34, centroY + escalaCasco * 0.30);
+            detalleTraje.moveTo(centroX + escalaCasco * 0.44, centroY + escalaCasco * 0.39);
+            detalleTraje.quadTo(centroX + escalaCasco * 0.39, centroY + escalaCasco * 0.35,
+                    centroX + escalaCasco * 0.33, centroY + escalaCasco * 0.36);
+            g.draw(detalleTraje);
 
             // esquinas sobre el rostro detectado
             float[] f = fila;

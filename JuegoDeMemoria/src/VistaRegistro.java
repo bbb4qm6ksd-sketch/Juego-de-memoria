@@ -12,9 +12,10 @@ public class VistaRegistro extends JDialog {
     private final JPasswordField txtContrasena = new JPasswordField();
     private final JPasswordField txtConfirmar = new JPasswordField();
     private final JButton btnCrear = new VistaTablero.BotonPill("CREAR CUENTA", true);
+    private final JButton btnRegistrarRostro = new VistaTablero.BotonPill("REGISTRAR ROSTRO", false);
     private final JButton btnVolver = Tema.botonTexto("VOLVER");
     private final JLabel lblError = new JLabel(" ");
-    private final JCheckBox chkFaceId = new JCheckBox("Activar Face ID con mi rostro", true);
+    private final JLabel lblEstadoRostro = new JLabel("Rostro pendiente de registro");
 
     public VistaRegistro(Frame dueno) {
         super(dueno, "AstroMatch - Crear cuenta", true);
@@ -27,8 +28,8 @@ public class VistaRegistro extends JDialog {
         setContentPane(fondo);
         fondo.add(crearFormulario());
 
-        setSize(520, 750);
-        setMinimumSize(new Dimension(480, 710));
+        setSize(520, 790);
+        setMinimumSize(new Dimension(480, 750));
         setLocationRelativeTo(dueno);
     }
 
@@ -54,25 +55,20 @@ public class VistaRegistro extends JDialog {
         form.add(alinear(etiqueta("NUEVA CUENTA", fuentes.mono(Font.BOLD, 11), Tema.HIELO)));
         form.add(Box.createVerticalStrut(14));
         form.add(alinear(etiqueta("Crea tu cuenta", fuentes.mono(Font.PLAIN, 40), Tema.TEXTO)));
-        form.add(Box.createVerticalStrut(28));
+        form.add(Box.createVerticalStrut(18));
         form.add(alinear(etiqueta("USUARIO",fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO)));
         form.add(alinear(txtUsuario));
-        form.add(Box.createVerticalStrut(16));
+        form.add(Box.createVerticalStrut(10));
         form.add(alinear(etiqueta("CORREO",fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO)));
         form.add(alinear(txtCorreo));
-        form.add(Box.createVerticalStrut(16));
+        form.add(Box.createVerticalStrut(10));
         form.add(alinear(etiqueta("CONTRASEÑA", fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO)));
         form.add(alinear(campoClave(txtContrasena)));
-        form.add(Box.createVerticalStrut(16));
+        form.add(Box.createVerticalStrut(10));
         form.add(alinear(etiqueta("CONFIRMAR CONTRASEÑA", fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO)));
         form.add(alinear(campoClave(txtConfirmar)));
-        form.add(Box.createVerticalStrut(16));
-        chkFaceId.setOpaque(false);
-        chkFaceId.setForeground(Tema.TEXTO);
-        chkFaceId.setFont(Tema.sans(Font.PLAIN, 13));
-        chkFaceId.setFocusPainted(false);
-        chkFaceId.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        form.add(alinear(chkFaceId));
+        form.add(Box.createVerticalStrut(12));
+        form.add(alinear(crearSeccionRostro()));
         form.add(Box.createVerticalStrut(10));
         form.add(alinear(lblError));
         form.add(Box.createVerticalStrut(10));
@@ -86,6 +82,68 @@ public class VistaRegistro extends JDialog {
             ((JComponent) hijo).setAlignmentX(Component.LEFT_ALIGNMENT);
         }
         return form;
+    }
+
+    private JPanel crearSeccionRostro() {
+        JPanel tarjeta = new JPanel(new BorderLayout(12, 0));
+        tarjeta.setOpaque(false);
+        tarjeta.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(169, 188, 255, 100), 1, true),
+                new EmptyBorder(8, 10, 8, 10)));
+        AvatarAstronauta avatar = new AvatarAstronauta();
+        tarjeta.add(avatar, BorderLayout.WEST);
+
+        JPanel texto = new JPanel();
+        texto.setOpaque(false);
+        texto.setLayout(new BoxLayout(texto, BoxLayout.Y_AXIS));
+        JLabel titulo = etiqueta("IDENTIDAD ESPACIAL", fuentes.mono(Font.BOLD, 10), Tema.HIELO);
+        lblEstadoRostro.setFont(Tema.sans(Font.PLAIN, 12));
+        lblEstadoRostro.setForeground(Tema.SECUNDARIO);
+        titulo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblEstadoRostro.setAlignmentX(Component.LEFT_ALIGNMENT);
+        texto.add(titulo);
+        texto.add(Box.createVerticalStrut(6));
+        texto.add(lblEstadoRostro);
+        tarjeta.add(texto, BorderLayout.CENTER);
+
+        btnRegistrarRostro.setMaximumSize(new Dimension(165, 42));
+        btnRegistrarRostro.setPreferredSize(new Dimension(165, 42));
+        tarjeta.add(btnRegistrarRostro, BorderLayout.EAST);
+        tarjeta.setMaximumSize(new Dimension(Integer.MAX_VALUE, 82));
+        return tarjeta;
+    }
+
+    /** Icono original del astronauta para señalar dónde iniciar el registro facial. */
+    private static final class AvatarAstronauta extends JComponent {
+        AvatarAstronauta() {
+            setPreferredSize(new Dimension(54, 62));
+            setOpaque(false);
+        }
+
+        @Override protected void paintComponent(Graphics g0) {
+            Graphics2D g = (Graphics2D) g0.create();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.translate(2, 1);
+            g.setColor(new Color(75, 101, 177, 100));
+            g.fillRoundRect(5, 21, 42, 38, 16, 16);
+            g.fillRoundRect(1, 30, 9, 20, 7, 7);
+            g.fillRoundRect(42, 30, 9, 20, 7, 7);
+            g.setColor(new Color(198, 216, 255));
+            g.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g.drawRoundRect(5, 21, 42, 38, 16, 16);
+            g.drawRoundRect(1, 30, 9, 20, 7, 7);
+            g.drawRoundRect(42, 30, 9, 20, 7, 7);
+            g.setColor(new Color(14, 24, 59));
+            g.fillRoundRect(11, 27, 30, 27, 12, 12);
+            g.setColor(Tema.HIELO);
+            g.setStroke(new BasicStroke(1.6f));
+            g.drawRoundRect(11, 27, 30, 27, 12, 12);
+            g.drawLine(20, 17, 20, 11);
+            g.drawLine(32, 17, 32, 11);
+            g.fill(new Ellipse2D.Double(17, 6, 6, 6));
+            g.fill(new Ellipse2D.Double(29, 6, 6, 6));
+            g.dispose();
+        }
     }
 
     // ---------- Campo de contrasena con "ojito" para mostrar/ocultar ----------
@@ -157,9 +215,15 @@ public class VistaRegistro extends JDialog {
     public String getCorreo()        { return txtCorreo.getText().trim(); }
     public String getContrasena()    { return new String(txtContrasena.getPassword()); }
     public String getConfirmacion()  { return new String(txtConfirmar.getPassword()); }
-    public boolean quiereFaceId()    { return chkFaceId.isSelected(); }
+    public JButton getBtnRegistrarRostro() { return btnRegistrarRostro; }
     public JButton getBtnCrear()     { return btnCrear; }
     public JButton getBtnVolver()    { return btnVolver; }
+
+    public void fijarRostroRegistrado(boolean registrado) {
+        lblEstadoRostro.setText(registrado ? "Rostro capturado correctamente" : "Rostro pendiente de registro");
+        lblEstadoRostro.setForeground(registrado ? Tema.ESTRELLA : Tema.SECUNDARIO);
+        btnRegistrarRostro.setText(registrado ? "VOLVER A CAPTURAR" : "REGISTRAR ROSTRO");
+    }
 
     public void mostrarError(String mensaje) { lblError.setText(mensaje); }
     public void limpiarError()               { lblError.setText(" "); }

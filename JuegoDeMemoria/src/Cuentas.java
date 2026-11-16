@@ -23,6 +23,22 @@ public class Cuentas {
     }
 
     public static String registrar(String usuario, String correo, String contrasena) {
+        String error = validarRegistro(usuario, correo, contrasena);
+        if (error != null) {
+            return error;
+        }
+        try {
+            String linea = usuario + ";" + correo + ";" + contrasena + System.lineSeparator();
+            Files.write(ARCHIVO, linea.getBytes(StandardCharsets.UTF_8),
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            return null;
+        } catch (IOException e) {
+            return "No se pudo guardar la cuenta.";
+        }
+    }
+
+    /** Valida una cuenta sin guardarla; el formulario la usa antes de abrir la cámara. */
+    public static String validarRegistro(String usuario, String correo, String contrasena) {
         if (!USUARIO.matcher(usuario).matches()) {
             return "Usuario: de 3 a 20 caracteres (letras, números, . _ -).";
         }
@@ -42,12 +58,9 @@ public class Cuentas {
                     return "Ese correo ya tiene una cuenta.";
                 }
             }
-            String linea = usuario + ";" + correo + ";" + contrasena + System.lineSeparator();
-            Files.write(ARCHIVO, linea.getBytes(StandardCharsets.UTF_8),
-                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             return null;
         } catch (IOException e) {
-            return "No se pudo guardar la cuenta.";
+            return "No se pudo validar la cuenta.";
         }
     }
 
@@ -78,6 +91,20 @@ public class Cuentas {
             return false;
         }
         return false;
+    }
+
+    /** Elimina una cuenta por nombre; se usa para revertir un alta incompleta de Face ID. */
+    public static boolean eliminar(String usuario) {
+        try {
+            List<Cuenta> lista = cargar();
+            boolean eliminada = lista.removeIf(c -> c.usuario.equalsIgnoreCase(usuario));
+            if (eliminada) {
+                guardar(lista);
+            }
+            return eliminada;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     // cambia la contraseña de la cuenta; devuelve null si todo salió bien, o el mensaje de error

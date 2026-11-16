@@ -1,13 +1,15 @@
-import javax.swing.JOptionPane;
 import java.awt.Container;
-import java.awt.Dimension;
 
 public class ControladorLogin {
 
     private final VistaLogin vista;
+    private final Container contenidoLogin;
+    private final String tituloLogin;
 
     public ControladorLogin(VistaLogin vista) {
         this.vista = vista;
+        this.contenidoLogin = vista.getContentPane();
+        this.tituloLogin = vista.getTitle();
         vista.getRootPane().setDefaultButton(vista.getBtnIngresar());
         vista.getBtnIngresar().addActionListener(e -> ingresar());
         vista.getBtnCrearCuenta().addActionListener(e -> abrirRegistro());
@@ -37,19 +39,40 @@ public class ControladorLogin {
 
     private void abrirRegistro() {
         VistaRegistro registro = new VistaRegistro(vista);
-        new ControladorRegistro(registro);
-        registro.setVisible(true);
+        vista.setContentPane(registro.getContentPane());
+        vista.setTitle("AstroMatch - Crear cuenta");
+        new ControladorRegistro(registro, vista, () -> restaurarLogin(registro));
+        actualizarVentana();
     }
 
     private void abrirRecuperacion() {
-        VistaRecuperarContraseña recuperar = new VistaRecuperarContraseña(vista);
-        new ControladorRecuperarContraseña(recuperar, new ModeloRecuperarContraseña());
-        recuperar.setVisible(true);
+        VistaRecuperarContraseña recuperar = new VistaRecuperarContraseña();
+        vista.setContentPane(recuperar);
+        vista.setTitle("AstroMatch - Restablecer contraseña");
+        new ControladorRecuperarContraseña(recuperar, new ModeloRecuperarContraseña(),
+                this::restaurarLogin);
+        actualizarVentana();
+    }
+
+    private void restaurarLogin() {
+        vista.setContentPane(contenidoLogin);
+        vista.setTitle(tituloLogin);
+        actualizarVentana();
+    }
+
+    private void restaurarLogin(java.awt.Window vistaSecundaria) {
+        vistaSecundaria.dispose();
+        restaurarLogin();
+    }
+
+    private void actualizarVentana() {
+        vista.revalidate();
+        vista.repaint();
+        vista.setVisible(true);
     }
     private void abrirMenu(String usuario) {
         VistaPantallaPrincipal menu = new VistaPantallaPrincipal(usuario);
         Container contenidoMenu = menu.getContentPane();
-        Dimension tamanoMenu = menu.getSize();
         String tituloMenu = menu.getTitle();
         VistaTablero tablero = new VistaTablero();
         VistaPremios premios = new VistaPremios();
@@ -63,10 +86,9 @@ public class ControladorLogin {
 
         menu.getBtnClasico().addActionListener(e -> {
             Sonidos.cambiarMusica(Sonidos.Pista.JUEGO);
+            menu.getRootPane().getGlassPane().setVisible(false);
             menu.setContentPane(tablero.getContentPane());
             menu.setTitle("AstroMatch - Modo clásico");
-            menu.setSize(tablero.getSize());
-            menu.setLocationRelativeTo(null);
             menu.revalidate();
             menu.repaint();
             menu.setVisible(true);
@@ -74,8 +96,7 @@ public class ControladorLogin {
             if (jugador2 == null || jugador2.trim().isEmpty()) {
                 menu.setContentPane(contenidoMenu);
                 menu.setTitle(tituloMenu);
-                menu.setSize(tamanoMenu);
-                menu.setLocationRelativeTo(null);
+                menu.getRootPane().getGlassPane().setVisible(true);
                 menu.revalidate();
                 menu.repaint();
                 Sonidos.cambiarMusica(Sonidos.Pista.MENU);
@@ -85,20 +106,30 @@ public class ControladorLogin {
             tablero.mostrarSelectorNiveles();
         });
 
-        // Modo patrones: cada vez que se pulsa JUGAR se crea una vista nueva y se le conecta su controlador
+        // Cada modo ocupa el mismo marco principal; solo se cambia el contenido.
         menu.getBtnPatrones().addActionListener(e -> {
             Sonidos.cambiarMusica(Sonidos.Pista.JUEGO);
             VistaPatrones patrones = new VistaPatrones();
             new ControladorPatrones(patrones, () -> {
                 Sonidos.cambiarMusica(Sonidos.Pista.MENU);   // al salir, vuelve la música del menú
-                menu.setVisible(true);
+                menu.setContentPane(contenidoMenu);
+                menu.setTitle(tituloMenu);
+                menu.getRootPane().getGlassPane().setVisible(true);
+                menu.revalidate();
+                menu.repaint();
             }, modeloTienda);
-            menu.setVisible(false);
-            patrones.setVisible(true);
+            menu.getRootPane().getGlassPane().setVisible(false);
+            menu.setContentPane(patrones.getContentPane());
+            menu.setTitle("AstroMatch - Modo patrones");
+            menu.revalidate();
+            menu.repaint();
         });
         menu.getBtnPremios().addActionListener(e -> {
-            menu.setVisible(false);
-            premios.setVisible(true);
+            menu.getRootPane().getGlassPane().setVisible(false);
+            menu.setContentPane(premios.getContentPane());
+            menu.setTitle("AstroMatch - Premios");
+            menu.revalidate();
+            menu.repaint();
             controladorPremios.actualizar();
         });
         menu.getBtnCerrarSesion().addActionListener(e -> {
@@ -115,15 +146,17 @@ public class ControladorLogin {
             clasico.detener();
             menu.setContentPane(contenidoMenu);
             menu.setTitle(tituloMenu);
-            menu.setSize(tamanoMenu);
-            menu.setLocationRelativeTo(null);
+            menu.getRootPane().getGlassPane().setVisible(true);
             menu.revalidate();
             menu.repaint();
             menu.setVisible(true);
         });
         premios.getBtnVolver().addActionListener(e -> {
-            premios.setVisible(false);
-            menu.setVisible(true);
+            menu.setContentPane(contenidoMenu);
+            menu.setTitle(tituloMenu);
+            menu.getRootPane().getGlassPane().setVisible(true);
+            menu.revalidate();
+            menu.repaint();
         });
         menu.getBtnSonido().setText(Sonidos.isSilenciado() ? "SONIDO: OFF" : "SONIDO: ON");
         menu.getBtnSonido().addActionListener(e -> {
@@ -132,6 +165,7 @@ public class ControladorLogin {
         });
 
         vista.setVisible(false);
+        menu.setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
         menu.setVisible(true);
     }
 }

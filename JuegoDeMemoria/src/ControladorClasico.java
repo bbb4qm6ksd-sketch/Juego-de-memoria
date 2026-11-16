@@ -1,4 +1,3 @@
-import javax.swing.JOptionPane;
 import javax.swing.Timer;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
