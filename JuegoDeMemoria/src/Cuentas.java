@@ -93,6 +93,19 @@ public class Cuentas {
         return false;
     }
 
+    /** Devuelve el correo asociado a un usuario; null si no existe o no se puede leer. */
+    public static String correoDe(String usuario) {
+        if (usuario == null) return null;
+        try {
+            for (Cuenta c : cargar()) {
+                if (c.usuario.equalsIgnoreCase(usuario.trim())) return c.correo;
+            }
+        } catch (IOException e) {
+            return null;
+        }
+        return null;
+    }
+
     /** Elimina una cuenta por nombre; se usa para revertir un alta incompleta de Face ID. */
     public static boolean eliminar(String usuario) {
         try {

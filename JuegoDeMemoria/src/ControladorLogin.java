@@ -81,8 +81,11 @@ public class ControladorLogin {
 
         ModeloTienda modeloTienda = new ModeloTienda(usuario);
         new ControladorTienda(menu, modeloTienda);
+        ModeloPerfil modeloPerfil = new ModeloPerfil(usuario);
+        new ControladorPerfil(menu, modeloPerfil, modeloTienda, modeloPremios);
 
-        ControladorClasico clasico = new ControladorClasico(tablero, usuario, "Jugador 2", modeloTienda, modeloPremios);
+        ControladorClasico clasico = new ControladorClasico(tablero, usuario, "Jugador 2",
+                modeloTienda, modeloPremios, modeloPerfil);
 
         menu.getBtnClasico().addActionListener(e -> {
             Sonidos.cambiarMusica(Sonidos.Pista.JUEGO);
@@ -117,7 +120,7 @@ public class ControladorLogin {
                 menu.getRootPane().getGlassPane().setVisible(true);
                 menu.revalidate();
                 menu.repaint();
-            }, modeloTienda);
+            }, modeloTienda, modeloPerfil);
             menu.getRootPane().getGlassPane().setVisible(false);
             menu.setContentPane(patrones.getContentPane());
             menu.setTitle("AstroMatch - Modo patrones");

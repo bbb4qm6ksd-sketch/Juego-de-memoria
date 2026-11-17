@@ -7,10 +7,13 @@ public class ControladorPatrones {
     private final ModeloPatrones modelo = new ModeloPatrones();
     private final Runnable alSalir;
     private final ModeloTienda tienda;
+    private final ModeloPerfil perfil;
 
     private boolean jugando = false;
     private boolean perdio = false;
     private int paso = 0;
+    private int rondasCompletadas = 0;
+    private int estrellasGanadasPartida = 0;
     private VistaPatrones.Casilla encendida = null;
 
     private final Timer relojMostrar = new Timer(500, e -> mostrarSiguienteCasilla());
@@ -26,9 +29,14 @@ public class ControladorPatrones {
     }
 
     public ControladorPatrones(VistaPatrones vista, Runnable alSalir, ModeloTienda tienda) {
+        this(vista, alSalir, tienda, null);
+    }
+
+    public ControladorPatrones(VistaPatrones vista, Runnable alSalir, ModeloTienda tienda, ModeloPerfil perfil) {
         this.vista = vista;
         this.alSalir = alSalir;
         this.tienda = tienda;
+        this.perfil = perfil;
 
         vista.setNivel(modelo.getNivel());
         vista.setRonda(modelo.getRonda());
@@ -52,6 +60,8 @@ public class ControladorPatrones {
         if (perdio) {
             modelo.nuevoJuego();
             perdio = false;
+            rondasCompletadas = 0;
+            estrellasGanadasPartida = 0;
         }
 
         modelo.nuevaRonda();
@@ -122,6 +132,8 @@ public class ControladorPatrones {
             estrellasGanadas = ModeloTienda.calcularEstrellasPatrones(modelo.getNivel());
             tienda.agregarEstrellas(estrellasGanadas);
         }
+        rondasCompletadas++;
+        estrellasGanadasPartida += estrellasGanadas;
         modelo.siguienteRonda();
         vista.setNivel(modelo.getNivel());
         vista.setRonda(modelo.getRonda());
@@ -135,6 +147,7 @@ public class ControladorPatrones {
 
     private void terminarPorError(String mensaje) {
         detener();
+        if (perfil != null) perfil.registrarPatrones(rondasCompletadas, estrellasGanadasPartida);
         perdio = true;
         vista.setFase(mensaje);
         vista.getBtnComenzar().setText("REINTENTAR");

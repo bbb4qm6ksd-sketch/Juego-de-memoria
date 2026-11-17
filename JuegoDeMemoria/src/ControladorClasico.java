@@ -11,6 +11,7 @@ public class ControladorClasico {
     private final ModeloClasico modelo = new ModeloClasico();
     private final ModeloTienda tienda;
     private final ModeloPremios ranking;
+    private final ModeloPerfil perfil;
     private final String[] nombres = new String[ModeloClasico.JUGADORES];
 
     private final Timer relojTurno = new Timer(100, e -> pasarTiempo());
@@ -37,9 +38,15 @@ public class ControladorClasico {
     }
 
     public ControladorClasico(VistaTablero vista, String jugador1, String jugador2, ModeloTienda tienda, ModeloPremios ranking) {
+        this(vista, jugador1, jugador2, tienda, ranking, null);
+    }
+
+    public ControladorClasico(VistaTablero vista, String jugador1, String jugador2, ModeloTienda tienda,
+                              ModeloPremios ranking, ModeloPerfil perfil) {
         this.vista = vista;
         this.tienda = tienda;
         this.ranking = ranking;
+        this.perfil = perfil;
         nombres[0] = jugador1;
         nombres[1] = jugador2;
         pausaFallo.setRepeats(false);
@@ -306,6 +313,13 @@ public class ControladorClasico {
             int estrellas = ModeloTienda.calcularEstrellas(modelo.getIntentos(0));
             tienda.agregarEstrellas(estrellas);
             felicitacion += " +" + estrellas + " estrellas.";
+            if (perfil != null) {
+                perfil.registrarClasico(ganador == 0, modelo.getIntentos(0), nombres[1],
+                        modelo.getTamanoMatriz(), estrellas);
+            }
+        } else if (perfil != null) {
+            perfil.registrarClasico(ganador == 0, modelo.getIntentos(0), nombres[1],
+                    modelo.getTamanoMatriz(), 0);
         }
         vista.mostrarFelicitacion(felicitacion);
         Sonidos.reproducir(Sonidos.Efecto.VICTORIA);

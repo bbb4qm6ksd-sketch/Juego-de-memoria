@@ -27,6 +27,8 @@ public class VistaPantallaPrincipal extends JFrame {
     private final JButton btnCerrarSesion = Tema.botonTexto("CERRAR SESIÓN");
     private final JButton btnSonido = Tema.botonTexto("SONIDO: ON");
     private final JButton btnTienda = Tema.botonTexto("TIENDA");
+    private final JButton btnPerfil = Tema.botonTexto("PERFIL");
+    private Runnable alMostrarOpciones;
 
     private CardLayout tarjetas;
     private JPanel pantallas;
@@ -75,6 +77,7 @@ public class VistaPantallaPrincipal extends JFrame {
 
         btnCerrarSesion.setForeground(Tema.SECUNDARIO);
         usuarioPanel.add(nombre);
+        usuarioPanel.add(btnPerfil);
         usuarioPanel.add(btnTienda);
         usuarioPanel.add(btnSonido);
         usuarioPanel.add(btnCerrarSesion);
@@ -229,6 +232,22 @@ public class VistaPantallaPrincipal extends JFrame {
 
     public void mostrarOpciones() {
         tarjetas.show(pantallas, "opciones");
+        if (alMostrarOpciones != null) alMostrarOpciones.run();
+    }
+
+    public void instalarPerfil(VistaPerfil vista) {
+        pantallas.add(vista, "perfil");
+        pantallas.revalidate();
+        pantallas.repaint();
+    }
+    public void mostrarPerfil() { tarjetas.show(pantallas, "perfil"); }
+    public void setAlMostrarOpciones(Runnable accion) { alMostrarOpciones = accion; }
+    public void setAvatarPerfil(BufferedImage imagen) {
+        if (imagen == null) {
+            btnPerfil.setIcon(null);
+        } else {
+            btnPerfil.setIcon(new ImageIcon(imagen.getScaledInstance(28, 28, Image.SCALE_SMOOTH)));
+        }
     }
 
     public void instalarTienda(VistaTienda vista) {
@@ -245,6 +264,7 @@ public class VistaPantallaPrincipal extends JFrame {
     public JButton getBtnCerrarSesion() { return btnCerrarSesion; }
     public JButton getBtnSonido() { return btnSonido; }
     public JButton getBtnTienda() { return btnTienda; }
+    public JButton getBtnPerfil() { return btnPerfil; }
     private static Path2D estrella(double cx, double cy, double re, double ri) {
         Path2D.Double p = new Path2D.Double();
         for (int i = 0; i < 10; i++) {
