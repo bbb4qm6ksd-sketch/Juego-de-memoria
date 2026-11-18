@@ -13,6 +13,7 @@ import javax.swing.JComponent;
 import javax.swing.Timer;
 
 
+// Presenta el tablero de patrones y los elementos visuales que acompañan cada ronda.
 public class VistaPatrones extends JFrame {
 
     public static final int FILAS = 6;
@@ -33,19 +34,23 @@ public class VistaPatrones extends JFrame {
     private Confeti confeti;
     private long ultimoConfetiNs;
     private boolean cuentaActiva = false;
-    private double cuentaRestante = 0;
+    private double cuentaRestante = 0; // Segundos que faltan para que termine la cuenta atrás
     private BufferedImage fondoDifuminado;
 
     private final JComponent capaConfeti = new JComponent() {
         @Override
+        // Dibuja el componente con el estilo que corresponde a su estado.
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
-            if (cuentaActiva) dibujarCuentaAtras(g2);
-            if (confeti != null) confeti.dibujar(g2);
+            if (cuentaActiva) dibujarCuentaAtras(g2); //dibuja la cuentra regresiva si está activa
+            if (confeti != null) confeti.dibujar(g2); //dibuja el confeti
             g2.dispose();
         }
     };
 
+    //Temporizador de animación del confeti
+    //En cada tick calcula el tiempo transcurrido, actualiza las partículas
+    //y repinta. Cuando el confeti termina, se detiene a sí mismo.
     private final Timer timerConfeti = new Timer(16, e -> {
         long ahora = System.nanoTime();
         double dt = (ahora - ultimoConfetiNs) / 1e9;
@@ -60,6 +65,7 @@ public class VistaPatrones extends JFrame {
         capaConfeti.repaint();
     });
 
+    //Lanza la animación de confeti a pantalla completa
     public void lanzarConfeti() {
         confeti = new Confeti(capaConfeti.getWidth(), capaConfeti.getHeight());
         confeti.iniciar();
@@ -68,6 +74,7 @@ public class VistaPatrones extends JFrame {
         timerConfeti.start();
     }
 
+    //Detiene y elimina el confeti de inmediato.
     public void detenerConfeti() {
         timerConfeti.stop();
         confeti = null;
@@ -75,11 +82,13 @@ public class VistaPatrones extends JFrame {
         capaConfeti.repaint();
     }
 
+    // Muestra la capa superior solo cuando hay una animacion activa.
     private void actualizarVisibilidadCapa() {
         boolean hayConfeti = confeti != null && confeti.estaActivo();
         capaConfeti.setVisible(cuentaActiva || hayConfeti);
     }
 
+    //Muestra o actualiza la cuenta atrás entre rondas
     public void mostrarCuentaAtras(double restante) {
         if (!cuentaActiva) {
             fondoDifuminado = capturarFondoDifuminado();
@@ -90,6 +99,7 @@ public class VistaPatrones extends JFrame {
         capaConfeti.repaint();
     }
 
+    //Oculta la cuenta atrás y libera la imagen de fondo.
     public void ocultarCuentaAtras() {
         cuentaActiva = false;
         fondoDifuminado = null;
@@ -97,6 +107,7 @@ public class VistaPatrones extends JFrame {
         capaConfeti.repaint();
     }
 
+    // Genera una imagen difuminada del contenido actual de la ventana.
     private BufferedImage capturarFondoDifuminado() {
         Container cp = getContentPane();
         final int reduccion = 10;
@@ -110,11 +121,13 @@ public class VistaPatrones extends JFrame {
         return img;
     }
 
+    //Dibuja la cuenta atrás, con fondo difuminado y oscurecido, un círculo central
     private void dibujarCuentaAtras(Graphics2D g2) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         int w = capaConfeti.getWidth(), h = capaConfeti.getHeight();
 
+        // 1) Fondo: captura borrosa + velo azul oscuro semitransparente
         if (fondoDifuminado != null) {
             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             g2.drawImage(fondoDifuminado, 0, 0, w, h, null);
@@ -122,10 +135,12 @@ public class VistaPatrones extends JFrame {
         g2.setColor(new Color(10, 15, 32, 140));
         g2.fillRect(0, 0, w, h);
 
+        //  Número que se muestra dentro del circulo de la cuenta regresiva
         int numero = (int) Math.ceil(cuentaRestante);
         double fraccion = Math.max(0, Math.min(1, cuentaRestante - (numero - 1)));
 
 
+        //dibujo del circulo central de la cuenta regresiva
         int d = Math.max(160, Math.min(w, h) / 4);
         int x = (w - d) / 2, y = (h - d) / 2;
         g2.setColor(new Color(17, 26, 51, 225));
@@ -133,14 +148,17 @@ public class VistaPatrones extends JFrame {
         g2.setColor(Tema.LINEA);
         g2.setStroke(new BasicStroke(4f));
         g2.drawOval(x, y, d, d);
+        //Arco de progreso: empieza arriba (90º) y gira en sentido horario
         g2.setColor(Tema.HIELO);
         g2.setStroke(new BasicStroke(6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2.draw(new Arc2D.Double(x, y, d, d, 90, -360 * fraccion, Arc2D.OPEN));
+        // Número centrado en el círculo
         g2.setFont(fuentes.mono(Font.BOLD, d / 2));
         FontMetrics fm = g2.getFontMetrics();
         String t = String.valueOf(numero);
         g2.setColor(Tema.TEXTO);
         g2.drawString(t, x + (d - fm.stringWidth(t)) / 2, y + (d + fm.getAscent() - fm.getDescent()) / 2);
+       //Mensaje centrado sobre el círculo
         g2.setFont(fuentes.romantic(Font.PLAIN, 24));
         fm = g2.getFontMetrics();
         String msg = "La siguiente ronda comienza en";
@@ -148,16 +166,19 @@ public class VistaPatrones extends JFrame {
         g2.drawString(msg, (w - fm.stringWidth(msg)) / 2, y - 28);
     }
 
+    // Construye el tablero y los controles del modo de memoria.
     public VistaPatrones() {
         super("AstroMatch - Modo patrones");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        // Panel de fondo con degradado y animación
         Tema fondo = new Tema(150, new Color(0x141F47), Tema.FONDO);
         fondo.setAnimado(true);
         fondo.setLayout(new BorderLayout(0, 20));
         fondo.setBorder(new EmptyBorder(30, 52, 26, 52));
         setContentPane(fondo);
 
+        // Zona central: título arriba y (tiempos + tablero) debajo
         JPanel centro = new JPanel(new BorderLayout(0, 20));
         centro.setOpaque(false);
         centro.add(crearTitulo(), BorderLayout.NORTH);
@@ -171,11 +192,13 @@ public class VistaPatrones extends JFrame {
         add(centro, BorderLayout.CENTER);
         add(crearPie(), BorderLayout.SOUTH);
 
+        // Tamaño inicial
         int alto = Math.min(900, Toolkit.getDefaultToolkit().getScreenSize().height - 80);
         setSize(980, alto);
         setMinimumSize(new Dimension(760, 680));
         setLocationRelativeTo(null);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
+        // Configuración de la capa superior: transparente y oculta por defecto.
         capaConfeti.setOpaque(false);
         capaConfeti.addMouseListener(new MouseAdapter() {});
         capaConfeti.setVisible(false);
@@ -193,8 +216,8 @@ public class VistaPatrones extends JFrame {
                 return contenidoBase.getPreferredSize();
             }
         };
-        capas.add(contenidoBase, JLayeredPane.DEFAULT_LAYER);
-        capas.add(capaConfeti, JLayeredPane.PALETTE_LAYER);
+        capas.add(contenidoBase, JLayeredPane.DEFAULT_LAYER);// juego (abajo)
+        capas.add(capaConfeti, JLayeredPane.PALETTE_LAYER);// cuenta atrás y confeti (arriba)
         setContentPane(capas);
     }
 
@@ -219,6 +242,8 @@ public class VistaPatrones extends JFrame {
         return encabezado;
     }
 
+    //Crea el bloque de título: texto del modo y título a la izquierda,
+    //y las tarjetas de estadísticas (casillas y ronda) a la derecha.
     private JPanel crearTitulo() {
         JPanel p = new JPanel(new BorderLayout());
         p.setOpaque(false);
@@ -249,6 +274,7 @@ public class VistaPatrones extends JFrame {
         return p;
     }
 
+    //Crea una tarjeta de estadística con un título pequeño
     private JPanel crearStat(String titulo, JLabel valor) {
         JPanel p = new JPanel(new BorderLayout(0, 2));
         p.setBackground(Tema.SUPERFICIE);
@@ -268,6 +294,7 @@ public class VistaPatrones extends JFrame {
         return p;
     }
 
+    //Crea la zona de tiempos
     private JPanel crearTiempos() {
         JPanel tiempos = new JPanel(new GridLayout(1, 2, 28, 0));
         tiempos.setOpaque(false);
@@ -280,6 +307,7 @@ public class VistaPatrones extends JFrame {
         return izquierda;
     }
 
+    //Crea un bloque de tiempo: con el el título (izquierda) y el valor numérico (derecha); debajo, la barra de progreso.
     private JPanel crearBloqueTiempo(String titulo, JLabel valor, VistaTablero.BarraTiempo barra) {
         JLabel t = new JLabel(titulo);
         t.setFont(fuentes.mono(Font.BOLD, 10));
@@ -298,8 +326,7 @@ public class VistaPatrones extends JFrame {
         bloque.add(barra, BorderLayout.CENTER);
         return bloque;
     }
-
-
+    //Crea el tablero de FILAS x COLUMNAS
     private JPanel crearMatriz() {
         JPanel tablero = new JPanel(new GridLayout(FILAS, COLUMNAS, 10, 10));
         tablero.setOpaque(false);
@@ -320,7 +347,7 @@ public class VistaPatrones extends JFrame {
         contenedor.add(tablero);
         return contenedor;
     }
-
+    //Crea el pie: mensaje de fase a la izquierda y botón COMENZAR a la derecha.
     private JPanel crearPie() {
         JPanel pie = new JPanel(new BorderLayout());
         pie.setOpaque(false);
@@ -335,28 +362,38 @@ public class VistaPatrones extends JFrame {
     }
 
 
+    // Devuelve la casilla ubicada en la fila y columna indicadas.
     public Casilla getCasilla(int fila, int columna) { return casillas[fila][columna]; }
+    // Devuelve todas las casillas del tablero.
     public Casilla[][] getCasillas()                 { return casillas; }
+    // Devuelve el boton para iniciar o reintentar la partida.
     public JButton getBtnComenzar()                  { return btnComenzar; }
+    // Devuelve el boton para cerrar el modo de patrones.
     public JButton getBtnSalir()                     { return btnSalir; }
 
+    // Actualiza el nombre del jugador que aparece en pantalla.
     public void setJugador(String nombre)            { lblJugador.setText("OBSERVADOR  *  " + nombre.toUpperCase()); }
+    // Actualiza el nivel que se muestra en la interfaz.
     public void setNivel(int casillasDelPatron)      { lblNivel.setText(String.valueOf(casillasDelPatron)); }
+    // Actualiza el numero de ronda visible.
     public void setRonda(int ronda)                  { lblRonda.setText(String.valueOf(ronda)); }
+    // Muestra el mensaje correspondiente al momento de la partida.
     public void setFase(String texto)                { lblFase.setText(texto); }
 
 
+    // Actualiza el texto y la barra del tiempo total.
     public void setTiempoTotal(double restante, double maximo) {
         lblTotal.setText(String.format("%.1f s", Math.max(0, restante)));
         barraTotal.setFraccion(maximo <= 0 ? 0 : restante / maximo);
     }
 
-    /** Tiempo para pulsar la siguiente casilla (segundos). */
+    //Tiempo para pulsar la siguiente casilla (segundos).
     public void setTiempoCasilla(double restante, double maximo) {
         lblEntre.setText(String.format("%.1f s", Math.max(0, restante)));
         barraEntre.setFraccion(maximo <= 0 ? 0 : restante / maximo);
     }
 
+    // Devuelve todas las casillas a su aspecto normal.
     public void limpiarCasillas() {
         for (Casilla[] fila : casillas) {
             for (Casilla c : fila) {
@@ -373,6 +410,7 @@ public class VistaPatrones extends JFrame {
         private Estado estado = Estado.REPOSO;
         private int numero = 0;
 
+        // Prepara una casilla del tablero con su estilo inicial.
         public Casilla() {
             setContentAreaFilled(false);
             setBorderPainted(false);
@@ -381,15 +419,21 @@ public class VistaPatrones extends JFrame {
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
 
+        // Cambia el aspecto de la casilla segun el estado del juego.
         public void setEstado(Estado estado) { this.estado = estado; repaint(); }
+        // Devuelve el estado visual actual de la casilla.
         public Estado getEstado()            { return estado; }
+        // Actualiza el numero que se muestra dentro de la casilla.
         public void setNumero(int numero)    { this.numero = numero; repaint(); }
 
+        // Crea un color con la transparencia indicada.
         private static Color alfa(Color c, int a) {
             return new Color(c.getRed(), c.getGreen(), c.getBlue(), Math.max(0, Math.min(255, a)));
         }
 
+        //Dibujo de las casillas
         @Override
+        // Dibuja el componente con el estilo que corresponde a su estado.
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

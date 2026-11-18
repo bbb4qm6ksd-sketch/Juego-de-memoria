@@ -2,6 +2,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
+// Muestra el formulario donde la persona solicita recuperar el acceso a su cuenta.
 public class VistaRecuperarContraseña extends JPanel {
 
     private static final char ECO = '\u2022';
@@ -27,6 +28,7 @@ public class VistaRecuperarContraseña extends JPanel {
     private final JLabel lblSubtitulo = new JLabel(" ");
     private final JLabel lblError = new JLabel(" ");
 
+    // Prepara los pasos y controles del formulario de recuperacion.
     public VistaRecuperarContraseña() {
         setOpaque(true);
         setBackground(Tema.FONDO);
@@ -68,9 +70,10 @@ public class VistaRecuperarContraseña extends JPanel {
         mostrarPaso(PASO_USUARIO);
     }
 
-    /** Constructor compatible con llamadas antiguas; la vista se monta en el marco principal. */
+    // Prepara los pasos y controles del formulario de recuperacion.
     public VistaRecuperarContraseña(Frame padre) { this(); }
 
+    // Prepara la franja superior con la informacion del jugador.
     private JPanel crearEncabezado() {
         JPanel p = new JPanel();
         p.setOpaque(false);
@@ -88,6 +91,7 @@ public class VistaRecuperarContraseña extends JPanel {
         return p;
     }
 
+    // Arma el formulario donde se identifica la cuenta.
     private JPanel crearPasoUsuario() {
         JPanel p = nuevoPaso();
         Tema.estilizarCampo(txtUsuario);
@@ -103,6 +107,7 @@ public class VistaRecuperarContraseña extends JPanel {
         return p;
     }
 
+    // Arma los campos para escribir y confirmar la nueva clave.
     private JPanel crearPasoClave() {
         JPanel p = nuevoPaso();
         Tema.estilizarCampo(txtNueva);
@@ -130,6 +135,7 @@ public class VistaRecuperarContraseña extends JPanel {
         return p;
     }
 
+    // Prepara el mensaje que confirma que el cambio termino.
     private JPanel crearPasoExito() {
         JPanel p = nuevoPaso();
 
@@ -144,6 +150,7 @@ public class VistaRecuperarContraseña extends JPanel {
         return p;
     }
 
+    // Crea un panel con el formato comun de cada paso.
     private static JPanel nuevoPaso() {
         JPanel p = new JPanel();
         p.setOpaque(false);
@@ -151,6 +158,7 @@ public class VistaRecuperarContraseña extends JPanel {
         return p;
     }
 
+    // Organiza dos botones de navegacion en una fila.
     private static JPanel filaLinks(JButton izquierda, JButton derecha) {
         JPanel f = new JPanel(new BorderLayout());
         f.setOpaque(false);
@@ -160,6 +168,7 @@ public class VistaRecuperarContraseña extends JPanel {
         return f;
     }
 
+    // Crea una etiqueta con el texto, fuente y color indicados.
     private static JLabel etiqueta(String texto, Font fuente, Color color) {
         JLabel l = new JLabel(texto);
         l.setFont(fuente);
@@ -172,8 +181,7 @@ public class VistaRecuperarContraseña extends JPanel {
         return c;
     }
 
-    // ---- API para el controlador ----
-
+    // Ensenia el paso solicitado y oculta los demas.
     public void mostrarPaso(String paso) {
         cartas.show(contenido, paso);
         limpiarError();
@@ -193,20 +201,33 @@ public class VistaRecuperarContraseña extends JPanel {
         }
     }
 
+    // Muestra la confirmacion de que la recuperacion termino.
     public void mostrarExito() { mostrarPaso(PASO_EXITO); }
 
+    // Devuelve el nombre o correo ingresado sin espacios sobrantes.
     public String getUsuario()          { return txtUsuario.getText().trim(); }
+    // Devuelve la nueva clave escrita en el formulario.
     public String getNuevaClave()       { return new String(txtNueva.getPassword()); }
+    // Devuelve la confirmacion de la nueva clave.
     public String getConfirmacion()     { return new String(txtConfirmar.getPassword()); }
 
+    // Devuelve el boton para continuar el proceso.
     public JButton getBtnContinuar()    { return btnContinuar; }
+    // Devuelve el boton para guardar la nueva clave.
     public JButton getBtnGuardar()      { return btnGuardar; }
+    // Devuelve el boton para cerrar el proceso exitoso.
     public JButton getBtnFinalizar()    { return btnFinalizar; }
+    // Devuelve el boton para volver al paso anterior.
     public JButton getBtnAtras()        { return btnAtras; }
+    // Devuelve el boton para cancelar la recuperacion.
     public JButton getBtnCancelar()     { return btnCancelar; }
+    // Devuelve el boton alternativo para cancelar.
     public JButton getBtnCancelar2()    { return btnCancelar2; }
 
+    // Presenta el mensaje indicado junto a los campos.
     public void mostrarError(String mensaje) { lblError.setText(mensaje); }
+    // Quita el mensaje de error visible.
     public void limpiarError()               { lblError.setText(" "); }
+    // Borra las claves escritas en ambos campos.
     public void limpiarClaves()              { txtNueva.setText(""); txtConfirmar.setText(""); }
 }

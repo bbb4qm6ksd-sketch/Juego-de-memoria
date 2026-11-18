@@ -1,6 +1,7 @@
 import javax.swing.Timer;
 
 
+// Coordina la partida de patrones: conecta las acciones de la pantalla con las reglas del modelo.
 public class ControladorPatrones {
 
     private final VistaPatrones vista;
@@ -20,18 +21,22 @@ public class ControladorPatrones {
     private final Timer relojJuego = new Timer(100, e -> pasarTiempo());
     private final Timer relojSiguiente = new Timer(50, e -> pasarCuentaAtras());
 
+    // Prepara la partida y conecta la pantalla con las opciones disponibles.
     public ControladorPatrones(VistaPatrones vista) {
         this(vista, null, null);
     }
 
+    // Prepara la partida y conecta la pantalla con las opciones disponibles.
     public ControladorPatrones(VistaPatrones vista, Runnable alSalir) {
         this(vista, alSalir, null);
     }
 
+    // Prepara la partida y conecta la pantalla con las opciones disponibles.
     public ControladorPatrones(VistaPatrones vista, Runnable alSalir, ModeloTienda tienda) {
         this(vista, alSalir, tienda, null);
     }
 
+    // Prepara la partida y conecta la pantalla con las opciones disponibles.
     public ControladorPatrones(VistaPatrones vista, Runnable alSalir, ModeloTienda tienda, ModeloPerfil perfil) {
         this.vista = vista;
         this.alSalir = alSalir;
@@ -53,6 +58,7 @@ public class ControladorPatrones {
 
     }
 
+    // Inicia una ronda y prepara el tablero para mostrar el patron.
     private void comenzar() {
         relojSiguiente.stop();
         vista.ocultarCuentaAtras();
@@ -79,6 +85,7 @@ public class ControladorPatrones {
         relojMostrar.start();
     }
 
+    // Ilumina cada casilla del patron en orden y luego habilita la respuesta.
     private void mostrarSiguienteCasilla() {
         if (encendida != null) {
             encendida.setEstado(VistaPatrones.Casilla.Estado.REPOSO);
@@ -96,6 +103,7 @@ public class ControladorPatrones {
         }
     }
 
+    // Comprueba la casilla elegida y actualiza la pantalla segun el resultado.
     private void pulsarCasilla(int fila, int columna) {
         if (!jugando) return;
 
@@ -109,12 +117,14 @@ public class ControladorPatrones {
         }
     }
 
+    // Reduce el tiempo disponible y termina la ronda si se agota.
     private void pasarTiempo() {
         modelo.restarTiempo(0.1);
         mostrarTiempos();
         if (modelo.tiempoAgotado()) terminarPorError("Se acabó el tiempo. Pulsa REINTENTAR para volver a empezar");
     }
 
+    // Actualiza la espera entre rondas y comienza la siguiente cuando llega a cero.
     private void pasarCuentaAtras() {
         modelo.restarCuentaAtras(0.05);
         if (modelo.cuentaAtrasTerminada()) {
@@ -125,6 +135,7 @@ public class ControladorPatrones {
         }
     }
 
+    // Registra la ronda completada, entrega estrellas y prepara la siguiente.
     private void ganarRonda() {
         detener();
         int estrellasGanadas = 0;
@@ -145,6 +156,7 @@ public class ControladorPatrones {
         relojSiguiente.start();
     }
 
+    // Detiene la partida y muestra el motivo por el que termino.
     private void terminarPorError(String mensaje) {
         detener();
         if (perfil != null) perfil.registrarPatrones(rondasCompletadas, estrellasGanadasPartida);
@@ -154,11 +166,13 @@ public class ControladorPatrones {
         vista.getBtnComenzar().setVisible(true);
     }
 
+    // Pausa el juego y su temporizador.
     private void detener() {
         jugando = false;
         relojJuego.stop();
     }
 
+    // Cierra el flujo de recuperacion y vuelve a la pantalla anterior.
     private void salir() {
         relojSiguiente.stop();
         vista.ocultarCuentaAtras();
@@ -169,6 +183,7 @@ public class ControladorPatrones {
         if (alSalir != null) alSalir.run();
     }
 
+    // Refresca en pantalla los tiempos que quedan para jugar.
     private void mostrarTiempos() {
         vista.setTiempoTotal(modelo.getTiempoTotal(), ModeloPatrones.TIEMPO_TOTAL);
         vista.setTiempoCasilla(modelo.getTiempoEntreCasillas(), ModeloPatrones.TIEMPO_ENTRE_CASILLAS);

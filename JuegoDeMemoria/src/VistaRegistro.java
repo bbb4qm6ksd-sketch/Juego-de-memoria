@@ -41,6 +41,12 @@ public class VistaRegistro extends JDialog {
 
         txtContrasena.setEchoChar('\u2022');
         txtConfirmar.setEchoChar('\u2022');
+        String ayudaContrasena = "<html>La contraseña debe tener:<br>"
+                + "• Al menos 8 caracteres<br>"
+                + "• Una letra minúscula y una mayúscula<br>"
+                + "• Un carácter especial (excepto ;)</html>";
+        txtContrasena.setToolTipText(ayudaContrasena);
+        txtConfirmar.setToolTipText(ayudaContrasena);
 
         JTextField[] campos = {txtUsuario, txtCorreo, txtContrasena, txtConfirmar};
         for (JTextField campo : campos) {
@@ -64,7 +70,11 @@ public class VistaRegistro extends JDialog {
         form.add(Box.createVerticalStrut(10));
         form.add(alinear(etiqueta("CONTRASEÑA", fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO)));
         form.add(alinear(campoClave(txtContrasena)));
-        form.add(Box.createVerticalStrut(10));
+        JLabel ayudaContrasenaVisible = etiqueta(
+                "Mínimo 8 caracteres, una minúscula, una mayúscula y un símbolo.",
+                Tema.sans(Font.PLAIN, 11), Tema.SECUNDARIO);
+        form.add(alinear(ayudaContrasenaVisible));
+        form.add(Box.createVerticalStrut(8));
         form.add(alinear(etiqueta("CONFIRMAR CONTRASEÑA", fuentes.mono(Font.BOLD, 10), Tema.SECUNDARIO)));
         form.add(alinear(campoClave(txtConfirmar)));
         form.add(Box.createVerticalStrut(12));

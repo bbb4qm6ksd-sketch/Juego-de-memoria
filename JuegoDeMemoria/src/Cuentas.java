@@ -12,9 +12,9 @@ public class Cuentas {
 
     // cada linea del archivo: usuario;correo;contraseña
     private static final Path ARCHIVO = Paths.get("cuentas.txt");
-    private static final Pattern USUARIO = Pattern.compile("[A-Za-z0-9_.-]{3,20}");
+    private static final Pattern USUARIO = Pattern.compile("[A-Za-z0-9_.-]{1,20}");
     private static final Pattern CORREO = Pattern.compile("[^\\s@;]+@[^\\s@;]+\\.[^\\s@;]+");
-    private static final int MIN_CONTRASENA = 6;
+    private static final int MIN_CONTRASENA = 8;
 
     private static class Cuenta {
         String usuario;
@@ -40,7 +40,7 @@ public class Cuentas {
     /** Valida una cuenta sin guardarla; el formulario la usa antes de abrir la cámara. */
     public static String validarRegistro(String usuario, String correo, String contrasena) {
         if (!USUARIO.matcher(usuario).matches()) {
-            return "Usuario: de 3 a 20 caracteres (letras, números, . _ -).";
+            return "Usuario: usa de 1 a 20 caracteres (letras, números, . _ -).";
         }
         if (!CORREO.matcher(correo).matches()) {
             return "Escribe un correo válido.";
@@ -146,7 +146,20 @@ public class Cuentas {
         if (contrasena.length() < MIN_CONTRASENA) {
             return "La contraseña debe tener al menos " + MIN_CONTRASENA + " caracteres.";
         }
-        // el punto y coma separa los campos en el archivo
+        boolean tieneMinuscula = false;
+        boolean tieneMayuscula = false;
+        boolean tieneCaracterEspecial = false;
+        for (char caracter : contrasena.toCharArray()) {
+            if (Character.isLowerCase(caracter)) tieneMinuscula = true;
+            else if (Character.isUpperCase(caracter)) tieneMayuscula = true;
+            else if (!Character.isLetterOrDigit(caracter) && !Character.isWhitespace(caracter)) {
+                tieneCaracterEspecial = true;
+            }
+        }
+        if (!tieneMinuscula || !tieneMayuscula || !tieneCaracterEspecial) {
+            return "La contraseña debe incluir una minúscula, una mayúscula y un carácter especial.";
+        }
+        // El punto y coma separa los campos al guardar la cuenta.
         if (contrasena.contains(";")) {
             return "La contraseña no puede llevar el símbolo ;";
         }

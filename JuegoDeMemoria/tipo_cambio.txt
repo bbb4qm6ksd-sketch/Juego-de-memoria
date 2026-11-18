@@ -1,9 +1,1 @@
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-442.56
-=======
-442.74
->>>>>>> origin/main
-=======
-442.56
->>>>>>> Stashed changes
+441.73

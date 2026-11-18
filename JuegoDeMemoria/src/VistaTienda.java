@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 
+// Construye la tienda y muestra el catálogo, el saldo y el estado de cada artículo.
 public class VistaTienda extends JPanel {
     public enum CategoriaTienda {
         ACCESORIOS("ACCESORIOS", "JÚPITER"), TIEMPO("TIEMPO EXTRA", "SATURNO"), PUNTOS("PUNTOS EXTRA", "MARTE");
@@ -35,6 +36,7 @@ public class VistaTienda extends JPanel {
     private int saldo;
     private javax.swing.Timer temporizador;
 
+    // Construye las pantallas del catalogo y del editor de accesorios.
     public VistaTienda(VistaPantallaPrincipal principal) {
         this.principal = principal;
         setOpaque(false);
@@ -52,6 +54,7 @@ public class VistaTienda extends JPanel {
         volver.addActionListener(e -> principal.mostrarOpciones());
     }
 
+    // Arma la cabecera con el saldo y la navegacion.
     private JPanel crearCabecera() {
         JPanel p = new JPanel(new BorderLayout());
         p.setOpaque(false);
@@ -96,12 +99,14 @@ public class VistaTienda extends JPanel {
         return p;
     }
 
+    // Prepara la vista ilustrada del sistema solar.
     private JPanel crearSistemaSolar() {
         JPanel p=new JPanel(new BorderLayout()); p.setOpaque(false);
         JLabel guia=etiqueta("ELIGE UN PLANETA PARA EXPLORAR SUS ARTÍCULOS",fuentes.kiwiSoda(Font.PLAIN,18),Tema.TEXTO); guia.setHorizontalAlignment(SwingConstants.CENTER);
         p.add(guia,BorderLayout.NORTH); p.add(new MapaSolar(),BorderLayout.CENTER); return p;
     }
 
+    // Crea el catalogo de la categoria seleccionada.
     private JPanel crearCatalogo(CategoriaTienda cat) {
         JPanel pagina = new JPanel(new BorderLayout(0, 16)); pagina.setOpaque(false);
         JLabel titulo = etiqueta(cat.titulo, fuentes.kiwiSoda(Font.PLAIN, 38), Tema.TEXTO);
@@ -124,6 +129,7 @@ public class VistaTienda extends JPanel {
         return pagina;
     }
 
+    // Prepara la vista para revisar y equipar accesorios.
     private JPanel crearEditorAccesorios() {
         JPanel editor = new JPanel(new GridLayout(1, 2, 22, 0)); editor.setOpaque(false);
         editor.add(avatarPreview);
@@ -144,15 +150,20 @@ public class VistaTienda extends JPanel {
         editor.add(selector); return editor;
     }
 
+    // Permite recorrer el contenido cuando no cabe en pantalla.
     private JScrollPane crearScroll(JPanel contenido) {
         JScrollPane scroll = new JScrollPane(contenido, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setOpaque(false); scroll.getViewport().setOpaque(false); scroll.setBorder(null); scroll.getVerticalScrollBar().setUnitIncrement(16);
         return scroll;
     }
 
+    // Guarda la accion que se ejecutara al pulsar comprar.
     public void setAlComprar(Consumer<String> accion){alComprar=accion;}
+    // Muestra la pagina principal de la tienda.
     public void mostrarTienda(){layout.show(paginas,"solar");}
+    // Actualiza el saldo y la disponibilidad de compra.
     public void setSaldo(int nuevo){saldo=nuevo;lblSaldo.setText(String.valueOf(nuevo));for(Tarjeta t:articulos.values())t.setSaldo(nuevo);}
+    // Anade una tarjeta de articulo a su categoria.
     public void agregarArticulo(String id,CategoriaTienda cat,String nombre,String descripcion,int precio,boolean unico,int valor){
         BufferedImage compuesto = cat == CategoriaTienda.ACCESORIOS ? componerAvatar(Collections.singleton(id)) : null;
         Tarjeta t = new Tarjeta(cat, nombre, descripcion, precio, valor, unico, compuesto, () -> { if (alComprar != null) alComprar.accept(id); });
@@ -165,16 +176,20 @@ public class VistaTienda extends JPanel {
         }
         t.setSaldo(saldo);
     }
+    // Indica en la tarjeta que el articulo ya se compro.
     public void marcarComprado(String id){Tarjeta t=articulos.get(id);if(t!=null)t.setComprado(true);}
+    // Actualiza la vista previa con los accesorios equipados.
     public void setAccesoriosEquipados(Set<String> ids){
         avatarPreview.setAccesorios(ids);
         for(Map.Entry<String,Tarjeta> e:articulos.entrySet()) e.getValue().setEquipado(ids.contains(e.getKey()));
     }
+    // Vacía el catalogo para poder cargarlo de nuevo.
     public void limpiarTienda(){
         articulos.clear();
         for (JPanel lista : listas.values()) { lista.removeAll(); lista.revalidate(); lista.repaint(); }
         for (JPanel grid : grillasAccesorios.values()) { grid.removeAll(); grid.revalidate(); grid.repaint(); }
     }
+    // Muestra un aviso temporal de compra o error.
     public void mostrarMensajeTienda(String texto,boolean error){lblMensaje.setForeground(error?Tema.ERROR:Tema.ESTRELLA);lblMensaje.setText(texto);if(temporizador!=null)temporizador.stop();temporizador=new javax.swing.Timer(3500,e->lblMensaje.setText(" "));temporizador.setRepeats(false);temporizador.start();}
 
     private final class MapaSolar extends JPanel {
@@ -247,6 +262,7 @@ public class VistaTienda extends JPanel {
         }
 
         @Override
+        // Dibuja el componente con el estilo que corresponde a su estado.
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D x = (Graphics2D) g.create();
@@ -275,6 +291,7 @@ public class VistaTienda extends JPanel {
             dibujarSol(x, cx, cy);
             x.dispose();
         }
+        // Dibuja el resplandor alrededor del sol.
         private void dibujarResplandorSol(Graphics2D x, double cx, double cy) {
             float radio = 165f;
 
@@ -295,6 +312,7 @@ public class VistaTienda extends JPanel {
             ));
         }
 
+        // Dibuja el sol y sus detalles.
         private void dibujarSol(Graphics2D x, double cx, double cy) {
             if (imagenSol != null) {
                 int xSol = (int) cx - imagenSol.getWidth() / 2;
@@ -432,11 +450,13 @@ public class VistaTienda extends JPanel {
         BufferedImage sprite; boolean spriteIntentado;
         Planeta(CategoriaTienda c,String n,String s,Color color,double o,double a,int d,double v){categoria=c;nombre=n;seccion=s;this.color=color;orbita=o;angulo=a;diam=d;velocidad=v;}
     }
+    // Identifica la categoria a partir del identificador del accesorio.
     private static TipoAccesorio tipoAccesorio(String id) {
         for (TipoAccesorio tipo : TipoAccesorio.values()) if (id.startsWith("accesorio_" + tipo.id + "_")) return tipo;
         return null;
     }
 
+    // Busca una imagen entre los recursos de la aplicacion.
     private static BufferedImage cargarImagen(String recurso) {
         synchronized (CACHE_IMAGENES) {
             BufferedImage cached = CACHE_IMAGENES.get(recurso);
@@ -451,7 +471,7 @@ public class VistaTienda extends JPanel {
 
     private static final double FACTOR_SATURNO = 1.93;   // la imagen incluye los anillos
 
-    /** Carga la textura del planeta y la deja ya escalada al tamaño con que se dibuja. */
+    // Carga y ajusta la imagen de un planeta al tamano de pantalla.
     private static BufferedImage prepararSprite(Planeta p) {
         String nombre = java.text.Normalizer.normalize(p.nombre, java.text.Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "").toLowerCase();               // "JÚPITER" -> "jupiter"
@@ -479,6 +499,7 @@ public class VistaTienda extends JPanel {
         return fin;
     }
 
+    // Carga una imagen y la escala manteniendo sus proporciones.
     private static BufferedImage prepararImagen(String recurso, int ancho) {
         BufferedImage origen = cargarImagen(recurso);
         if (origen == null) return null;
@@ -514,6 +535,7 @@ public class VistaTienda extends JPanel {
         return resultado;
     }
 
+    // Dibuja las capas de accesorios en el orden adecuado.
     private static void dibujarCapas(Graphics2D g, Set<String> ids, boolean atras) {
         String[] orden = atras ? new String[]{"capa", "mochila"} : new String[]{"antenas", "casco", "visor", "halo"};
         for (String ranura : orden) for (String id : ids) {
@@ -623,14 +645,17 @@ public class VistaTienda extends JPanel {
             add(comprar, BorderLayout.SOUTH);
         }
 
+        // Redimensiona una imagen para que encaje en la tarjeta.
         private static BufferedImage escalar(BufferedImage fuente,int ancho,int alto){
             BufferedImage mini=new BufferedImage(ancho,alto,BufferedImage.TYPE_INT_ARGB);Graphics2D g=mini.createGraphics();g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);g.drawImage(fuente,0,0,ancho,alto,null);g.dispose();return mini;
         }
 
+        // Actualiza el saldo y la disponibilidad de compra.
         void setSaldo(int saldo){asequible=saldo>=precio;actualizarBoton();if(adquirido)disponibilidad.setText(equipado?"EN USO":"COMPRADO");else if(asequible)disponibilidad.setText("SALDO SUFICIENTE");else disponibilidad.setText("TE FALTAN "+(precio-saldo)+" ESTRELLAS");disponibilidad.setForeground(asequible?Tema.HIELO:Tema.ERROR);}
         void setComprado(boolean b){adquirido=b;actualizarBoton();}
         void setEquipado(boolean b){equipado=b;actualizarBoton();}
 
+        // Ajusta el texto y disponibilidad del boton segun compra y saldo.
         private void actualizarBoton() {
             comprar.setText(equipado ? "RETIRAR" : (adquirido ? "EQUIPAR" : "COMPRAR"));
 
@@ -668,6 +693,7 @@ public class VistaTienda extends JPanel {
         }
 
         @Override
+        // Dibuja el componente con el estilo que corresponde a su estado.
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
@@ -745,6 +771,7 @@ public class VistaTienda extends JPanel {
             x.dispose();
         }
     }
+    // Crea una etiqueta con el texto, fuente y color indicados.
     private static JLabel etiqueta(String t,Font f,Color c){JLabel l=new JLabel(t);l.setFont(f);l.setForeground(c);return l;}
 }
 

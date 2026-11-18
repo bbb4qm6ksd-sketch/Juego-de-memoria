@@ -1,12 +1,6 @@
 import java.io.*;
 import java.util.*;
 
-/**
- * Modelo de la tienda. Guarda, por jugador: saldo de estrellas, accesorios comprados y equipados para un avatar fijo y consumibles (segundos y puntos extra) pendientes de usar.
- * No conoce nada de Swing: solo datos y reglas de negocio.
- *
- * Los datos se guardan en  datos_tienda/tienda_<usuario>.properties
- */
 public class ModeloTienda {
 
     public enum Resultado { EXITO, SALDO_INSUFICIENTE, YA_COMPRADO, NO_EXISTE }
@@ -22,6 +16,7 @@ public class ModeloTienda {
     private int segundosExtra;   // acumulados por compras de TIEMPO
     private int puntosExtra;     // acumulados por compras de PUNTOS
 
+    // Carga el estado de la tienda del jugador y prepara el catalogo de articulos.
     public ModeloTienda(String usuario) {
         this.usuario = usuario;
         crearCatalogo();
@@ -57,8 +52,10 @@ public class ModeloTienda {
         catalogo.add(new Articulo("puntos_15", Articulo.Tipo.PUNTOS, "+15 puntos", "Agrega 15 puntos a tu reserva de puntos extra", 145, 15));
     }
 
+    // Devuelve el catalogo sin permitir que otras clases lo modifiquen.
     public List<Articulo> getCatalogo() { return Collections.unmodifiableList(catalogo); }
 
+    // Busca un articulo del catalogo usando su identificador.
     public Articulo buscar(String id) {
         for (Articulo a : catalogo) if (a.getId().equals(id)) return a;
         return null;
@@ -66,11 +63,17 @@ public class ModeloTienda {
 
     //Consultas
     public String getUsuario()          { return usuario; }
+    // Devuelve el saldo actual de estrellas.
     public int getSaldo()               { return saldo; }
+    // Devuelve los segundos extra que el jugador tiene guardados.
     public int getSegundosExtra()       { return segundosExtra; }
+    // Devuelve los puntos extra que el jugador tiene guardados.
     public int getPuntosExtra()         { return puntosExtra; }
+    // Devuelve los accesorios adquiridos sin permitir cambios externos.
     public Set<String> getAccesoriosComprados() { return Collections.unmodifiableSet(accesoriosComprados); }
+    // Devuelve los accesorios que el avatar esta usando.
     public Set<String> getAccesoriosEquipados() { return Collections.unmodifiableSet(accesoriosEquipados); }
+    // Indica si el jugador ya compro el articulo indicado.
     public boolean yaComprado(String id) { return accesoriosComprados.contains(id); }
 
     //Compra
@@ -97,6 +100,7 @@ public class ModeloTienda {
         return Resultado.EXITO;
     }
 
+    // Equipa un accesorio comprado y guarda el cambio.
     public boolean equiparAccesorio(String id) {
         if (!accesoriosComprados.contains(id)) return false;
         equiparAccesorioSinGuardar(id);
@@ -104,16 +108,19 @@ public class ModeloTienda {
         return true;
     }
 
+    // Reemplaza el accesorio de la misma ranura y equipa el nuevo.
     private void equiparAccesorioSinGuardar(String id) {
         String ranura = ranuraAccesorio(id);
         accesoriosEquipados.removeIf(equipado -> ranuraAccesorio(equipado).equals(ranura));
         accesoriosEquipados.add(id);
     }
 
+    // Obtiene la ranura del avatar a la que pertenece el accesorio.
     private static String ranuraAccesorio(String id) {
         int ultimoGuion = id.lastIndexOf('_');
         return ultimoGuion > "accesorio_".length() ? id.substring("accesorio_".length(), ultimoGuion) : id;
     }
+    // Retira del avatar el accesorio indicado y guarda el cambio.
     public boolean quitarAccesorio(String id) {
         if (!accesoriosEquipados.remove(id)) return false;
         guardar(); return true;
@@ -126,18 +133,18 @@ public class ModeloTienda {
         guardar();
     }
 
-    /** Menos intentos = más estrellas. Ajusta la fórmula a tu gusto. */
+    //Menos intentos = más estrellas
     public static int calcularEstrellas(int intentos) {
         return Math.max(10, 120 - intentos * 3);
     }
 
-    /** Recompensa creciente por cada ronda completada en el modo patrones. */
+    //Recompensa creciente por cada ronda completada en el modo patrones.
     public static int calcularEstrellasPatrones(int nivelCompletado) {
         return Math.min(100, Math.max(10, 10 + nivelCompletado * 5));
     }
 
     //Uso de consumibles (lo llaman los controladores de los modos de juego)
-    /** Devuelve los segundos extra acumulados y los gasta (quedan en 0). */
+    //Devuelve los segundos extra acumulados y los gasta (quedan en 0).
     public int usarTiempoExtra() {
         int s = segundosExtra;
         segundosExtra = 0;
@@ -145,7 +152,7 @@ public class ModeloTienda {
         return s;
     }
 
-    /** Devuelve los puntos extra acumulados y los gasta (quedan en 0). */
+    //Devuelve los puntos extra acumulados y los gasta (quedan en 0).
     public int usarPuntosExtra() {
         int p = puntosExtra;
         puntosExtra = 0;
@@ -156,12 +163,13 @@ public class ModeloTienda {
     //Persistencia
     private File archivo() { return archivoDe(usuario); }
 
+    // Construye el nombre del archivo de datos asociado al usuario.
     private static File archivoDe(String usuario) {
         String limpio = usuario.replaceAll("[^a-zA-Z0-9_-]", "_");
         return new File(CARPETA, "tienda_" + limpio + ".properties");
     }
 
-    /** Solo lectura: accesorios equipados de un jugador. Vacío si no tiene tienda o no equipó nada. */
+    //Solo lectura: accesorios equipados de un jugador.
     public static Set<String> equipadosDe(String usuario) {
         Set<String> equipados = new LinkedHashSet<>();
         if (usuario == null || usuario.trim().isEmpty()) return equipados;
@@ -185,6 +193,7 @@ public class ModeloTienda {
         return equipados;
     }
 
+    // Restaura el saldo, consumibles y accesorios guardados del jugador.
     private void cargar() {
         File f = archivo();
         if (!f.exists()) { guardar(); return; }
@@ -211,6 +220,7 @@ public class ModeloTienda {
         }
     }
 
+    // Adapta identificadores antiguos de accesorios al formato actual.
     private static String migrarIdAccesorio(String id) {
         if (!id.startsWith("accesorio_") || id.matches("accesorio_.+_\\d{2}")) return id;
         String ranura = id.substring("accesorio_".length());
@@ -218,6 +228,7 @@ public class ModeloTienda {
         return id;
     }
 
+    // Guarda en disco el saldo, consumibles y accesorios actuales.
     private void guardar() {
         Properties p = new Properties();
         p.setProperty("saldo", String.valueOf(saldo));
