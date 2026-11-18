@@ -1,8 +1,8 @@
 import java.awt.image.BufferedImage;
 
 /**
- * Conecta la pantalla de perfil con los datos del jugador.
- * Se instala solo en la pantalla principal: crea el panel, lo agrega y escucha el boton PERFIL.
+ * Coordina el perfil: obtiene estadísticas de los modelos, actualiza la vista y
+ * conecta sus botones con la navegación de la pantalla principal.
  */
 public class ControladorPerfil {
 
@@ -13,6 +13,10 @@ public class ControladorPerfil {
     private final ModeloPremios ranking;
     private final String usuario;
 
+    /**
+     * Instala la vista en el menú, conecta la navegación y prepara el avatar
+     * que se muestra junto al botón de perfil.
+     */
     public ControladorPerfil(VistaPantallaPrincipal menu, ModeloPerfil perfil,
                              ModeloTienda tienda, ModeloPremios ranking) {
         this.menu = menu;
@@ -30,12 +34,13 @@ public class ControladorPerfil {
         refrescarAvatarMenu();
     }
 
+    /** Actualiza los datos visibles y cambia la pantalla al perfil. */
     private void mostrar() {
         refrescar();
         menu.mostrarPerfil();
     }
 
-    /** Vuelve a leer todos los datos y los pinta en la vista. */
+    /** Vuelve a leer los modelos y entrega a la vista la cuenta y sus estadísticas. */
     public void refrescar() {
         ranking.recargar();
 
@@ -60,11 +65,12 @@ public class ControladorPerfil {
         vista.setHistorial(perfil.getHistorial(VistaPerfil.FILAS_HISTORIAL));
     }
 
-    /** Solo el circulo del menu (es mas liviano que refrescar todo el perfil). */
+    /** Actualiza únicamente el avatar pequeño del menú al regresar a opciones. */
     private void refrescarAvatarMenu() {
         menu.setAvatarPerfil(VistaTienda.componerAvatar(tienda.getAccesoriosEquipados()));
     }
 
+    /** Prepara el texto que indica cuántas partidas faltan para subir de rango. */
     private String textoProgreso() {
         int faltan = perfil.getPartidasParaSiguienteRango();
         if (faltan < 0) return "Rango máximo alcanzado";

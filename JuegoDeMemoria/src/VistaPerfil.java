@@ -18,7 +18,9 @@ import java.util.List;
  */
 public class VistaPerfil extends JPanel {
 
-    public static final int FILAS_HISTORIAL = 7;           // cuantas partidas recientes se muestran
+    /** Número máximo de partidas recientes que se dibujan en pantalla. */
+    public static final int FILAS_HISTORIAL = 7;
+    // Proporción del ancho asignada a cada columna de una fila del historial.
     private static final double[] PESOS = {0.15, 0.17, 0.15, 0.37, 0.16};
     private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM  HH:mm");
 
@@ -59,6 +61,7 @@ public class VistaPerfil extends JPanel {
 
     // ---------- Construccion ----------
 
+    /** Construye el título y el botón que permite regresar al menú de opciones. */
     private JPanel crearCabecera() {
         JPanel p = new JPanel(new BorderLayout());
         p.setOpaque(false);
@@ -84,6 +87,7 @@ public class VistaPerfil extends JPanel {
         return p;
     }
 
+    /** Distribuye la tarjeta del jugador y el área de estadísticas e historial. */
     private JPanel crearContenido() {
         JPanel contenido = new JPanel(new BorderLayout(24, 0));
         contenido.setOpaque(false);
@@ -92,6 +96,7 @@ public class VistaPerfil extends JPanel {
         return contenido;
     }
 
+    /** Presenta el avatar, nombre, rango, progreso, correo y estado de Face ID. */
     private JPanel crearTarjetaJugador() {
         PanelRedondo tarjeta = new PanelRedondo(24);
         tarjeta.setLayout(new BorderLayout(0, 12));
@@ -132,6 +137,7 @@ public class VistaPerfil extends JPanel {
         return tarjeta;
     }
 
+    /** Agrupa las estadísticas resumidas y las filas de partidas recientes. */
     private JPanel crearDerecha() {
         JPanel p = new JPanel(new BorderLayout(0, 16));
         p.setOpaque(false);
@@ -160,12 +166,15 @@ public class VistaPerfil extends JPanel {
 
     // ---------- API para el controlador ----------
 
+    /** Botón que el controlador conecta con la navegación de regreso al menú. */
     public JButton getBtnVolver() { return btnVolver; }
 
+    /** Actualiza el retrato y usa la inicial del usuario si no hay imagen. */
     public void setAvatar(BufferedImage imagen, String usuario) {
         retrato.setImagen(imagen, usuario);
     }
 
+    /** Actualiza los datos de cuenta que aparecen bajo el avatar. */
     public void setCuenta(String usuario, String correo, boolean faceId) {
         // el nombre se achica si es muy largo para que quepa en la tarjeta
         int tam = 30;
@@ -181,39 +190,47 @@ public class VistaPerfil extends JPanel {
         lblFaceId.setForeground(faceId ? Tema.HIELO : Tema.SECUNDARIO);
     }
 
+    /** Actualiza el rango actual y el texto de avance hacia el siguiente. */
     public void setRango(String rango, String progreso) {
         lblRango.setText("RANGO  *  " + rango);
         lblProgreso.setText(progreso);
     }
 
+    /** Muestra el saldo actual de la tienda y las estrellas ganadas jugando. */
     public void setEstrellas(int saldo, int ganadas) {
         mEstrellas.setValores(String.valueOf(saldo), ganadas + " ganadas jugando");
     }
 
+    /** Muestra el total de partidas y su división por modo. */
     public void setPartidas(int total, int clasico, int patrones) {
         mPartidas.setValores(String.valueOf(total), clasico + " clásico  *  " + patrones + " patrones");
     }
 
+    /** Muestra victorias clásicas y su porcentaje sobre las partidas clásicas. */
     public void setVictorias(int victorias, int porcentaje, int jugadasClasico) {
         mVictorias.setValores(String.valueOf(victorias),
                 jugadasClasico == 0 ? "modo clásico" : porcentaje + "% de " + jugadasClasico + " partidas");
     }
 
     /** intentos <= 0 significa que todavía no tiene récord. */
+    /** Muestra el mejor resultado del ranking clásico o un texto inicial. */
     public void setRecord(int intentos) {
         mRecord.setValores(intentos > 0 ? String.valueOf(intentos) : "-",
                 intentos > 0 ? "intentos en la clasificación" : "gana una partida clásica");
     }
 
+    /** Muestra la mayor cantidad de rondas completadas en modo patrones. */
     public void setMejorRonda(int ronda) {
         mRonda.setValores(ronda > 0 ? String.valueOf(ronda) : "-",
                 ronda > 0 ? "rondas en modo patrones" : "juega el modo patrones");
     }
 
+    /** Muestra cuántos accesorios posee el usuario respecto al catálogo disponible. */
     public void setAccesorios(int comprados, int total) {
         mAccesorios.setValores(comprados + "/" + total, "comprados en la tienda");
     }
 
+    /** Sustituye las filas visibles por las partidas recientes recibidas del modelo. */
     public void setHistorial(List<ModeloPerfil.Entrada> entradas) {
         listaHistorial.removeAll();
         if (entradas.isEmpty()) {
@@ -232,6 +249,7 @@ public class VistaPerfil extends JPanel {
 
     // ---------- Filas del historial ----------
 
+    /** Convierte una entrada del historial en una fila con fecha, resultado y estrellas. */
     private JPanel crearFila(ModeloPerfil.Entrada e) {
         String fecha = FORMATO_FECHA.format(Instant.ofEpochMilli(e.momento).atZone(ZoneId.systemDefault()));
         String modo, resultado, detalle;
@@ -298,7 +316,7 @@ public class VistaPerfil extends JPanel {
 
     // ---------- Componentes propios ----------
 
-    /** Panel con fondo oscuro y esquinas redondeadas (igual que las tarjetas del menu). */
+    /** Panel reutilizable con fondo oscuro, borde y esquinas redondeadas. */
     private static class PanelRedondo extends JPanel {
         private final int radio;
 
@@ -320,7 +338,7 @@ public class VistaPerfil extends JPanel {
         }
     }
 
-    /** Una estadistica: titulo pequeno, numero grande y una linea de detalle. */
+    /** Tarjeta de estadística con título, valor principal y descripción breve. */
     private static class Mosaico extends PanelRedondo {
         private final JLabel lblValor = new JLabel("-");
         private final JLabel lblDetalle = new JLabel(" ");
@@ -352,7 +370,7 @@ public class VistaPerfil extends JPanel {
         }
     }
 
-    /** El astronauta del jugador con un halo detras. Si no hay imagenes, muestra su inicial. */
+    /** Dibuja el avatar centrado con un halo; si falta la imagen, dibuja la inicial. */
     private static class Retrato extends JComponent {
         private BufferedImage imagen;
         private String inicial = "?";
@@ -400,7 +418,7 @@ public class VistaPerfil extends JPanel {
         }
     }
 
-    /** Estrellita dibujada con Java2D (no depende de que la fuente tenga el simbolo). */
+    /** Ícono de estrella dibujado con Java2D para no depender de una fuente especial. */
     private static class IconoEstrella implements Icon {
         private final int tam;
         private final Color color;

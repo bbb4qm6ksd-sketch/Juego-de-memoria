@@ -17,6 +17,7 @@ import java.util.List;
  */
 public class ModeloPerfil {
 
+    /** Identifica el modo de juego asociado a cada registro del historial. */
     public enum Modo { CLASICO, PATRONES }
 
     /** Una partida del historial. */
@@ -29,6 +30,7 @@ public class ModeloPerfil {
         public final int tamano;         // CLASICO: 2, 4 o 6 (dificultad) | PATRONES: 0
         public final int estrellas;      // estrellas que dio la partida
 
+        /** Crea una entrada inmutable con los datos de una partida ya terminada. */
         Entrada(long momento, Modo modo, boolean victoria, int valor, String detalle, int tamano, int estrellas) {
             this.momento = momento;
             this.modo = modo;
@@ -60,11 +62,13 @@ public class ModeloPerfil {
 
     // ---------- Registro de partidas (lo llaman los controladores de los modos de juego) ----------
 
+    /** Guarda el resultado clásico, donde valor representa intentos y detalle el nombre del rival. */
     public void registrarClasico(boolean victoria, int intentos, String rival, int tamano, int estrellas) {
         agregar(new Entrada(System.currentTimeMillis(), Modo.CLASICO, victoria, intentos,
                 limpiar(rival), tamano, Math.max(0, estrellas)));
     }
 
+    /** Guarda una partida de patrones; valor representa cuántas rondas se completaron. */
     public void registrarPatrones(int rondasCompletadas, int estrellas) {
         agregar(new Entrada(System.currentTimeMillis(), Modo.PATRONES, false,
                 Math.max(0, rondasCompletadas), "", 0, Math.max(0, estrellas)));
@@ -72,13 +76,19 @@ public class ModeloPerfil {
 
     // ---------- Estadisticas ----------
 
+    /** Devuelve el nombre de la cuenta asociada a este perfil. */
     public String getUsuario() { return usuario; }
 
+    /** Cantidad de partidas clásicas registradas. */
     public int getPartidasClasico() { return contar(Modo.CLASICO, false); }
+    /** Cantidad de victorias del usuario en el modo clásico. */
     public int getVictoriasClasico() { return contar(Modo.CLASICO, true); }
+    /** Cantidad de partidas terminadas en el modo patrones. */
     public int getPartidasPatrones() { return contar(Modo.PATRONES, false); }
+    /** Total de partidas de ambos modos que conserva el historial. */
     public int getPartidasTotales() { return historial.size(); }
 
+    /** Calcula el porcentaje de victorias clásicas; devuelve cero si aún no hay partidas. */
     public int getPorcentajeVictorias() {
         int jugadas = getPartidasClasico();
         return jugadas == 0 ? 0 : Math.round(100f * getVictoriasClasico() / jugadas);
