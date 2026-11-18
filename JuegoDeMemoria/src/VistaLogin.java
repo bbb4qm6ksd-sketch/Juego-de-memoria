@@ -1,3 +1,4 @@
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -7,10 +8,13 @@ import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
 
 
+// Ventana de inicio de sesión con una sección visual y otra para ingresar credenciales.
 public class VistaLogin extends JFrame {
 
+    // Carácter que oculta la contraseña mientras se escribe.
     private static final char ECO = '\u2022';
 
+    // Campos, botones y etiqueta que componen el formulario de acceso.
     private final JTextField txtUsuario = new JTextField();
     private final JPasswordField txtContrasena = new JPasswordField();
     private final JButton btnVer = Tema.botonTexto("VER");
@@ -19,6 +23,7 @@ public class VistaLogin extends JFrame {
     private final JButton btnCrearCuenta = Tema.botonTexto("CREAR CUENTA");
     private final JLabel lblError = new JLabel(" ");
 
+    // Configura la ventana y distribuye el panel decorativo junto al formulario.
     public VistaLogin() {
         super("AstroMatch - Iniciar sesión");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -43,6 +48,7 @@ public class VistaLogin extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
+    // Construye el panel izquierdo con el fondo animado y la presentación del juego.
     private JPanel crearPanelHero() {
         Tema hero = new Tema(140);
         hero.setMostrarOrion(true);
@@ -67,6 +73,7 @@ public class VistaLogin extends JFrame {
         descripcion.setFont(fuentes.mono(Font.PLAIN, 16));
         descripcion.setForeground(Tema.SECUNDARIO);
 
+        // Agrupa el lema y la descripción en una columna alineada a la izquierda.
         JPanel textos = new JPanel();
         textos.setOpaque(false);
         textos.setLayout(new BoxLayout(textos, BoxLayout.Y_AXIS));
@@ -89,6 +96,7 @@ public class VistaLogin extends JFrame {
         return hero;
     }
 
+    // Crea el formulario, sus controles y la acción para mostrar u ocultar la contraseña.
     private JPanel crearPanelFormulario() {
         JPanel lado = new JPanel(new GridBagLayout());
         lado.setBackground(Tema.FONDO);
@@ -98,11 +106,13 @@ public class VistaLogin extends JFrame {
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
         form.add(Box.createHorizontalStrut(280));
 
+        // Aplica el estilo visual compartido a los campos de usuario y contraseña.
         Tema.estilizarCampo(txtUsuario);
         Tema.estilizarCampo(txtContrasena);
         txtContrasena.setEchoChar(ECO);
         txtUsuario.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
 
+        // Coloca el campo de contraseña junto al botón para alternar su visibilidad.
         JPanel filaClave = new JPanel(new BorderLayout());
         filaClave.setOpaque(false);
         filaClave.add(txtContrasena, BorderLayout.CENTER);
@@ -120,6 +130,7 @@ public class VistaLogin extends JFrame {
         filaLinks.add(btnCrearCuenta, BorderLayout.EAST);
         filaLinks.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
 
+        // Agrega títulos, campos, mensajes y botones en el orden de lectura del formulario.
         form.add(alinear(etiqueta("ACCESO", fuentes.mono(Font.BOLD, 11), Tema.HIELO)));
         form.add(Box.createVerticalStrut(14));
         form.add(alinear(etiqueta("Bienvenido", fuentes.romantic(Font.PLAIN, 46), Tema.TEXTO)));
@@ -142,6 +153,7 @@ public class VistaLogin extends JFrame {
             ((JComponent) hijo).setAlignmentX(Component.LEFT_ALIGNMENT);
         }
 
+        // Cambia entre mostrar la contraseña como puntos y mostrar el texto ingresado.
         btnVer.addActionListener(e -> {
             boolean oculta = txtContrasena.getEchoChar() != 0;
             txtContrasena.setEchoChar(oculta ? (char) 0 : ECO);
@@ -156,6 +168,7 @@ public class VistaLogin extends JFrame {
         return lado;
     }
 
+    // Crea una etiqueta de texto con fuente y color personalizados.
     private static JLabel etiqueta(String texto, Font fuente, Color color) {
         JLabel l = new JLabel(texto);
         l.setFont(fuente);
@@ -163,11 +176,13 @@ public class VistaLogin extends JFrame {
         return l;
     }
 
+    // Alinea un componente al inicio de la columna del formulario y lo devuelve.
     private static <T extends JComponent> T alinear(T c) {
         c.setAlignmentX(Component.LEFT_ALIGNMENT);
         return c;
     }
 
+    // Componente personalizado que dibuja el lema en dos líneas con fuentes decorativas.
     private static class Lema extends JComponent {
         private static final String LINEA1 = "Une los puntos,";
         private static final String LINEA2 = "lee el cielo.";
@@ -176,6 +191,7 @@ public class VistaLogin extends JFrame {
         private final int altoLinea;
         private final int ancho;
 
+        // Calcula el espacio necesario para que ambas líneas del lema quepan completas.
         Lema() {
             LineMetrics lm = fuente.getLineMetrics(LINEA1, frc);
             altoLinea = (int) Math.ceil((lm.getAscent() + lm.getDescent()) * 0.95);
@@ -190,6 +206,7 @@ public class VistaLogin extends JFrame {
 
         @Override
         protected void paintComponent(Graphics g) {
+            // Dibuja cada línea del lema con su color y suavizado de texto.
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -204,12 +221,14 @@ public class VistaLogin extends JFrame {
         }
     }
 
+    // Métodos para que el controlador lea los datos y acceda a los botones del formulario.
     public String getUsuario()           { return txtUsuario.getText().trim(); }
     public String getContrasena()        { return new String(txtContrasena.getPassword()); }
     public JButton getBtnIngresar()      { return btnIngresar; }
     public JButton getBtnOlvide()        { return btnOlvide; }
     public JButton getBtnCrearCuenta()   { return btnCrearCuenta; }
 
+    // Métodos para mostrar errores o limpiar los campos del formulario.
     public void mostrarError(String mensaje) { lblError.setText(mensaje); }
     public void limpiarError()               { lblError.setText(" "); }
     public void limpiarCampos()              { txtUsuario.setText(""); txtContrasena.setText(""); limpiarError(); }

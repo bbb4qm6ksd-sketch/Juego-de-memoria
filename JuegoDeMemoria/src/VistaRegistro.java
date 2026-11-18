@@ -1,3 +1,4 @@
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -5,8 +6,10 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 
+
 public class VistaRegistro extends JDialog {
 
+    // Campos, botones y etiquetas que forman el formulario de registro.
     private final JTextField txtUsuario = new JTextField();
     private final JTextField txtCorreo = new JTextField();
     private final JPasswordField txtContrasena = new JPasswordField();
@@ -17,6 +20,7 @@ public class VistaRegistro extends JDialog {
     private final JLabel lblError = new JLabel(" ");
     private final JLabel lblEstadoRostro = new JLabel("Rostro pendiente de registro");
 
+    // Configura el diálogo, prepara el fondo y lo centra respecto a su ventana dueña.
     public VistaRegistro(Frame dueno) {
         super(dueno, "AstroMatch - Crear cuenta", true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -33,12 +37,14 @@ public class VistaRegistro extends JDialog {
         setLocationRelativeTo(dueno);
     }
 
+    // Construye los campos de usuario, correo y contraseñas junto con las acciones.
     private JPanel crearFormulario() {
         JPanel form = new JPanel();
         form.setOpaque(false);
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
         form.add(Box.createHorizontalStrut(360));
 
+        // Oculta ambas contraseñas y ofrece indicaciones sobre los requisitos.
         txtContrasena.setEchoChar('\u2022');
         txtConfirmar.setEchoChar('\u2022');
         String ayudaContrasena = "<html>La contraseña debe tener:<br>"
@@ -48,6 +54,7 @@ public class VistaRegistro extends JDialog {
         txtContrasena.setToolTipText(ayudaContrasena);
         txtConfirmar.setToolTipText(ayudaContrasena);
 
+        // Aplica el estilo común y un alto uniforme a todos los campos.
         JTextField[] campos = {txtUsuario, txtCorreo, txtContrasena, txtConfirmar};
         for (JTextField campo : campos) {
             Tema.estilizarCampo(campo);
@@ -58,6 +65,7 @@ public class VistaRegistro extends JDialog {
         lblError.setForeground(Tema.ERROR);
         btnCrear.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
 
+        // Coloca las etiquetas y controles en orden vertical para completar el registro.
         form.add(alinear(etiqueta("NUEVA CUENTA", fuentes.mono(Font.BOLD, 11), Tema.HIELO)));
         form.add(Box.createVerticalStrut(14));
         form.add(alinear(etiqueta("Crea tu cuenta", fuentes.mono(Font.PLAIN, 40), Tema.TEXTO)));
@@ -94,6 +102,7 @@ public class VistaRegistro extends JDialog {
         return form;
     }
 
+    // Presenta el estado del registro facial y el botón para capturar el rostro.
     private JPanel crearSeccionRostro() {
         JPanel tarjeta = new JPanel(new BorderLayout(12, 0));
         tarjeta.setOpaque(false);
@@ -123,13 +132,15 @@ public class VistaRegistro extends JDialog {
         return tarjeta;
     }
 
-    /** Icono original del astronauta para señalar dónde iniciar el registro facial. */
+    // Dibuja un astronauta sencillo como icono de la sección de identidad facial.
     private static final class AvatarAstronauta extends JComponent {
+        // Define el tamaño del icono y deja visible el fondo que está detrás.
         AvatarAstronauta() {
             setPreferredSize(new Dimension(54, 62));
             setOpaque(false);
         }
 
+        // Dibuja el casco y el traje del astronauta con formas vectoriales.
         @Override protected void paintComponent(Graphics g0) {
             Graphics2D g = (Graphics2D) g0.create();
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -158,6 +169,7 @@ public class VistaRegistro extends JDialog {
 
     // ---------- Campo de contrasena con "ojito" para mostrar/ocultar ----------
     // Es comportamiento puramente visual (cambia el caracter de eco); no hay logica aqui.
+    // Combina un campo de contraseña con un botón para alternar su visibilidad.
     private JPanel campoClave(JPasswordField campo) {
         final char eco = campo.getEchoChar();
 
@@ -183,13 +195,14 @@ public class VistaRegistro extends JDialog {
         return fila;
     }
 
-    /** Ojo dibujado con Java2D (sin imagenes). tachado=true: ojo con una raya. */
+    // Crea un icono vectorial de ojo, con una raya cuando la contraseña está visible.
     private static Icon iconoOjo(boolean tachado) {
         return new Icon() {
             @Override public int getIconWidth()  { return 22; }
             @Override public int getIconHeight() { return 22; }
 
             @Override
+            // Dibuja el contorno del ojo y agrega una diagonal si está tachado.
             public void paintIcon(Component c, Graphics g, int x, int y) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -209,6 +222,7 @@ public class VistaRegistro extends JDialog {
         };
     }
 
+    // Crea una etiqueta con fuente y color personalizados.
     private static JLabel etiqueta(String texto, Font fuente, Color color) {
         JLabel l = new JLabel(texto);
         l.setFont(fuente);
@@ -216,11 +230,13 @@ public class VistaRegistro extends JDialog {
         return l;
     }
 
+    // Alinea un control a la izquierda y devuelve el mismo componente.
     private static <T extends JComponent> T alinear(T c) {
         c.setAlignmentX(Component.LEFT_ALIGNMENT);
         return c;
     }
 
+    // Métodos para que el controlador lea los datos y acceda a los botones.
     public String getUsuario()       { return txtUsuario.getText().trim(); }
     public String getCorreo()        { return txtCorreo.getText().trim(); }
     public String getContrasena()    { return new String(txtContrasena.getPassword()); }
@@ -229,12 +245,14 @@ public class VistaRegistro extends JDialog {
     public JButton getBtnCrear()     { return btnCrear; }
     public JButton getBtnVolver()    { return btnVolver; }
 
+    // Actualiza el texto, color y acción del botón según el estado del rostro.
     public void fijarRostroRegistrado(boolean registrado) {
         lblEstadoRostro.setText(registrado ? "Rostro capturado correctamente" : "Rostro pendiente de registro");
         lblEstadoRostro.setForeground(registrado ? Tema.ESTRELLA : Tema.SECUNDARIO);
         btnRegistrarRostro.setText(registrado ? "VOLVER A CAPTURAR" : "REGISTRAR ROSTRO");
     }
 
+    // Muestra un error de validación o limpia el mensaje anterior.
     public void mostrarError(String mensaje) { lblError.setText(mensaje); }
     public void limpiarError()               { lblError.setText(" "); }
 }

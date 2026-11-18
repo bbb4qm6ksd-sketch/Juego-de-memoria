@@ -7,10 +7,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-//Gana quien logra hacer lo 18 pares en menos intentos
+
+// Administra los puntajes de los jugadores y calcula la tabla de premios.
 public class ModeloPremios {
 
+    // Cantidad máxima de jugadores que aparecen en la tabla.
     public static final int TOP = 5;
+    // Archivo local que conserva los nombres de jugadores y sus intentos.
     private static final Path ARCHIVO = Paths.get("premios.txt");
 
     //Rgeistra mejor puntaje de un jugador
@@ -34,15 +37,19 @@ public class ModeloPremios {
         }
     }
 
+
     private final List<Registro> registros = new ArrayList<>();
 
+    // Al crear el modelo, carga los puntajes que ya están guardados.
     public ModeloPremios() {
         cargar();
     }
 
-    //Se registran victorias, si ya existe el jugador se actualiza cual ha sido su mejor puntaje
+    // Registra una victoria o actualiza el récord existente si se logró con menos intentos.
     public void registrar(String jugador, int intentos) {
+        // Ignora datos incompletos o puntajes que no pueden ser válidos.
         if (jugador == null || jugador.trim().isEmpty() || intentos <= 0) return;
+        // Busca al jugador sin distinguir mayúsculas y minúsculas.
         for (Registro r : registros) {
             if (r.jugador.equalsIgnoreCase(jugador)) {
                 if (intentos < r.intentos) {
@@ -56,12 +63,14 @@ public class ModeloPremios {
         guardar();
     }
 
+    // Vuelve a leer desde el archivo para reflejar los datos guardados más recientes.
     public void recargar() {
         registros.clear();
         cargar();
     }
 
-    /** Devuelve el mejor registro persistido del jugador o -1 si todavía no existe. */
+
+    // Devuelve el mejor puntaje del jugador, o -1 cuando no hay registro.
     public int getMejorIntento(String jugador) {
         if (jugador == null) return -1;
         for (Registro registro : registros) {
@@ -71,15 +80,16 @@ public class ModeloPremios {
     }
 
 
-    // se hace el calculo del premio segun la formula
+    // Calcula el monto del premio usando los intentos y el tipo de cambio.
     public static double calcularPremio(int intentos, double cambioDolar) {
         if (intentos <= 0) return 0;
         return 1.0 / intentos * 100 * cambioDolar;
     }
 
+
     private static final Path ARCHIVO_CAMBIO = Paths.get("tipo_cambio.txt");
 
-    //Guarda el tipo de cambio
+    // Guarda el tipo de cambio actual para poder recuperarlo si falla otra consulta.
     public void guardarCambio(double valor) {
         try {
             Files.write(ARCHIVO_CAMBIO, String.valueOf(valor).getBytes(StandardCharsets.UTF_8));
@@ -88,7 +98,7 @@ public class ModeloPremios {
         }
     }
 
-    //Cual fue el utlimo tipo de cambio?
+    // Lee el tipo de cambio guardado; devuelve -1 si no existe o no se puede interpretar.
     public double ultimoCambio() {
         try {
             String t = new String(Files.readAllBytes(ARCHIVO_CAMBIO), StandardCharsets.UTF_8);
@@ -98,8 +108,9 @@ public class ModeloPremios {
         }
     }
 
-    //Calcula el top 5 mejores
+    // Ordena los registros por intentos y prepara las filas de los mejores jugadores.
     public List<Fila> getTabla(double cambioDolar) {
+        // Ordena una copia para mantener intacto el orden de los registros originales.
         List<Registro> orden = new ArrayList<>(registros);
         orden.sort(Comparator.comparingInt(Registro::getIntentos));   
 
@@ -111,8 +122,7 @@ public class ModeloPremios {
         return tabla;
     }
 
-    // ---------- Persistencia (jugador<TAB>intentos) ----------
-
+    // Guarda todos los registros en formato: nombre del jugador, tabulador e intentos.
     private void guardar() {
         List<String> lineas = new ArrayList<>();
         for (Registro r : registros) lineas.add(r.jugador + "\t" + r.intentos);
@@ -123,10 +133,12 @@ public class ModeloPremios {
         }
     }
 
+    // Lee el archivo de puntajes y reconstruye los registros en memoria.
     private void cargar() {
         if (!Files.exists(ARCHIVO)) return;
         try {
             for (String linea : Files.readAllLines(ARCHIVO, StandardCharsets.UTF_8)) {
+                // Separa cada línea en nombre e intentos y solo procesa filas con ambos datos.
                 String[] p = linea.split("\t");
                 if (p.length == 2) registros.add(new Registro(p[0], Integer.parseInt(p[1].trim())));
             }

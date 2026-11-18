@@ -1,3 +1,4 @@
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
@@ -9,6 +10,7 @@ import java.util.Map;
 // Botón que representa una carta del modo clásico y anima sus cambios de cara.
 // ModeloClasico conserva la lógica de las parejas; esta clase dibuja la constelación
 // y el estado que recibe del controlador.
+
 public class Carta extends JButton {
 
     // Estado lógico que el controlador solicita mostrar en la carta.
@@ -19,6 +21,7 @@ public class Carta extends JButton {
     private static final Color COLOR_POR_DEFECTO = Tema.HIELO;
 
 
+    // Registra colores para los nombres en español y sus variantes en inglés.
     static {
         color(0x5CD8FF, "cisne", "cygnus");                    // celeste
         color(0xFF5D5D, "escorpio", "scorpius");               // rojo
@@ -40,6 +43,7 @@ public class Carta extends JButton {
         color(0x1FD1B2, "capricornio", "capricornus");         // turquesa
     }
 
+
     private static void color(int rgb, String... claves) {
         for (String k : claves) COLORES.put(k, new Color(rgb));
     }
@@ -48,6 +52,7 @@ public class Carta extends JButton {
     public static Color colorDe(String nombre) {
         return COLORES.getOrDefault(clave(nombre), COLOR_POR_DEFECTO);
     }
+
 
     static String clave(String nombre) {
         return Normalizer.normalize(nombre == null ? "" : nombre, Normalizer.Form.NFD)
@@ -62,6 +67,7 @@ public class Carta extends JButton {
     private Patron patron = Patron.para("");
     private boolean resaltada = false;
     private static final int DURACION_FLIP_MS = 300;
+
 
     private Estado mostrado = Estado.OCULTA;   // cara que se ve en la primera mitad del giro ///////
     private double flip = 1;                   // 0 a 1; 1 = sin animación
@@ -170,6 +176,7 @@ public class Carta extends JButton {
         g2.scale(escalaX, 1 - 0.05 * (1 - escalaX));   // leve achique vertical = efecto 3D
         g2.translate(-w / 2.0, -h / 2.0);
 
+
         RoundRectangle2D forma = new RoundRectangle2D.Float(1, 1, w - 3, h - 3, 18, 18);
 
         // fondo: oculta = azul noche; volteada/encontrada = azul noche con un toque del color de su constelacion
@@ -201,7 +208,6 @@ public class Carta extends JButton {
         if (oculta) dibujarEstrella(g2, w / 2f, h / 2f);
         else        dibujarContenido(g2, w, h);
 
-// cursor del teclado
         if (resaltada) {
             g2.setColor(alfa(Tema.HIELO, 70));
             g2.setStroke(new BasicStroke(6f));
@@ -213,6 +219,7 @@ public class Carta extends JButton {
         g2.dispose();
     }
 
+    // Dibuja el brillo central que aparece en el reverso de la carta.
     private void dibujarEstrella(Graphics2D g2, float cx, float cy) {
         g2.setPaint(new RadialGradientPaint(new Point2D.Float(cx, cy), 14f,
                 new float[]{0f, 1f}, new Color[]{alfa(Tema.HIELO, 110), alfa(Tema.HIELO, 0)}));
@@ -221,6 +228,7 @@ public class Carta extends JButton {
         g2.fillOval((int) (cx - 2.5f), (int) (cy - 2.5f), 5, 5);
     }
 
+    // Dibuja el nombre y una imagen o, si no hay imagen, la constelación vectorial.
     private void dibujarContenido(Graphics2D g2, int w, int h) {
         String etiqueta = nombre.isBlank() ? "Constelación" : nombre;
         int tam = Math.max(12, h / 7);
@@ -304,6 +312,7 @@ public class Carta extends JButton {
         g2.dispose();
     }
 
+
     private static Point2D punto(Patron p, int indice, int margen, double ancho, double alto) {
         return new Point2D.Double(margen + p.puntos[indice][0] * ancho, margen + p.puntos[indice][1] * alto);
     }
@@ -315,6 +324,7 @@ public class Carta extends JButton {
         final int brillante;
         Patron(double[][] puntos, int[][] lineas, int brillante) { this.puntos = puntos; this.lineas = lineas; this.brillante = brillante; }
 
+        // Selecciona las coordenadas y líneas que representan la constelación indicada.
         static Patron para(String nombre) {
             switch (clave(nombre)) {
                 case "cisne": case "cygnus": return new Patron(new double[][]{{.5,.08},{.5,.92},{.16,.43},{.84,.43},{.5,.25},{.5,.68}}, new int[][]{{0,1},{2,3},{4,5}}, 0);

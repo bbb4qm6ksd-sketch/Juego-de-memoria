@@ -1,3 +1,4 @@
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -19,8 +20,10 @@ import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
 
 
-//Botones
+
 public class VistaPantallaPrincipal extends JFrame {
+
+    // Botones de navegación y acciones disponibles desde la pantalla principal.
     private final JButton btnClasico = new BotonEstrella("JUGAR", true);
     private final JButton btnPatrones = new BotonEstrella("JUGAR", true);
     private final JButton btnPremios = new BotonEstrella("PREMIOS", false);
@@ -33,7 +36,7 @@ public class VistaPantallaPrincipal extends JFrame {
     private CardLayout tarjetas;
     private JPanel pantallas;
 
-    //Constructor
+    // Configura el fondo animado, las pantallas navegables y el tamaño de la ventana.
     public VistaPantallaPrincipal(String usuario) {
         super("AstroMatch - Inicio");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -50,6 +53,7 @@ public class VistaPantallaPrincipal extends JFrame {
         pantallas.setOpaque(false);
 
 
+        // El CardLayout permite alternar entre bienvenida, opciones, perfil y tienda.
         pantallas.add(crearBienvenida(usuario), "bienvenida");
         pantallas.add(crearContenido(), "opciones");
 
@@ -63,7 +67,7 @@ public class VistaPantallaPrincipal extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
-    //Encabezado
+    // Construye la barra superior con el nombre del usuario y accesos rápidos.
     private JPanel crearEncabezado(String usuario) {
         JPanel encabezado = new JPanel(new BorderLayout());
         encabezado.setOpaque(false);
@@ -86,7 +90,7 @@ public class VistaPantallaPrincipal extends JFrame {
         return encabezado;
     }
 
-    //Bienvenida
+    // Crea la pantalla de bienvenida con lema, título y botón para ver las opciones.
     private JPanel crearBienvenida(String usuario) {
         JPanel seccion = new JPanel(new BorderLayout());
         seccion.setOpaque(false);
@@ -102,7 +106,7 @@ public class VistaPantallaPrincipal extends JFrame {
         textos.setOpaque(false);
         textos.setLayout(new BoxLayout(textos, BoxLayout.Y_AXIS));
 
-        //Acomoda todo en el centro
+        // Centra vertical y horizontalmente los textos principales de bienvenida.
         for (JComponent c : new JComponent[]{eyebrow, titulo, divisor, lema}) c.setAlignmentX(Component.CENTER_ALIGNMENT);
         textos.add(eyebrow);
         textos.add(Box.createVerticalStrut(14));
@@ -128,7 +132,7 @@ public class VistaPantallaPrincipal extends JFrame {
         seccion.add(centro, BorderLayout.CENTER);
         seccion.add(sur, BorderLayout.SOUTH);
 
-        //Estrella fugaz que cruza por delante y por detras del titulo
+        // Añade una estrella fugaz animada sobre el título de bienvenida.
         EstrellaFugaz estrellaFugaz = new EstrellaFugaz(seccion, titulo);
         getRootPane().setGlassPane(estrellaFugaz);
         estrellaFugaz.setVisible(true);
@@ -137,7 +141,7 @@ public class VistaPantallaPrincipal extends JFrame {
     }
 
 
-    //Opciones
+    // Prepara la pantalla con las tarjetas de modos de juego y clasificación.
     private JPanel crearContenido() {
         JPanel contenido = new JPanel(new BorderLayout(0, 32));
         contenido.setOpaque(false);
@@ -154,7 +158,7 @@ public class VistaPantallaPrincipal extends JFrame {
         titulos.add(Box.createVerticalStrut(8));
         titulos.add(subtitulo);
 
-        //Las tres tarjetas
+        // Cada tarjeta presenta una sección distinta y su botón de acceso.
         JPanel opciones = new JPanel(new GridLayout(1, 3, 24, 0));
         opciones.setOpaque(false);
         opciones.add(crearTarjeta(" MODO CLÁSICO", "Memoriza las constelaciones",
@@ -172,6 +176,7 @@ public class VistaPantallaPrincipal extends JFrame {
         return contenido;
     }
 
+    // Construye una tarjeta con textos, decoración y botón para la opción elegida.
     private JPanel crearTarjeta(String categoria, String titulo, String descripcion, JButton boton,
                                 boolean principal, boolean conConstelaciones, boolean conPatron, boolean conPodio) {
         PanelOpcion tarjeta = new PanelOpcion(principal);
@@ -208,6 +213,7 @@ public class VistaPantallaPrincipal extends JFrame {
     }
 
 
+    // Crea etiquetas con una fuente y un color definidos por quien las solicita.
     private static JLabel etiqueta(String texto, Font fuente, Color color) {
         JLabel l = new JLabel(texto);
         l.setFont(fuente);
@@ -215,6 +221,7 @@ public class VistaPantallaPrincipal extends JFrame {
         return l;
     }
 
+    // Crea el texto decorativo que aparece al pie de la ventana.
     private JPanel crearPie() {
         JPanel pie = new JPanel(new BorderLayout());
         pie.setOpaque(false);
@@ -225,16 +232,18 @@ public class VistaPantallaPrincipal extends JFrame {
         return pie;
     }
 
-    //Cambio de pagina
+    // Cambia el CardLayout para mostrar la pantalla inicial de bienvenida.
     private void mostrarBienvenida() {
         tarjetas.first(pantallas);
     }
 
+    // Muestra las opciones y ejecuta la acción asociada si se configuró una.
     public void mostrarOpciones() {
         tarjetas.show(pantallas, "opciones");
         if (alMostrarOpciones != null) alMostrarOpciones.run();
     }
 
+    // Agrega la vista del perfil al conjunto de pantallas y actualiza el panel.
     public void instalarPerfil(VistaPerfil vista) {
         pantallas.add(vista, "perfil");
         pantallas.revalidate();
@@ -250,6 +259,7 @@ public class VistaPantallaPrincipal extends JFrame {
         }
     }
 
+    // Agrega la vista de la tienda al conjunto de pantallas.
     public void instalarTienda(VistaTienda vista) {
         pantallas.add(vista, "tienda");
         pantallas.revalidate();
@@ -258,6 +268,7 @@ public class VistaPantallaPrincipal extends JFrame {
     public void mostrarTienda() { tarjetas.show(pantallas, "tienda"); }
 
 
+    // Métodos de acceso para que el controlador conecte acciones a los botones.
     public JButton getBtnClasico() { return btnClasico; }
     public JButton getBtnPatrones() { return btnPatrones; }
     public JButton getBtnPremios() { return btnPremios; }
@@ -265,6 +276,8 @@ public class VistaPantallaPrincipal extends JFrame {
     public JButton getBtnSonido() { return btnSonido; }
     public JButton getBtnTienda() { return btnTienda; }
     public JButton getBtnPerfil() { return btnPerfil; }
+
+    // Genera la forma geométrica de una estrella de cinco puntas.
     private static Path2D estrella(double cx, double cy, double re, double ri) {
         Path2D.Double p = new Path2D.Double();
         for (int i = 0; i < 10; i++) {
@@ -278,7 +291,7 @@ public class VistaPantallaPrincipal extends JFrame {
         return p;
     }
 
-    //Mezclar colores
+    // Interpola entre dos colores según t, limitado al intervalo de 0 a 1.
     private static Color mezclar(Color a, Color b, float t) {
         t = Math.max(0f, Math.min(1f, t));
         return new Color(
@@ -287,12 +300,14 @@ public class VistaPantallaPrincipal extends JFrame {
                 Math.round(a.getBlue() + (b.getBlue() - a.getBlue()) * t));
     }
 
+    // Panel de tarjeta que dibuja decoraciones animadas detrás de sus controles.
     private static class PanelOpcion extends JPanel {
         private static final String[] CONSTELACIONES = {
                 "Orión", "Escorpio", "Cisne", "Géminis", "Cruz del Sur", "Casiopea",
                 "Osa Mayor", "Lira", "Leo", "Tauro", "Andrómeda", "Pegaso",
                 "Acuario", "Aries", "Cáncer", "Virgo", "Sagitario", "Capricornio"};
 
+        // Ajustes visuales para la tarjeta, sus decoraciones y sus animaciones.
         private final boolean destacado;
         private boolean conConstelaciones = false;
         private BufferedImage cache;// el fondo se dibuja una vez y se reutiliza
@@ -315,8 +330,10 @@ public class VistaPantallaPrincipal extends JFrame {
         private static final int[] SECUENCIA = {0, 4, 2, 5, 8, 7, 3, 1, 6};   // orden en que se iluminan (casillas 0 a 8)
         private static final double SEG_POR_ESTRELLA = 0.6, SEG_PAUSA = 1.0;
 
+        // Temporizador que actualiza el resaltado y las decoraciones de la tarjeta.
         private final Timer animacion = new Timer(16, e -> tic());
 
+        // Suaviza la transición al pasar el cursor y avanza las animaciones activas.
         private void tic() {
             long ahora = System.nanoTime();
             float dt = Math.min((ahora - ultimoNs) / 1e9f, 0.1f);
@@ -335,6 +352,7 @@ public class VistaPantallaPrincipal extends JFrame {
             if (nivel > 0f || previo > 0f) repaint();
         }
 
+        // Comprueba si el cursor se encuentra dentro de los límites de esta tarjeta.
         private boolean mouseEncima() {
             PointerInfo pi = MouseInfo.getPointerInfo();
             if (pi == null) return false;
@@ -350,6 +368,7 @@ public class VistaPantallaPrincipal extends JFrame {
 
         private float factorBrillo() { return 0.55f + 0.45f * nivel; }   // opacidad del dibujo: tenue sin hover
 
+        // Inicializa el estilo destacado y arranca el temporizador de animación.
         PanelOpcion(boolean destacado) {
             this.destacado = destacado;
             setOpaque(false);
@@ -362,8 +381,10 @@ public class VistaPantallaPrincipal extends JFrame {
 
 
         // Cada llamada define una zona libre: el rectángulo que envuelve a esos componentes
+        // Registra componentes que deben quedar despejados de las decoraciones de fondo.
         void agregarZonaLibre(JComponent... componentes) { grupos.add(componentes); }
 
+        // Calcula las áreas ocupadas por los grupos de texto y botones.
         private List<Rectangle> calcularZonas() {
             List<Rectangle> zonas = new ArrayList<>();
             for (JComponent[] grupo : grupos) {
@@ -381,6 +402,7 @@ public class VistaPantallaPrincipal extends JFrame {
             return zonas;
         }
 
+        // Dibuja el fondo, las decoraciones y el borde de la tarjeta.
         @Override protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g.create();
@@ -425,6 +447,7 @@ public class VistaPantallaPrincipal extends JFrame {
         }
 
 
+        // Genera imágenes pequeñas de las constelaciones y prepara sus posiciones iniciales.
         private void crearMiniaturas(int w, int h) {
             int columnas = 3, filas = 6;
             ladoMini = (int) Math.min(w / (float) columnas, h / (float) filas);
@@ -452,6 +475,7 @@ public class VistaPantallaPrincipal extends JFrame {
             }
         }
 
+        // Dibuja constelaciones flotantes dentro de la tarjeta, evitando texto y botón.
         private void dibujarConstelaciones(Graphics2D g2, int w, int h) {
             if (w <= 0 || h <= 0) return;
             if (miniaturas == null || w != anchoUsado || h != altoUsado) crearMiniaturas(w, h);
@@ -485,7 +509,7 @@ public class VistaPantallaPrincipal extends JFrame {
             g.dispose();
         }
 
-        // Cuadrícula 3x3 de estrellas; una secuencia se ilumina y crece una estrella por ronda.
+        // Muestra una cuadrícula animada que ilustra la secuencia del modo de patrones.
         private void dibujarPatron(Graphics2D g2, int w, int h) {
             List<Rectangle> zonas = calcularZonas();
             if (zonas.size() < 2) return;                          // aún no se acomodó el layout
@@ -560,7 +584,7 @@ public class VistaPantallaPrincipal extends JFrame {
             g.dispose();
         }
 
-        // Podio de 5 puestos (orden: 4º, 2º, 1º, 3º, 5º); una estrella fugaz recorre su contorno.
+        // Dibuja el podio de cinco puestos y una estrella fugaz que recorre su contorno.
         private void dibujarPodio(Graphics2D g2, int w, int h) {
             List<Rectangle> zonas = calcularZonas();
             if (zonas.size() < 2) return;
@@ -660,6 +684,7 @@ public class VistaPantallaPrincipal extends JFrame {
 
 
         // Punto de la ruta a una distancia d del inicio (la ruta es un bucle, así que d se "da la vuelta")
+        // Obtiene una posición interpolada sobre una ruta cerrada según su distancia recorrida.
         private static double[] puntoEnRuta(double[][] pts, double[] acum, double d) {
             double total = acum[acum.length - 1];
             d = ((d % total) + total) % total;
@@ -671,6 +696,7 @@ public class VistaPantallaPrincipal extends JFrame {
         }
 
         // duración total de un ciclo completo (todas las rondas) y dónde empieza cada ronda
+        // Calcula la duración total de todas las rondas de la secuencia ilustrada.
         private static double ciclo() {
             double total = 0;
             for (int n = 1; n <= SECUENCIA.length; n++) total += n * SEG_POR_ESTRELLA + SEG_PAUSA;
@@ -684,7 +710,7 @@ public class VistaPantallaPrincipal extends JFrame {
         }
     }
 
-    //Boton de estrella que gira
+    // Botón personalizado con brillo y estrella animados al pasar el cursor.
     private static class BotonEstrella extends JButton {
         private final boolean principal;
         private boolean encima = false;
@@ -707,6 +733,7 @@ public class VistaPantallaPrincipal extends JFrame {
 
         @Override
         protected void paintComponent(Graphics g) {
+            // Dibuja el botón, su etiqueta y la estrella decorativa con el estado de hover actual.
             Graphics2D g2 = (Graphics2D) g.create();
             //Calidad de dibujo
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -775,7 +802,7 @@ public class VistaPantallaPrincipal extends JFrame {
         }
     }
 
-    //Dibuja la frase de bienvenida
+    // Componente que dibuja el lema de bienvenida con dos colores.
     private static class LemaBienvenida extends JComponent {
         private static final String PARTE1 = "Une los puntos,";
         private static final String PARTE2 = "lee el cielo.";
@@ -817,7 +844,7 @@ public class VistaPantallaPrincipal extends JFrame {
         }
     }
 
-    //Linea con estrella
+    // Componente decorativo con líneas degradadas y una estrella central.
     private static class DivisorEstelar extends JComponent {
         @Override public Dimension getPreferredSize() { return new Dimension(280, 28); }
         @Override public Dimension getMaximumSize()   { return getPreferredSize(); }
@@ -844,7 +871,7 @@ public class VistaPantallaPrincipal extends JFrame {
         }
     }
 
-    //Estrella fugaz grande: pasa por delante y por detras de las letras del titulo (se dibuja en el glass pane)
+    // Animación de una estrella fugaz que cruza por detrás y por delante del título.
     private static class EstrellaFugaz extends JComponent {
         //x, y (fraccion del area de bienvenida), z (-1 detras del texto, 1 delante)
         private static final double[][] RUTA = {
@@ -872,6 +899,7 @@ public class VistaPantallaPrincipal extends JFrame {
         //Deja pasar los clics a lo que hay debajo
         @Override public boolean contains(int x, int y) { return false; }
 
+        // Avanza la estrella y sus chispas, reiniciando la ruta cuando comienza un nuevo ciclo.
         private void avanzar() {
             if (!titulo.isShowing() || area.getWidth() == 0) { activo = false; return; }
             long ahora = System.nanoTime();
@@ -896,7 +924,7 @@ public class VistaPantallaPrincipal extends JFrame {
             repaint();
         }
 
-        //Curva suave (Catmull-Rom) por los puntos de RUTA
+        // Interpola una posición suave entre los puntos de la ruta definida.
         private static double[] punto(double u) {
             int n = RUTA.length, i = Math.min((int) Math.floor(u), n - 2);
             double f = u - i;
@@ -909,7 +937,7 @@ public class VistaPantallaPrincipal extends JFrame {
             return r;
         }
 
-        //Silueta exacta de las letras del titulo, en coordenadas de esta capa
+        // Obtiene la silueta del título para recortar la parte de la estrella que va detrás.
         private Shape formaTitulo() {
             Font f = titulo.getFont();
             GlyphVector gv = f.createGlyphVector(new FontRenderContext(null, true, true), titulo.getText());
@@ -954,7 +982,7 @@ public class VistaPantallaPrincipal extends JFrame {
             g2.dispose();
         }
 
-        //Dibuja la parte de la cola, chispas y estrella que esta en la capa pedida
+        // Dibuja la cola, las chispas y la cabeza en la capa delantera o trasera.
         private void dibujar(Graphics2D c, boolean frente, Point o, double w, double h, double r0) {
             int n = cola.size();
             for (int i = 1; i < n; i++) {
@@ -982,7 +1010,7 @@ public class VistaPantallaPrincipal extends JFrame {
             }
         }
 
-        //La estrella: brillo, destello de 4 puntas y cuerpo dorado
+        // Dibuja el halo, el destello y el cuerpo de la estrella fugaz.
         private static void cabeza(Graphics2D c, double x, double y, double r, double giro) {
             float rg = (float) (r * 3.4);
             c.setPaint(new RadialGradientPaint((float) x, (float) y, rg, new float[]{0f, .4f, 1f},

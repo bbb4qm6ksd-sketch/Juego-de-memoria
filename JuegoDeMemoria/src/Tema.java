@@ -1,3 +1,4 @@
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -11,8 +12,10 @@ import java.util.Map;
 import java.util.Random;
 
 
+
 public class Tema extends JPanel {
 
+    // Paleta de colores compartida por las distintas vistas del juego.
     public static final Color FONDO       = new Color(0x060914);
     public static final Color SUPERFICIE  = new Color(0x0D1324);
     public static final Color LINEA       = new Color(0x222C48);
@@ -22,10 +25,12 @@ public class Tema extends JPanel {
     public static final Color ESTRELLA    = new Color(0xF6DCA2);
     public static final Color ERROR       = new Color(0xFF8D7E);
 
+    // Crea fuentes estándar y fuentes decorativas usadas en títulos y textos.
     public static Font serif(int estilo, int tam) { return new Font(Font.SERIF, estilo, tam); }
     public static Font sans(int estilo, int tam)  { return new Font(Font.SANS_SERIF, estilo, tam); }
     private static Font fuenteLemaBase;
 
+    // Carga la fuente decorativa del lema una sola vez y devuelve el tamaño solicitado.
     public static Font lema(float tam) {
         if (fuenteLemaBase == null) {
             try (java.io.InputStream in = Tema.class.getResourceAsStream("/fonts/ROMANTIC.TTF")) {
@@ -40,6 +45,7 @@ public class Tema extends JPanel {
 
     private static Font fuenteTituloBase;
 
+    // Carga la fuente de títulos; si no está disponible, usa una fuente serif estándar.
     public static Font titulo(float tam) {
         if (fuenteTituloBase == null) {
             try (java.io.InputStream in = Tema.class.getResourceAsStream("/fonts/KiwiSoda.ttf")) {
@@ -53,6 +59,7 @@ public class Tema extends JPanel {
     }
 
 
+    // Crea un botón de texto sin marco que cambia de color al pasar el cursor.
     public static JButton botonTexto(String texto) {
         JButton b = new JButton(texto);
         b.setContentAreaFilled(false);
@@ -70,16 +77,19 @@ public class Tema extends JPanel {
     }
 
 
+    // Calcula un brillo oscilante para simular el parpadeo de una estrella.
     public static double parpadeo(double seg, double periodo, double fase) {
         return 0.2 + 0.8 * (0.5 + 0.5 * Math.sin(2 * Math.PI * (seg / periodo + fase)));
     }
 
 
+    // Desplaza una posición y la devuelve al inicio al salir del límite.
     public static float derivar(float pos, float vel, float dt) {
         pos -= vel * dt;
         return pos < 0f ? pos + 1f : pos;
     }
 
+    // Aplica colores y bordes a un campo de texto, resaltándolo cuando recibe el foco.
     public static void estilizarCampo(JTextField campo) {
         campo.setOpaque(false);
         campo.setForeground(TEXTO);
@@ -98,7 +108,7 @@ public class Tema extends JPanel {
         });
     }
 
-    // ---------- Fondo nocturno con estrellas estáticas y parpadeo suave ----------
+    // Coordenadas, conexiones, tamaños y fases de brillo de las estrellas de Orión.
     private static final double[][] ORION = {
             {30, 15}, {70, 18}, {42, 48}, {50, 50}, {58, 52}, {28, 85}, {72, 82}
     };
@@ -110,6 +120,7 @@ public class Tema extends JPanel {
     private static final double ORION_TRAZO = 1.6;
     private static final double[] ORION_FASE = {0.25, 0.5, 0.0, 0.1, 0.2, 0.75, 0.125};
 
+    // Parámetros y arreglos que guardan la apariencia y movimiento de las estrellas del fondo.
     private final Color centro;
     private final Color borde;
     private final int cantidad;
@@ -120,18 +131,22 @@ public class Tema extends JPanel {
     private long ultimoNs = System.nanoTime();
 
 
+    // Imagen del fondo degradado, reutilizada mientras las dimensiones del panel no cambien.
     private BufferedImage fondoCache;
 
     private boolean mostrarOrion = false;
     private boolean animado = true;
     private long inicioNs = System.nanoTime();
 
+    // Temporizador que actualiza la animación y solicita volver a dibujar el panel.
     private final Timer reloj = new Timer(33, e -> { actualizar(); repaint(); });
+
 
     public Tema(int cantidad) {
         this(cantidad, new Color(0x16224A), FONDO);
     }
 
+    // Inicializa el fondo y genera posiciones y propiedades reproducibles para las estrellas.
     public Tema(int cantidad, Color centro, Color borde) {
         this.cantidad = cantidad;
         this.centro = centro;
@@ -153,6 +168,7 @@ public class Tema extends JPanel {
             vel[i] = 0.012f + profundidad * 0.05f;
         }
 
+        // Inicia la animación cuando el panel aparece y la detiene cuando deja de mostrarse.
         addHierarchyListener(e -> {
             if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
                 if (isShowing()) iniciarAnimacion(); else reloj.stop();
@@ -161,23 +177,27 @@ public class Tema extends JPanel {
         });
     }
 
+    // Activa o desactiva la constelación decorativa de Orión.
     public void setMostrarOrion(boolean mostrar) {
         this.mostrarOrion = mostrar;
         repaint();
     }
 
+    // Activa o pausa los efectos animados del fondo.
     public void setAnimado(boolean animado) {
         this.animado = animado;
         if (animado && isShowing()) iniciarAnimacion(); else reloj.stop();
         repaint();
     }
 
+    // Activa el movimiento de las estrellas y ajusta la frecuencia de actualización.
     public void setViaje(boolean viaje) {
         this.viaje = viaje;
         reloj.setDelay(viaje ? 16 : 33);
         ultimoNs = System.nanoTime();
     }
 
+    // Reinicia las marcas de tiempo y pone en marcha el temporizador si hay animación.
     private void iniciarAnimacion() {
         if (animado) {
             inicioNs = System.nanoTime();
@@ -186,6 +206,7 @@ public class Tema extends JPanel {
         }
     }
 
+    // Actualiza las posiciones de las estrellas cuando está activado el efecto de viaje.
     private void actualizar() {
         long ahora = System.nanoTime();
         float dt = Math.min((ahora - ultimoNs) / 1e9f, 0.1f);
@@ -203,12 +224,14 @@ public class Tema extends JPanel {
 
     @Override
     protected void paintComponent(Graphics g) {
+        // Dibuja el degradado cacheado, las estrellas y, si corresponde, la constelación.
         super.paintComponent(g);
         int w = getWidth(), h = getHeight();
         if (w <= 0 || h <= 0) return;
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+        // Recrea el fondo solo si aún no existe o cambió el tamaño del panel.
         if (fondoCache == null || fondoCache.getWidth() != w || fondoCache.getHeight() != h) {
             fondoCache = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
             Graphics2D gc = fondoCache.createGraphics();
@@ -222,6 +245,7 @@ public class Tema extends JPanel {
 
         double seg = animado ? (System.nanoTime() - inicioNs) / 1e9 : 1e6;   // 1e6 = ya terminado
 
+        // Dibuja cada estrella con un brillo variable según su período y fase.
         for (int i = 0; i < cantidad; i++) {
             double f = animado ? parpadeo(seg, periodo[i], fase[i]) : 1.0;
             int alfa = (int) Math.min(255, 255 * brilloBase[i] * f);
@@ -233,6 +257,7 @@ public class Tema extends JPanel {
         g2.dispose();
     }
 
+    // Calcula el tamaño y la ubicación de Orión en relación con el panel.
     private static int[] geometriaOrion(int w, int h) {
         int lado = (int) Math.min(h * 0.55, w * 0.38);
         int x0 = (int) (w * 0.94 - lado * 0.74);
@@ -240,6 +265,7 @@ public class Tema extends JPanel {
         return new int[]{lado, x0, y0};
     }
 
+    // Dibuja las líneas y estrellas de Orión con animación de trazado y brillo.
     private void dibujarOrion(Graphics2D g0, int w, int h, double seg) {
         int[] d = geometriaOrion(w, h);
         if (d == null) return;
@@ -252,6 +278,7 @@ public class Tema extends JPanel {
 
         g2.setStroke(new BasicStroke(1.3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2.setColor(new Color(169, 188, 255, 170));
+        // Traza gradualmente las líneas que conectan las estrellas de la constelación.
         for (int i = 0; i < ORION_LINEAS.length; i++) {
             double p = Math.max(0, Math.min(1, (seg - ORION_RETRASO[i]) / ORION_TRAZO));
             if (p <= 0) continue;
@@ -263,6 +290,7 @@ public class Tema extends JPanel {
             g2.draw(new Line2D.Double(ax, ay, ax + (bx - ax) * p, ay + (by - ay) * p));
         }
 
+        // Dibuja cada estrella con un halo; las estrellas del cinturón usan otro color.
         for (int i = 0; i < ORION.length; i++) {
             float cx = (float) (x0 + ORION[i][0] * lado / 100);
             float cy = (float) (y0 + ORION[i][1] * lado / 100);

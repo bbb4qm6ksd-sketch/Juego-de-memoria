@@ -1,3 +1,4 @@
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -9,16 +10,21 @@ import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.util.Set;
 
+
 public class VistaPremios extends JFrame {
 
+    // Número de posiciones que se muestran en la clasificación.
     public static final int PUESTOS = 5;
+    // Proporción horizontal reservada para cada columna de la tabla.
     private static final double[] PESOS = {0.10, 0.40, 0.18, 0.32};
     private static final int TAM_AVATAR = 40;
+    // Celdas de cada fila: posición, jugador, intentos y premio.
     private final JLabel[][] celdas = new JLabel[PUESTOS][4];
     private final JLabel lblCambio = new JLabel("Tipo de cambio: —");
     private final JLabel lblFormula = new JLabel("Premio = 1 / intentos × 100 × tipo de cambio");
     private final JButton btnVolver = new VistaTablero.BotonPill("VOLVER", true);
 
+    // Construye la ventana y distribuye encabezado, tabla y pie.
     public VistaPremios() {
         super("AstroMatch - Premios");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -37,6 +43,7 @@ public class VistaPremios extends JFrame {
         setLocationRelativeTo(null);
     }
 
+    // Crea el título, la fórmula del premio y el texto del tipo de cambio.
     private JPanel crearEncabezado() {
         JPanel p = new JPanel();
         p.setOpaque(false);
@@ -66,6 +73,7 @@ public class VistaPremios extends JFrame {
         return p;
     }
 
+    // Prepara los encabezados de columna y las filas vacías del top cinco.
     private JPanel crearTabla() {
         JPanel tabla = new JPanel(new BorderLayout(0, 8));
         tabla.setOpaque(false);
@@ -80,6 +88,7 @@ public class VistaPremios extends JFrame {
         filaCab.setPreferredSize(new Dimension(0, 24));
         tabla.add(filaCab, BorderLayout.NORTH);
 
+        // Cada fila reserva espacios para el avatar y los cuatro datos de clasificación.
         JPanel filas = new JPanel(new GridLayout(PUESTOS, 1, 0, 10));
         filas.setOpaque(false);
         for (int i = 0; i < PUESTOS; i++) {
@@ -96,6 +105,7 @@ public class VistaPremios extends JFrame {
         return tabla;
     }
 
+    // Crea una etiqueta de tabla con formato y alineación personalizados.
     private static JLabel celda(String texto, Font fuente, Color color, int alineacion) {
         JLabel l = new JLabel(texto, alineacion);
         l.setFont(fuente);
@@ -103,6 +113,7 @@ public class VistaPremios extends JFrame {
         return l;
     }
 
+    // Distribuye las celdas en una fila y opcionalmente dibuja un borde.
     private static JPanel fila(JLabel[] columnas, Color borde) {
         JPanel fila = new JPanel(new GridBagLayout());
         fila.setOpaque(false);
@@ -126,6 +137,7 @@ public class VistaPremios extends JFrame {
         return fila;
     }
 
+    // Añade el botón para volver a la pantalla anterior.
     private JPanel crearPie() {
         JPanel pie = new JPanel(new BorderLayout());
         pie.setOpaque(false);
@@ -136,6 +148,7 @@ public class VistaPremios extends JFrame {
 
     public JButton getBtnVolver() { return btnVolver; }
 
+    // Compone el avatar del jugador, lo recorta en círculo y lo asigna a su fila.
     public void setAvatar(int puesto, Set<String> accesorios) {
         if (puesto < 0 || puesto >= PUESTOS) return;
         BufferedImage avatar = VistaTienda.componerAvatar(accesorios);
@@ -143,6 +156,7 @@ public class VistaPremios extends JFrame {
             celdas[puesto][1].setIcon(null);
             return;
         }
+        // Escala la imagen para que quepa centrada dentro del avatar circular.
         int t = TAM_AVATAR;
         BufferedImage redonda = new BufferedImage(t, t, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2 = redonda.createGraphics();
@@ -159,11 +173,14 @@ public class VistaPremios extends JFrame {
         celdas[puesto][1].setIcon(new ImageIcon(redonda));
     }
 
+    // Actualiza la etiqueta que informa el tipo de cambio utilizado.
     public void setTipoCambio(String texto) { lblCambio.setText("Tipo de cambio: " + texto); }
 
+    // Rellena las filas con jugadores, intentos y premios; indica si el cambio es actual.
     public void mostrarTop(List<ModeloPremios.Fila> filas, double cambio, boolean cambioActual) {
         setTipoCambio(String.format("₡%.2f", cambio) + (cambioActual ? " (BCCR, actual)" : " (último guardado, sin conexión)"));
 
+        // Formatea los montos con dos decimales y separadores consistentes.
         NumberFormat moneda = NumberFormat.getNumberInstance(Locale.US);
         moneda.setMaximumFractionDigits(2);
         moneda.setMinimumFractionDigits(2);
@@ -182,6 +199,7 @@ public class VistaPremios extends JFrame {
         }
     }
 
+    // Muestra el error recibido y limpia los datos que no se pudieron calcular.
     public void mostrarErrorCambio(String mensaje) {
         lblCambio.setText(mensaje);
         for (int i = 0; i < PUESTOS; i++) {

@@ -1,18 +1,23 @@
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 
 
+
 public final class DialogoAstro {
 
+    // Evita crear instancias: todos los métodos de esta clase son estáticos.
     private DialogoAstro() { }
 
+    // Muestra una pregunta y devuelve true si el usuario acepta.
     public static boolean confirmar(Window dueno, String titulo, String mensaje,
                                     String aceptar, String cancelar) {
         return Boolean.TRUE.equals(mostrar(dueno, titulo, mensaje, null, aceptar, cancelar, false));
     }
 
+    // Solicita texto; devuelve lo ingresado o null si se cancela o falla el diálogo.
     public static String pedirTexto(Window dueno, String titulo, String mensaje,
                                     String inicial, String aceptar, String cancelar) {
         Object resultado = mostrar(dueno, titulo, mensaje, inicial == null ? "" : inicial,
@@ -20,12 +25,15 @@ public final class DialogoAstro {
         return resultado instanceof String ? (String) resultado : null;
     }
 
+    // Muestra un mensaje informativo que el usuario puede cerrar.
     public static void informar(Window dueno, String titulo, String mensaje) {
         mostrar(dueno, titulo, mensaje, null, "ENTENDIDO", null, false);
     }
 
+    // Construye y presenta el diálogo; pedirTexto determina si incluye un campo de entrada.
     private static Object mostrar(Window dueno, String titulo, String mensaje, String inicial,
                                   String aceptar, String cancelar, boolean pedirTexto) {
+        // Swing debe modificarse en su hilo de eventos; si estamos en otro hilo, se delega allí.
         if (!SwingUtilities.isEventDispatchThread()) {
             final Object[] resultado = new Object[1];
             try {
@@ -37,16 +45,19 @@ public final class DialogoAstro {
             return resultado[0];
         }
 
+        // Encuentra la raíz de la ventana, donde se instalará la capa del diálogo.
         JRootPane raiz = dueno instanceof RootPaneContainer
                 ? ((RootPaneContainer) dueno).getRootPane() : SwingUtilities.getRootPane(dueno);
         if (raiz == null) return null;
 
+        // Conserva el contenido previo de la ventana para restaurarlo al cerrar el diálogo.
         SecondaryLoop bucle = Toolkit.getDefaultToolkit().getSystemEventQueue().createSecondaryLoop();
         Object[] resultado = {null};
         Component capaAnterior = raiz.getGlassPane();
         boolean capaAnteriorVisible = capaAnterior.isVisible();
         JButton botonAnterior = raiz.getDefaultButton();
 
+        // Prepara el panel principal con colores, borde y distribución vertical.
         JPanel contenido = new JPanel();
         contenido.setOpaque(true);
         contenido.setBackground(new Color(0x111A38));
@@ -55,6 +66,7 @@ public final class DialogoAstro {
                 new EmptyBorder(26, 32, 24, 32)));
         contenido.setLayout(new BoxLayout(contenido, BoxLayout.Y_AXIS));
 
+        // Encabezado decorativo, título y mensaje central del diálogo.
         JLabel kicker = new JLabel("ASTROMATCH  ✦  CENTRO DE CONTROL");
         kicker.setFont(fuentes.mono(Font.BOLD, 10));
         kicker.setForeground(Tema.HIELO);
@@ -74,6 +86,7 @@ public final class DialogoAstro {
         contenido.add(Box.createVerticalStrut(14));
         contenido.add(cuerpo);
 
+        // El campo de texto solo se agrega en los diálogos que solicitan una respuesta.
         JTextField campo = null;
         if (pedirTexto) {
             campo = new JTextField(inicial, 24);
@@ -88,6 +101,7 @@ public final class DialogoAstro {
             contenido.add(campo);
         }
 
+        // Crea los botones y los organiza en la zona de acciones.
         JButton btnAceptar = new VistaTablero.BotonPill(aceptar, true);
         JButton btnCancelar = cancelar == null ? null : Tema.botonTexto(cancelar);
         btnAceptar.setPreferredSize(new Dimension(210, 48));
@@ -99,6 +113,7 @@ public final class DialogoAstro {
         contenido.add(Box.createVerticalStrut(20));
         contenido.add(acciones);
 
+        // Glass pane semitransparente que oscurece la ventana detrás del contenido.
         JPanel capa = new JPanel(new GridBagLayout()) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -112,6 +127,7 @@ public final class DialogoAstro {
         capa.add(contenido);
 
         final JTextField campoFinal = campo;
+        // Cierra el diálogo, restaura la capa y el botón predeterminado de la ventana.
         Runnable cerrar = () -> {
             capa.setVisible(false);
             raiz.setGlassPane(capaAnterior);
@@ -121,6 +137,7 @@ public final class DialogoAstro {
             raiz.repaint();
             bucle.exit();
         };
+        // Al aceptar, valida el texto si corresponde y guarda el resultado.
         btnAceptar.addActionListener(e -> {
             if (pedirTexto) {
                 String valor = campoFinal.getText().trim();
@@ -137,6 +154,7 @@ public final class DialogoAstro {
         if (btnCancelar != null) btnCancelar.addActionListener(e -> cerrar.run());
         if (campoFinal != null) campoFinal.addActionListener(e -> btnAceptar.doClick());
 
+        // Muestra la capa, enfoca el control inicial y espera hasta que el diálogo se cierre.
         raiz.setGlassPane(capa);
         capa.setVisible(true);
         raiz.setDefaultButton(btnAceptar);
@@ -148,6 +166,7 @@ public final class DialogoAstro {
         return resultado[0];
     }
 
+    // Escapa caracteres especiales para que el mensaje se interprete como texto dentro del HTML.
     private static String escapar(String texto) {
         return texto.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
