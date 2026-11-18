@@ -18,10 +18,8 @@ import java.awt.Window;
 
 
 
-/**
- * Ventana visual del modo clásico. Presenta el selector de dificultad,
- * los tableros de los jugadores, el tiempo y los marcadores; no decide las reglas.
- */
+// Ventana visual del modo clásico. Presenta el selector de dificultad,
+// los tableros, el tiempo y los marcadores; no decide las reglas del juego.
 public class VistaTablero extends JFrame {
 
     public static final int JUGADORES = 2;
@@ -70,7 +68,7 @@ public class VistaTablero extends JFrame {
         if (superficie != null) superficie.repaint();
     });
 
-    /** Inicia la animación de confeti sobre la ventana al terminar una partida. */
+    // Inicia la animación de confeti sobre la ventana al terminar una partida.
     public void lanzarConfeti() {
         int ancho = superficie == null ? getWidth() : superficie.getWidth();
         int alto = superficie == null ? getHeight() : superficie.getHeight();
@@ -81,20 +79,20 @@ public class VistaTablero extends JFrame {
         if (superficie != null) superficie.repaint();
     }
 
-    /** Abre un diálogo temático asociado a esta ventana. */
+    // Abre un diálogo temático asociado a esta ventana.
     public void mostrarMensajeFinal(String titulo, String detalle) {
         Window ventana = SwingUtilities.getWindowAncestor(getContentPane());
         DialogoAstro.informar(ventana == null ? this : ventana, titulo, detalle);
     }
 
-    /** Detiene y limpia la animación de confeti antes de salir o reiniciar. */
+    // Detiene y limpia la animación de confeti antes de salir o reiniciar.
     public void detenerConfeti() {
         timerConfeti.stop();
         confeti = null;
         if (superficie != null) superficie.repaint();
     }
 
-    /** Construye la ventana con selector de nivel y componentes para los dos tableros. */
+    // Construye la ventana con selector de nivel y componentes para los dos tableros.
     public VistaTablero() {
         super("AstroMatch");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -307,7 +305,7 @@ public class VistaTablero extends JFrame {
         return opcion;
     }
 
-    /** Solicita el nombre del segundo jugador antes de iniciar el modo clásico. */
+    // Solicita el nombre del segundo jugador antes de iniciar el modo clásico.
     public String solicitarNombreJugador2(String nombreInicial) {
         Window ventana = SwingUtilities.getWindowAncestor(getContentPane());
         return DialogoAstro.pedirTexto(ventana == null ? this : ventana,
@@ -315,7 +313,7 @@ public class VistaTablero extends JFrame {
                 nombreInicial, "CONTINUAR", "CANCELAR");
     }
 
-    /** Muestra la pantalla para elegir la dificultad de la siguiente partida. */
+    // Muestra la pantalla para elegir la dificultad de la siguiente partida.
     public void mostrarSelectorNiveles() {
         ((CardLayout) pantallas.getLayout()).show(pantallas, "niveles");
         btnAccion.setVisible(false);
@@ -328,7 +326,7 @@ public class VistaTablero extends JFrame {
         getContentPane().repaint();
     }
 
-    /** Prepara y muestra las cuadrículas con el tamaño seleccionado. */
+    // Prepara y muestra las cuadrículas con el tamaño seleccionado.
     public void mostrarTablero(int tamano) {
         for (int j = 0; j < JUGADORES; j++) {
             JPanel matriz = matricesJugador[j];
@@ -384,37 +382,37 @@ public class VistaTablero extends JFrame {
     }
 
     // ---------- API para el controlador del modo clásico ----------
-    /** Devuelve una carta concreta para que el controlador conecte eventos y estados. */
+    // Devuelve una carta concreta para que el controlador conecte eventos y estados.
     public Carta getCarta(int jugador, int fila, int columna) { return cartas[jugador][fila][columna]; }
-    /** Devuelve todas las cartas del tablero indicado. */
+    // Devuelve todas las cartas del tablero indicado.
     public Carta[][] getCartas(int jugador)                   { return cartas[jugador]; }
     public JButton getBtnAccion()                             { return btnAccion; }  // Reiniciar / Comenzar
     public JButton getBtnSalir()                              { return btnSalir; }
 
-    /** Cambia el nombre que se muestra sobre el tablero de un jugador. */
+    // Cambia el nombre que se muestra sobre el tablero de un jugador.
     public void setNombreJugador(int jugador, String nombre)  { lblNombre[jugador].setText(nombre); }
-    /** Actualiza el mensaje de estado que aparece bajo los tableros. */
+    // Actualiza el mensaje de estado que aparece bajo los tableros.
     public void setMensaje(String mensaje) {
         lblMensaje.setText(mensaje);
         lblMensaje.setFont(fuentes.mono(Font.PLAIN, 14));
         lblMensaje.setForeground(Tema.SECUNDARIO);
     }
 
-    /** Presenta el resultado final de la partida. */
+    // Presenta el resultado final de la partida.
     public void mostrarFelicitacion(String mensaje) {
         lblMensaje.setText(mensaje);
         lblMensaje.setFont(fuentes.mono(Font.ITALIC, 22));
         lblMensaje.setForeground(Tema.ESTRELLA);
     }
 
-    /** Actualiza el contador de intentos de un jugador. */
+    // Actualiza el contador de intentos de un jugador.
     public void setIntentos(int jugador, int intentos)        { lblIntentos[jugador].setText("INTENTOS  " + intentos); }
-    /** Actualiza el avance de parejas encontradas de un jugador. */
+    // Actualiza el avance de parejas encontradas de un jugador.
     public void setParejas(int jugador, int encontradas, int total) {
         lblParejas[jugador].setText("PAREJAS  " + encontradas + "/" + total);
     }
 
-    /** Resalta el panel del jugador cuyo turno está activo. */
+    // Resalta el panel del jugador cuyo turno está activo.
     public void setJugadorActivo(int jugador) {
         for (int j = 0; j < JUGADORES; j++) {
             marcarPanel(panelesJugador[j], j == jugador ? Tema.ESTRELLA : Tema.LINEA);
@@ -423,7 +421,7 @@ public class VistaTablero extends JFrame {
         lblTurno.setText("TURNO DE  " + lblNombre[jugador].getText().toUpperCase());
     }
 
-    /** Actualiza el número y la barra del tiempo restante del turno. */
+    // Actualiza el número y la barra del tiempo restante del turno.
     public void setTiempoTurno(int restante, int maximo) {
         lblTiempo.setText(String.format("%02d", Math.max(0, restante)));
         barra.setFraccion(maximo <= 0 ? 0 : (double) restante / maximo);

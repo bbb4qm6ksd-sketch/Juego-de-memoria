@@ -11,19 +11,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Sonidos de AstroMatch (todo sintetizado por codigo, sin archivos de audio).
- *
- * Musica de fondo, dos pistas:
- *  - MENU : pad espacial y tranquilo con destellos de campanitas (login, menu, premios).
- *  - JUEGO: pista energetica a 120 BPM con bajo, arpegio cristalino, bombo y hi-hats (partidas).
- *
- * Uso:
- *   Sonidos.iniciar();                                   // una vez, en Main
- *   Sonidos.cambiarMusica(Sonidos.Pista.JUEGO);          // al empezar a jugar
- *   Sonidos.cambiarMusica(Sonidos.Pista.MENU);           // al volver al menu
- *   Sonidos.reproducir(Sonidos.Efecto.ACIERTO);
- */
 public final class Sonidos {
 
     public enum Efecto { CLICK, HOVER, VOLTEAR, ACIERTO, FALLO, VICTORIA, ERROR, TICK, ABRIR }
@@ -54,9 +41,8 @@ public final class Sonidos {
 
     private Sonidos() { }
 
-    // =====================================================================
+
     //  API publica
-    // =====================================================================
 
     public static void iniciar() {
         if (iniciado) return;

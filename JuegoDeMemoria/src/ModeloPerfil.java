@@ -8,19 +8,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Modelo del perfil de un jugador. Guarda el HISTORIAL de partidas y de ahi calcula todas las
- * estadisticas (partidas, victorias, mejor ronda, estrellas ganadas, rango...).
- * No conoce nada de Swing.
- *
- * Los datos se guardan en  datos_perfil/historial_<usuario>.txt  (una partida por linea).
- */
+// Modelo del perfil de un jugador. Guarda el historial de partidas y calcula
+// estadísticas como partidas, victorias, mejor ronda, estrellas y rango.
+// No conoce nada de Swing. Los datos se guardan en datos_perfil/historial_<usuario>.txt.
 public class ModeloPerfil {
 
-    /** Identifica el modo de juego asociado a cada registro del historial. */
+    // Identifica el modo de juego asociado a cada registro del historial.
     public enum Modo { CLASICO, PATRONES }
 
-    /** Una partida del historial. */
+    // Una partida del historial.
     public static class Entrada {
         public final long momento;       // milisegundos (fecha y hora de la partida)
         public final Modo modo;
@@ -30,7 +26,7 @@ public class ModeloPerfil {
         public final int tamano;         // CLASICO: 2, 4 o 6 (dificultad) | PATRONES: 0
         public final int estrellas;      // estrellas que dio la partida
 
-        /** Crea una entrada inmutable con los datos de una partida ya terminada. */
+        // Crea una entrada inmutable con los datos de una partida ya terminada.
         Entrada(long momento, Modo modo, boolean victoria, int valor, String detalle, int tamano, int estrellas) {
             this.momento = momento;
             this.modo = modo;
@@ -62,13 +58,13 @@ public class ModeloPerfil {
 
     // ---------- Registro de partidas (lo llaman los controladores de los modos de juego) ----------
 
-    /** Guarda el resultado clásico, donde valor representa intentos y detalle el nombre del rival. */
+    // Guarda el resultado clásico: valor representa intentos y detalle, el nombre del rival.
     public void registrarClasico(boolean victoria, int intentos, String rival, int tamano, int estrellas) {
         agregar(new Entrada(System.currentTimeMillis(), Modo.CLASICO, victoria, intentos,
                 limpiar(rival), tamano, Math.max(0, estrellas)));
     }
 
-    /** Guarda una partida de patrones; valor representa cuántas rondas se completaron. */
+    // Guarda una partida de patrones; valor representa cuántas rondas se completaron.
     public void registrarPatrones(int rondasCompletadas, int estrellas) {
         agregar(new Entrada(System.currentTimeMillis(), Modo.PATRONES, false,
                 Math.max(0, rondasCompletadas), "", 0, Math.max(0, estrellas)));
@@ -76,25 +72,25 @@ public class ModeloPerfil {
 
     // ---------- Estadisticas ----------
 
-    /** Devuelve el nombre de la cuenta asociada a este perfil. */
+    // Devuelve el nombre de la cuenta asociada a este perfil.
     public String getUsuario() { return usuario; }
 
-    /** Cantidad de partidas clásicas registradas. */
+    // Cantidad de partidas clásicas registradas.
     public int getPartidasClasico() { return contar(Modo.CLASICO, false); }
-    /** Cantidad de victorias del usuario en el modo clásico. */
+    // Cantidad de victorias del usuario en el modo clásico.
     public int getVictoriasClasico() { return contar(Modo.CLASICO, true); }
-    /** Cantidad de partidas terminadas en el modo patrones. */
+    // Cantidad de partidas terminadas en el modo patrones.
     public int getPartidasPatrones() { return contar(Modo.PATRONES, false); }
-    /** Total de partidas de ambos modos que conserva el historial. */
+    // Total de partidas de ambos modos que conserva el historial.
     public int getPartidasTotales() { return historial.size(); }
 
-    /** Calcula el porcentaje de victorias clásicas; devuelve cero si aún no hay partidas. */
+    // Calcula el porcentaje de victorias clásicas; devuelve cero si aún no hay partidas.
     public int getPorcentajeVictorias() {
         int jugadas = getPartidasClasico();
         return jugadas == 0 ? 0 : Math.round(100f * getVictoriasClasico() / jugadas);
     }
 
-    /** Mayor numero de rondas completadas en una partida de patrones (0 si no ha jugado). */
+    // Mayor número de rondas completadas en patrones (cero si todavía no ha jugado).
     public int getMejorRonda() {
         int mejor = 0;
         for (Entrada e : historial) {
@@ -103,14 +99,14 @@ public class ModeloPerfil {
         return mejor;
     }
 
-    /** Estrellas ganadas jugando (suma de todas las partidas). */
+    // Estrellas ganadas jugando, sumadas entre todas las partidas.
     public int getEstrellasGanadas() {
         int total = 0;
         for (Entrada e : historial) total += e.estrellas;
         return total;
     }
 
-    /** Las ultimas partidas, la mas reciente primero. */
+    // Devuelve las partidas recientes, con la más nueva primero.
     public List<Entrada> getHistorial(int maximo) {
         List<Entrada> copia = new ArrayList<>(historial);
         Collections.reverse(copia);
@@ -123,13 +119,13 @@ public class ModeloPerfil {
         return RANGOS[indiceRango()];
     }
 
-    /** Nombre del siguiente rango, o null si ya tiene el maximo. */
+    // Devuelve el siguiente rango o null si ya alcanzó el máximo.
     public String getSiguienteRango() {
         int i = indiceRango();
         return i + 1 < RANGOS.length ? RANGOS[i + 1] : null;
     }
 
-    /** Partidas que faltan para el siguiente rango, o -1 si ya tiene el maximo. */
+    // Devuelve las partidas que faltan o -1 si ya alcanzó el rango máximo.
     public int getPartidasParaSiguienteRango() {
         int i = indiceRango();
         return i + 1 < RANGOS.length ? UMBRALES[i + 1] - getPartidasTotales() : -1;

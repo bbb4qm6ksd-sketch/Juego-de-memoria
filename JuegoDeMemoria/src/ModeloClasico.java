@@ -3,11 +3,8 @@ import java.util.Collections;
 import java.util.List;
 
 
-/**
- * Mantiene el estado y las reglas del modo clásico de parejas.
- * No dibuja componentes ni recibe clics: el controlador le consulta y actualiza
- * tableros, intentos, parejas, turno y tiempo.
- */
+// Mantiene el estado y las reglas del modo clásico de parejas.
+// El controlador consulta y actualiza tableros, intentos, parejas, turno y tiempo.
 public class ModeloClasico {
 
     public static final int JUGADORES = 2;
@@ -42,15 +39,13 @@ public class ModeloClasico {
         nuevaPartida();
     }
 
-    /** Inicia otra partida con la dificultad que se usó anteriormente. */
+    // Inicia otra partida con la dificultad que se usó anteriormente.
     public void nuevaPartida() {
         nuevaPartida(tamanoMatriz);
     }
 
-    /**
-     * Reinicia el estado de ambos jugadores y crea un tablero independiente
-     * para cada uno. Solo se aceptan tamaños 2, 4 o 6.
-     */
+    // Reinicia el estado de ambos jugadores y crea un tablero independiente
+    // para cada uno. Solo se aceptan tamaños 2, 4 o 6.
     public void nuevaPartida(int tamano) {
         tamanoMatriz = (tamano == 2 || tamano == 4 || tamano == 6) ? tamano : 6;
         parejasMaximas = tamanoMatriz * tamanoMatriz / 2;
@@ -78,13 +73,11 @@ public class ModeloClasico {
         reiniciarTurno();
     }
 
-    /**
-     * Intenta destapar una carta del jugador activo. Devuelve:
-     *  IGNORADA -> no es su turno, la carta ya esta encontrada, es la misma de antes o el juego termino
-     *  PRIMERA  -> primera carta de la jugada
-     *  ACIERTO  -> segunda carta, coincide (+7 s, el mismo jugador sigue)
-     *  FALLO    -> segunda carta, no coincide (el controlador cede el turno)
-     */
+    // Intenta destapar una carta del jugador activo. Devuelve:
+    // IGNORADA si no es su turno, ya fue encontrada o el juego terminó.
+    // PRIMERA si es la primera carta de la jugada.
+    // ACIERTO si coincide con la primera carta; el mismo jugador continúa.
+    // FALLO si no coincide; el controlador cede el turno.
     public Resultado voltear(int jugador, int fila, int columna) {
         if (fila < 0 || columna < 0 || fila >= tamanoMatriz || columna >= tamanoMatriz
                 || nombres[jugador][fila][columna] == null || jugador != jugadorActivo
@@ -115,7 +108,7 @@ public class ModeloClasico {
         return acierto ? Resultado.ACIERTO : Resultado.FALLO;
     }
 
-    /** Pasa el turno al rival, salvo que ya haya completado su tablero. */
+    // Pasa el turno al rival, salvo que ya haya completado su tablero.
     public void cambiarTurno() {
         int otro = 1 - jugadorActivo;
         if (!jugadorTermino(otro)) {
@@ -124,7 +117,7 @@ public class ModeloClasico {
         reiniciarTurno();
     }
 
-    /** Restablece el tiempo y borra la selección parcial del turno. */
+    // Restablece el tiempo y borra la selección parcial del turno.
     private void reiniciarTurno() {
         tiempo = TIEMPO_TURNO;
         tiempoMaximo = TIEMPO_TURNO;
@@ -132,27 +125,27 @@ public class ModeloClasico {
         primeraColumna = -1;
     }
 
-    /** Descuenta tiempo sin permitir que el contador quede por debajo de cero. */
+    // Descuenta tiempo sin permitir que el contador quede por debajo de cero.
     public void restarTiempo(double segundos) {
         tiempo = Math.max(0, tiempo - segundos);
     }
 
-    /** Indica si el tiempo del turno llegó a cero. */
+    // Indica si el tiempo del turno llegó a cero.
     public boolean tiempoAgotado() {
         return tiempo < 0.001;
     }
 
-    /** Indica si el jugador ya encontró todas las parejas de su tablero. */
+    // Indica si el jugador ya encontró todas las parejas de su tablero.
     public boolean jugadorTermino(int jugador) {
         return parejas[jugador] >= parejasMaximas;
     }
 
-    /** Indica si alguien encontró todas sus parejas y ganó la partida. */
+    // Indica si alguien encontró todas sus parejas y ganó la partida.
     public boolean partidaTerminada() {
         return ganador >= 0;
     }
 
-    /** Devuelve el índice del ganador o -1 mientras no haya ganador. */
+    // Devuelve el índice del ganador o -1 mientras no haya ganador.
     public int getGanador() {
         return ganador;
     }

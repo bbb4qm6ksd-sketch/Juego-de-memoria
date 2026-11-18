@@ -6,14 +6,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-/**
- * Botón que representa una carta del modo clásico y anima sus cambios de cara.
- * El ModeloClasico conserva la lógica de las parejas; esta clase solo dibuja
- * la constelación y el estado recibido del controlador.
- */
+// Botón que representa una carta del modo clásico y anima sus cambios de cara.
+// ModeloClasico conserva la lógica de las parejas; esta clase dibuja la constelación
+// y el estado que recibe del controlador.
 public class Carta extends JButton {
 
-    /** Estado lógico que el controlador solicita mostrar en la carta. */
+    // Estado lógico que el controlador solicita mostrar en la carta.
     public enum Estado { OCULTA, VOLTEADA, ENCONTRADA }
 
     // ---------- Un color por constelacion (clave = nombre sin tildes y en minusculas) ----------
@@ -46,7 +44,7 @@ public class Carta extends JButton {
         for (String k : claves) COLORES.put(k, new Color(rgb));
     }
 
-    /** Color de una constelacion por su nombre (util tambien para leyendas u otras vistas). */
+    // Devuelve el color de una constelación por su nombre normalizado.
     public static Color colorDe(String nombre) {
         return COLORES.getOrDefault(clave(nombre), COLOR_POR_DEFECTO);
     }
@@ -70,7 +68,7 @@ public class Carta extends JButton {
     private long inicioNs;
     private final Timer animacion = new Timer(15, e -> animar()); //////
 
-    /** Configura el botón para que su apariencia se dibuje completamente a medida. */
+    // Configura el botón para que su apariencia se dibuje completamente a medida.
     public Carta() {
         setContentAreaFilled(false);
         setBorderPainted(false);
@@ -80,7 +78,7 @@ public class Carta extends JButton {
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
 
-    /** Cambia la cara visible y anima el giro cuando pasa de oculta a descubierta. */
+    // Cambia la cara visible y anima el giro cuando pasa de oculta a descubierta.
     public void setEstado(Estado nuevo) {
         // solo gira si cambia entre boca abajo y boca arriba
         boolean cambiaCara = (estado == Estado.OCULTA) != (nuevo == Estado.OCULTA);
@@ -96,7 +94,7 @@ public class Carta extends JButton {
         }
     }
 
-    /** Avanza la animación de giro usando el tiempo real transcurrido. */
+    // Avanza la animación de giro usando el tiempo real transcurrido.
     private void animar() {
         flip = Math.min(1, (System.nanoTime() - inicioNs) / (DURACION_FLIP_MS * 1e6));
         if (flip >= 1) {
@@ -112,7 +110,7 @@ public class Carta extends JButton {
     }
     public Estado getEstado()            { return estado; }
     public void setImagen(Icon imagen)   { this.imagen = imagen; repaint(); }
-    /** Activa o desactiva el borde usado para señalar el cursor de teclado. */
+    // Activa o desactiva el borde usado para señalar el cursor de teclado.
     public void setResaltada(boolean resaltada) {
         this.resaltada = resaltada;
         repaint();
@@ -120,7 +118,7 @@ public class Carta extends JButton {
 
 
 
-    /** Asigna la constelación de la carta y actualiza su color y patrón visual. */
+    // Asigna la constelación de la carta y actualiza su color y patrón visual.
     public void setNombre(String nombre) {
         this.nombre = nombre == null ? "" : nombre;
         this.acento = colorDe(this.nombre);
@@ -129,7 +127,7 @@ public class Carta extends JButton {
     }
 
     // Dibuja una constelación suelta (sin carta ni marco) en el área indicada. Sirve para fondos y decoraciones.
-    /** Dibuja una versión pequeña de la constelación para las vistas del menú. */
+    // Dibuja una versión pequeña de la constelación para las vistas del menú.
     public static void dibujarMiniatura(Graphics2D g2, String nombre, int x, int y, int ancho, int alto, float opacidad) {
         Carta c = new Carta();
         c.setNombre(nombre);
@@ -147,7 +145,7 @@ public class Carta extends JButton {
         return new Color(c.getRed(), c.getGreen(), c.getBlue(), Math.max(0, Math.min(255, a)));
     }
 
-    /** Mezcla a con b: t=0 -> a, t=1 -> b. */
+    // Mezcla a con b: t=0 devuelve a y t=1 devuelve b.
     private static Color mezclar(Color a, Color b, float t) {
         return new Color(
                 Math.round(a.getRed() + (b.getRed() - a.getRed()) * t),
@@ -157,7 +155,7 @@ public class Carta extends JButton {
 
     // ---------- Dibujo de la carta ----------
     @Override
-    /** Pinta el reverso, el giro y el contenido de la carta según el estado actual. */
+    // Pinta el reverso, el giro y el contenido según el estado actual.
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -245,10 +243,8 @@ public class Carta extends JButton {
         g2.drawString(etiqueta, (w - fm.stringWidth(etiqueta)) / 2, h - 14);
     }
 
-    /**
-     * Constelacion con: halo suave de su color, lineas con brillo, estrellas con resplandor
-     * y un destello en forma de cruz en la estrella mas brillante.
-     */
+    // Dibuja la constelación con halo, líneas brillantes, estrellas con resplandor
+    // y un destello en forma de cruz sobre la estrella más brillante.
     private void dibujarConstelacion(Graphics2D original, int w, int alto) {
         Patron p = patron;
         Graphics2D g2 = (Graphics2D) original.create();

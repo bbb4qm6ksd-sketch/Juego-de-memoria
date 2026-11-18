@@ -3,10 +3,8 @@ import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
 
 
-/**
- * Atiende las acciones del modo clásico y sincroniza ModeloClasico con VistaTablero.
- * También administra el reloj, los controles de teclado, los sonidos y el resultado.
- */
+// Atiende las acciones del modo clásico y sincroniza ModeloClasico con VistaTablero.
+// También administra el reloj, los controles de teclado, los sonidos y el resultado.
 public class ControladorClasico {
 
     private static final int PAUSA_FALLO_MS = 900;     // tiempo que se ven las dos cartas de un fallo
@@ -33,22 +31,22 @@ public class ControladorClasico {
     private int cursorFila = 0;
     private int cursorCol = 0;
 
-    /** Crea el controlador sin conectar tienda, ranking ni perfil. */
+    // Crea el controlador sin conectar tienda, ranking ni perfil.
     public ControladorClasico(VistaTablero vista, String jugador1, String jugador2) {
         this(vista, jugador1, jugador2, null, null);
     }
 
-    /** Crea el controlador con tienda, manteniendo compatibilidad con llamadas existentes. */
+    // Crea el controlador con tienda, manteniendo compatibilidad con llamadas existentes.
     public ControladorClasico(VistaTablero vista, String jugador1, String jugador2, ModeloTienda tienda) {
         this(vista, jugador1, jugador2, tienda, null);
     }
 
-    /** Crea el controlador con tienda y ranking, sin conectar un perfil. */
+    // Crea el controlador con tienda y ranking, sin conectar un perfil.
     public ControladorClasico(VistaTablero vista, String jugador1, String jugador2, ModeloTienda tienda, ModeloPremios ranking) {
         this(vista, jugador1, jugador2, tienda, ranking, null);
     }
 
-    /** Inicializa dependencias, nombres, eventos de cartas y botones de dificultad. */
+    // Inicializa dependencias, nombres, eventos de cartas y botones de dificultad.
     public ControladorClasico(VistaTablero vista, String jugador1, String jugador2, ModeloTienda tienda,
                               ModeloPremios ranking, ModeloPerfil perfil) {
         this.vista = vista;
@@ -78,7 +76,7 @@ public class ControladorClasico {
                 .addKeyEventDispatcher(e -> manejarTecla(e));
     }
 
-    /** Actualiza el nombre del segundo jugador después de solicitarlo en pantalla. */
+    // Actualiza el nombre del segundo jugador después de solicitarlo en pantalla.
     public void setNombreJugador2(String nombre) {
         nombres[1] = nombre;
         vista.setNombreJugador(1, nombre);
@@ -86,12 +84,12 @@ public class ControladorClasico {
 
     // ---------- Ciclo de la partida ----------
 
-    /** Reinicia una partida usando el tamaño de tablero actual. */
+    // Reinicia una partida usando el tamaño de tablero actual.
     public void nuevaPartida() {
         iniciarPartida(modelo.getTamanoMatriz());
     }
 
-    /** Prepara los tableros, oculta todas las cartas y arranca el turno inicial. */
+    // Prepara los tableros, oculta todas las cartas y arranca el turno inicial.
     private void iniciarPartida(int tamano) {
         detener();
         vista.detenerConfeti();
@@ -117,7 +115,7 @@ public class ControladorClasico {
         imprimirTablerosEnConsola();
     }
 
-    /** Detiene los temporizadores y evita entradas mientras el juego está inactivo. */
+    // Detiene los temporizadores y evita entradas mientras el juego está inactivo.
     public void detener() {
         relojTurno.stop();
         pausaFallo.stop();
@@ -125,7 +123,7 @@ public class ControladorClasico {
         marcarCursor(false);
     }
 
-    /** Reinicia la medición del tiempo real y activa el reloj del turno. */
+    // Reinicia la medición del tiempo real y activa el reloj del turno.
     private void arrancarReloj() {
         ultimoNs = System.nanoTime();
         ultimoSegundo = -1;
@@ -134,7 +132,7 @@ public class ControladorClasico {
 
     // ---------- Clic en una carta ----------
 
-    /** Consulta la regla del modelo y aplica a la vista el resultado del clic. */
+    // Consulta la regla del modelo y aplica a la vista el resultado del clic.
     private void pulsarCarta(int jugador, int fila, int columna) {
         if (bloqueado) return;
         Carta carta = vista.getCarta(jugador, fila, columna);
@@ -201,7 +199,7 @@ public class ControladorClasico {
 
     // ---------- Teclado ----------
 
-    /** Mueve el cursor con flechas o WASD y confirma una carta con espacio. */
+    // Mueve el cursor con flechas o WASD y confirma una carta con espacio.
     // Devuelve true si la tecla se usó (así nadie más la procesa)
     private boolean manejarTecla(KeyEvent e) {
         if (e.getID() != KeyEvent.KEY_PRESSED || bloqueado) return false;
@@ -236,12 +234,12 @@ public class ControladorClasico {
         return true;
     }
 
-    /** Enciende o apaga el resaltado de la carta donde está el cursor. */
+    // Enciende o apaga el resaltado de la carta donde está el cursor.
     private void marcarCursor(boolean activo) {
         vista.getCarta(cursorJugador, cursorFila, cursorCol).setResaltada(activo);
     }
 
-    /** Después de mostrar un fallo, tapa las cartas y entrega el turno al rival. */
+    // Después de mostrar un fallo, tapa las cartas y entrega el turno al rival.
     private void resolverFallo() {
         if (primeraCarta != null) primeraCarta.setEstado(Carta.Estado.OCULTA);
         if (segundaCarta != null) segundaCarta.setEstado(Carta.Estado.OCULTA);
@@ -259,7 +257,7 @@ public class ControladorClasico {
 
     // ---------- Reloj del turno ----------
 
-    /** Actualiza el tiempo con el tiempo transcurrido y cede el turno al agotarse. */
+    // Actualiza el tiempo con el tiempo transcurrido y cede el turno al agotarse.
     private void pasarTiempo() {
         long ahora = System.nanoTime();
         modelo.restarTiempo((ahora - ultimoNs) / 1e9);     // tiempo real transcurrido
@@ -289,14 +287,14 @@ public class ControladorClasico {
         }
     }
 
-    /** Redondea hacia arriba para que la interfaz muestre segundos enteros. */
+    // Redondea hacia arriba para que la interfaz muestre segundos enteros.
     private int segundosRestantes() {
         return (int) Math.ceil(modelo.getTiempo() - 1e-6);
     }
 
     // ---------- Fin de la partida ----------
 
-    /** Detiene el juego, calcula el resultado y actualiza premios, tienda y perfil. */
+    // Detiene el juego, calcula el resultado y actualiza premios, tienda y perfil.
     private void terminar() {
         detener();
         int ganador = modelo.getGanador();
@@ -345,7 +343,7 @@ public class ControladorClasico {
 
     // ---------- Refrescar la vista ----------
 
-    /** Pinta el jugador activo, su turno y el tiempo disponible. */
+    // Pinta el jugador activo, su turno y el tiempo disponible.
     private void actualizarTurno() {
         int activo = modelo.getJugadorActivo();
         vista.setJugadorActivo(activo);
@@ -360,18 +358,18 @@ public class ControladorClasico {
         marcarCursor(true);
     }
 
-    /** Refresca intentos y parejas del jugador indicado. */
+    // Refresca intentos y parejas del jugador indicado.
     private void actualizarMarcadores(int jugador) {
         vista.setIntentos(jugador, modelo.getIntentos(jugador));
         vista.setParejas(jugador, modelo.getParejas(jugador), modelo.getParejasMaximas());
     }
 
-    /** Pasa a la vista el tiempo restante y el máximo actual del turno. */
+    // Pasa a la vista el tiempo restante y el máximo actual del turno.
     private void mostrarTiempo() {
         vista.setTiempoTurno(segundosRestantes(), (int) Math.ceil(modelo.getTiempoMaximo()));
     }
 
-    /** Imprime los tableros en consola para facilitar la revisión durante el desarrollo. */
+    // Imprime los tableros en consola para facilitar la revisión durante el desarrollo.
     private void imprimirTablerosEnConsola() {
         System.out.printf("%n========== MODO CLÁSICO: TABLEROS ==========%nDificultad: %dx%d | Parejas necesarias: %d%n",
                 modelo.getTamanoMatriz(), modelo.getTamanoMatriz(), modelo.getParejasMaximas());
