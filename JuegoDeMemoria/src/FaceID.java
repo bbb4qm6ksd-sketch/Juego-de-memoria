@@ -39,53 +39,32 @@ import org.opencv.objdetect.FaceRecognizerSF;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;
 
-/**
- * Face ID para AstroMatch (login y registro con la cámara).
- *
- * Usa OpenCV (detector YuNet + reconocedor SFace). Los dos modelos .onnx se descargan solos
- * la primera vez a la carpeta "modelos_faceid" (unos 38 MB en total).
- *
- * Del rostro NO se guarda ninguna foto: solo 5 vectores de 128 números por usuario, en "faceid.txt".
- *
- * Uso desde el resto del proyecto:
- *   FaceID.instalarEnLogin(vista, this::abrirMenu);   // añade el botón "ENTRAR CON FACE ID" al login
- *   FaceID.ofrecerActivar(ventana, usuario);          // pregunta si quiere registrar su rostro
- *   FaceID.registrar(ventana, usuario);               // registra el rostro directamente
- *   FaceID.identificar(ventana);                      // devuelve el usuario reconocido, o null
- *   FaceID.tieneFaceID(usuario) / FaceID.eliminar(usuario)
- */
 public final class FaceID {
 
-    private FaceID() { }
+    // Aquí se guarda el reconocimiento facial y su conexión con la cámara.
 
-    // ====================== AJUSTES (se pueden tocar) ======================
+    private FaceID() { }
     private static final Path ARCHIVO = Paths.get("faceid.txt");
     private static final Path CARPETA_MODELOS = Paths.get("modelos_faceid");
 
-    private static final int MUESTRAS = 5;                    // capturas que se guardan al registrar
-    private static final long INTERVALO_MUESTRA_MS = 1400;    // pausa entre capturas (para cambiar de pose)
-    // SFace suele separar identidades con cosine similarity desde ~0.36; se deja
-    // margen para cámaras normales sin aceptar coincidencias demasiado débiles.
+    private static final int MUESTRAS = 5;
+    private static final long INTERVALO_MUESTRA_MS = 1400;
     private static final double UMBRAL = 0.40;
-    private static final double MARGEN = 0.025;              // evita elegir entre dos cuentas casi empatadas
-    private static final int RACHA_NECESARIA = 3;             // fotogramas seguidos que deben coincidir
-    private static final double ANCHO_MIN = 0.20;             // el rostro debe ocupar al menos 20 % del ancho
-    private static final long TIEMPO_MAX_MS = 45_000;         // tiempo máximo por intento
+    private static final double MARGEN = 0.025;
+    private static final int RACHA_NECESARIA = 3;
+    private static final double ANCHO_MIN = 0.20;
+    private static final long TIEMPO_MAX_MS = 45_000;
 
     private static final String BASE_1 = "https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models/";
     private static final String BASE_2 = "https://github.com/opencv/opencv_zoo/raw/main/models/";
-    // {archivo, subcarpeta en el repositorio, tamaño mínimo esperado en bytes}
     private static final String[][] MODELOS = {
             {"face_detection_yunet_2023mar.onnx", "face_detection_yunet/", "150000"},
             {"face_recognition_sface_2021dec.onnx", "face_recognition_sface/", "30000000"}
     };
 
-    private static final Set<String> RECHAZADOS = new HashSet<>();   // quienes dijeron "ahora no" en esta sesión
+    private static final Set<String> RECHAZADOS = new HashSet<>();
     private static boolean nativasCargadas = false;
 
-    // ====================== API PÚBLICA ======================
-
-    /** Añade bajo el botón de iniciar sesión un botón "ENTRAR CON FACE ID". */
     public static void instalarEnLogin(VistaLogin vista, Consumer<String> alIngresar) {
         Container padre = vista.getBtnIngresar().getParent();
         if (padre == null) {
@@ -119,7 +98,6 @@ public final class FaceID {
         });
     }
 
-    /** Pregunta si quiere activar Face ID (si todavía no lo tiene) y, si acepta, lo registra. */
     public static void ofrecerActivar(Window dueno, String usuario) {
         if (usuario == null || tieneFaceID(usuario) || RECHAZADOS.contains(usuario.toLowerCase())) {
             return;
@@ -134,14 +112,12 @@ public final class FaceID {
         }
     }
 
-    /** Abre la cámara y guarda el rostro de ese usuario. true si quedó registrado. */
     public static boolean registrar(Window dueno, String usuario) {
         VentanaCamara v = new VentanaCamara(dueno, VentanaCamara.Modo.REGISTRAR, usuario);
         v.iniciar();
         return v.exito;
     }
 
-    /** Abre la cámara y devuelve el usuario cuyo rostro coincide, o null si no se reconoció / se canceló. */
     public static String identificar(Window dueno) {
         VentanaCamara v = new VentanaCamara(dueno, VentanaCamara.Modo.IDENTIFICAR, null);
         v.iniciar();
@@ -152,7 +128,7 @@ public final class FaceID {
         return usuario != null && cargarTodo(false).containsKey(usuario.toLowerCase());
     }
 
-    /** Borra el rostro guardado de ese usuario. */
+
     public static synchronized void eliminar(String usuario) {
         try {
             if (!Files.exists(ARCHIVO)) {
@@ -168,13 +144,10 @@ public final class FaceID {
             Files.write(ARCHIVO, sb.toString().getBytes(StandardCharsets.UTF_8),
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException ignorado) {
-            // si no se puede escribir, simplemente no se borra
         }
     }
 
-    // ====================== ALMACENAMIENTO (faceid.txt) ======================
-    // cada línea: usuario;vector1;vector2;...  (cada vector son 128 floats en Base64)
-
+    // Guarda las muestras del rostro asociadas a la cuenta.
     private static synchronized void guardar(String usuario, List<float[]> muestras) throws IOException {
         eliminar(usuario);
         StringBuilder sb = new StringBuilder(usuario);
@@ -186,7 +159,7 @@ public final class FaceID {
                 StandardOpenOption.CREATE, StandardOpenOption.APPEND);
     }
 
-    /** Devuelve usuario(en minúsculas) -> vectores. Con soloCuentasExistentes ignora usuarios ya borrados de cuentas.txt. */
+    // Lee los rostros guardados para poder compararlos al iniciar sesión.
     private static synchronized Map<String, List<float[]>> cargarTodo(boolean soloCuentasExistentes) {
         Map<String, List<float[]>> mapa = new LinkedHashMap<>();
         try {
@@ -213,7 +186,6 @@ public final class FaceID {
                 }
             }
         } catch (IOException ignorado) {
-            // archivo ilegible: se trata como si no hubiera rostros
         }
         return mapa;
     }
@@ -238,8 +210,7 @@ public final class FaceID {
         }
     }
 
-    // ====================== COMPARACIÓN ======================
-
+    // Calcula qué tan parecidos son dos registros de rostro.
     private static double coseno(float[] a, float[] b) {
         if (a.length != b.length) {
             return -1;
@@ -262,11 +233,10 @@ public final class FaceID {
         return mejor;
     }
 
-    /** Resultado de comparar un rostro contra todos los usuarios registrados. */
     private static final class Coincidencia {
-        String usuario;      // el más parecido (en minúsculas), o null
-        double puntaje = -1; // su similitud
-        double segundo = -1; // similitud del siguiente usuario
+        String usuario;
+        double puntaje = -1;
+        double segundo = -1;
     }
 
     private static Coincidencia comparar(float[] v, Map<String, List<float[]>> base, String excluir) {
@@ -287,17 +257,13 @@ public final class FaceID {
         return c;
     }
 
-    // ====================== OPENCV: motor de detección y reconocimiento ======================
-
     private static synchronized void cargarNativas() {
         if (nativasCargadas) {
             return;
         }
         try {
-            // con el jar org.openpnp:opencv las librerías nativas vienen dentro y se cargan así
             Class.forName("nu.pattern.OpenCV").getMethod("loadLocally").invoke(null);
         } catch (ClassNotFoundException e) {
-            // con una instalación normal de OpenCV (jar + .dll/.so/.dylib en java.library.path)
             System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("No se pudieron cargar las librerías nativas de OpenCV ("
@@ -306,10 +272,9 @@ public final class FaceID {
         nativasCargadas = true;
     }
 
-    /** Un rostro detectado: fila = x, y, ancho, alto, 5 puntos de referencia (x,y) y la confianza. */
     private static final class Deteccion {
         final float[] fila;
-        final int cantidad;   // cuántos rostros salían en el cuadro
+        final int cantidad;
 
         Deteccion(float[] fila, int cantidad) {
             this.fila = fila;
@@ -317,6 +282,7 @@ public final class FaceID {
         }
     }
 
+    // Se encarga de detectar rostros y obtener sus datos para compararlos.
     private static final class Motor {
         private final FaceDetectorYN detector;
         private final FaceRecognizerSF reconocedor;
@@ -328,7 +294,7 @@ public final class FaceID {
             this.reconocedor = FaceRecognizerSF.create(reconocedor.toString(), "");
         }
 
-        private static Motor guardado;   // se reutiliza: cargar los modelos tarda un poco
+        private static Motor guardado;
 
         static synchronized Motor crear(Consumer<String> estado) throws IOException {
             if (guardado != null) {
@@ -339,7 +305,6 @@ public final class FaceID {
             try {
                 guardado = new Motor(CARPETA_MODELOS.resolve(MODELOS[0][0]), CARPETA_MODELOS.resolve(MODELOS[1][0]));
             } catch (RuntimeException primero) {
-                // OpenCV en Windows falla con rutas que tienen tildes o ñ: se reintenta desde una ruta simple
                 Path alterna = carpetaAlterna();
                 Files.createDirectories(alterna);
                 for (String[] m : MODELOS) {
@@ -350,7 +315,6 @@ public final class FaceID {
             return guardado;
         }
 
-        /** El rostro más grande del cuadro, o null si no hay ninguno. */
         Deteccion detectar(Mat cuadro) {
             if (cuadro.cols() != ancho || cuadro.rows() != alto) {
                 ancho = cuadro.cols();
@@ -378,7 +342,6 @@ public final class FaceID {
             }
         }
 
-        /** Vector de 128 números que identifica ese rostro. */
         float[] vector(Mat cuadro, float[] fila) {
             Mat cara = new Mat(1, 15, CvType.CV_32F);
             Mat alineada = new Mat();
@@ -399,7 +362,7 @@ public final class FaceID {
     }
 
     private static Path carpetaAlterna() {
-        String publica = System.getenv("PUBLIC");   // C:\Users\Public en Windows
+        String publica = System.getenv("PUBLIC");
         Path base = publica != null ? Paths.get(publica) : Paths.get(System.getProperty("java.io.tmpdir"));
         return base.resolve("astromatch_faceid");
     }
@@ -466,11 +429,10 @@ public final class FaceID {
 
     private static VideoCapture abrirCamara() {
         boolean windows = System.getProperty("os.name", "").toLowerCase().contains("win");
-        // En Windows se prueba DirectShow, luego Media Foundation y por último el modo por defecto
         int[] backends = windows
                 ? new int[]{Videoio.CAP_DSHOW, Videoio.CAP_MSMF, Videoio.CAP_ANY}
                 : new int[]{Videoio.CAP_ANY};
-        for (int indice = 0; indice <= 3; indice++) {   // la webcam no siempre es la 0 (cámaras virtuales, USB, etc.)
+        for (int indice = 0; indice <= 3; indice++) {
             for (int backend : backends) {
                 VideoCapture c = new VideoCapture(indice, backend);
                 System.out.println("[FaceID] cámara " + indice + " (backend " + backend + "): "
@@ -489,7 +451,6 @@ public final class FaceID {
         return null;
     }
 
-    /** Comprueba que la cámara realmente entrega cuadros (las primeras pueden venir vacías mientras se calienta). */
     private static boolean entregaImagen(VideoCapture c) {
         Mat m = new Mat();
         try {
@@ -524,8 +485,7 @@ public final class FaceID {
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
-    // ====================== VENTANA DE LA CÁMARA ======================
-
+    // Muestra la cámara y guía al usuario durante el registro o el acceso.
     private static final class VentanaCamara extends JDialog {
 
         enum Modo { REGISTRAR, IDENTIFICAR }
@@ -625,15 +585,12 @@ public final class FaceID {
             setLocationRelativeTo(dueno);
         }
 
-        /** Arranca la cámara en un hilo aparte y muestra la ventana (bloquea hasta que se cierra). */
         void iniciar() {
             Thread hilo = new Thread(this::trabajar, "FaceID-camara");
             hilo.setDaemon(true);
             hilo.start();
             setVisible(true);
         }
-
-        // ---------- hilo de la cámara ----------
 
         private void trabajar() {
             VideoCapture camara = null;
@@ -662,7 +619,7 @@ public final class FaceID {
                 e.printStackTrace();
                 fallo("Falta la librería OpenCV o no se pudo cargar (" + e.getMessage() + ").");
             } catch (Throwable e) {
-                e.printStackTrace();   // el detalle completo sale en la consola de IntelliJ
+                e.printStackTrace();
                 fallo(e.getMessage() != null ? e.getMessage() : e.toString());
             } finally {
                 if (camara != null) {
@@ -711,7 +668,6 @@ public final class FaceID {
                 if (cancelado) {
                     return;
                 }
-                // que ese rostro no esté ya vinculado a otra cuenta (evita confusiones al iniciar sesión)
                 Map<String, List<float[]>> base = cargarTodo(true);
                 for (float[] v : muestras) {
                     Coincidencia c = comparar(v, base, usuario);
@@ -789,7 +745,6 @@ public final class FaceID {
             }
         }
 
-        /** Recupera el nombre con sus mayúsculas tal como se guardó. */
         private String nombreReal(String enMinusculas) {
             try {
                 for (String linea : Files.readAllLines(ARCHIVO, StandardCharsets.UTF_8)) {
@@ -799,12 +754,10 @@ public final class FaceID {
                     }
                 }
             } catch (IOException ignorado) {
-                // se usa el nombre en minúsculas
             }
             return enMinusculas;
         }
 
-        /** Lee un cuadro de la cámara y lo voltea como un espejo. false si no hubo imagen. */
         private boolean leer(VideoCapture camara, Mat cuadro, Mat espejo) throws InterruptedException {
             if (!camara.read(cuadro) || cuadro.empty()) {
                 Thread.sleep(30);
@@ -814,7 +767,6 @@ public final class FaceID {
             return true;
         }
 
-        /** Texto de ayuda si el cuadro no sirve para reconocer, o null si el rostro es válido. */
         private String problema(Deteccion d, Mat cuadro) {
             if (d == null) {
                 return "No veo tu rostro. Colócalo dentro del visor del casco.";
@@ -834,8 +786,6 @@ public final class FaceID {
             return null;
         }
 
-        // ---------- actualizaciones de la interfaz (seguras desde cualquier hilo) ----------
-
         private void mostrar(Mat espejo, Deteccion d, Estado estado, String texto) {
             video.mostrar(aImagen(espejo), d == null ? null : d.fila, estado);
             mensaje(texto, estado);
@@ -847,7 +797,7 @@ public final class FaceID {
                 lblEstado.setText(html);
                 lblEstado.setForeground(estado == Estado.ERROR ? Tema.ERROR
                         : estado == Estado.EXITO ? Tema.ESTRELLA : Tema.TEXTO);
-                if (estado == Estado.ERROR) {   // los errores pueden ser largos: la ventana se ajusta para que se lean completos
+                if (estado == Estado.ERROR) {
                     pack();
                     setLocationRelativeTo(getOwner());
                 }
@@ -875,8 +825,6 @@ public final class FaceID {
         }
     }
 
-    // ====================== COMPONENTES DE DIBUJO ======================
-
     private static JLabel etiqueta(String texto, Font fuente, Color color) {
         JLabel l = new JLabel(texto);
         l.setFont(fuente);
@@ -884,7 +832,7 @@ public final class FaceID {
         return l;
     }
 
-    /** Vista de la cámara con el óvalo guía, la línea de escaneo y las esquinas sobre el rostro. */
+    // Dibuja la imagen de la cámara y las guías del visor.
     private static final class PanelVideo extends JComponent {
         private volatile BufferedImage imagen;
         private volatile float[] fila;
@@ -930,9 +878,6 @@ public final class FaceID {
             VentanaCamara.Estado est = estado;
             Color color = est == VentanaCamara.Estado.ERROR ? Tema.ERROR
                     : est == VentanaCamara.Estado.BUSCANDO ? Tema.HIELO : Tema.ESTRELLA;
-
-            // Visor grande dentro de la silueta de un casco de astronauta.
-            // El área del visor permanece transparente para alinear el rostro.
             double escalaCasco = Math.min(w, h);
             double centroX = w / 2.0;
             double centroY = h / 2.0;
@@ -977,8 +922,6 @@ public final class FaceID {
             fuera.subtract(new Area(visor));
             g.setColor(new Color(6, 9, 20, 175));
             g.fill(fuera);
-
-            // línea de escaneo
             if (est == VentanaCamara.Estado.BUSCANDO || est == VentanaCamara.Estado.OK) {
                 double t = (System.nanoTime() / 1e9) % 2.4 / 2.4;
                 double y = visor.getY() + t * visor.getHeight();
@@ -991,8 +934,6 @@ public final class FaceID {
                 g.draw(new Line2D.Double(0, y, w, y));
                 g.setClip(anterior);
             }
-
-            // Silueta del casco y borde iluminado del visor.
             Stroke trazo = est == VentanaCamara.Estado.BUSCANDO
                     ? new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1f, new float[]{9f, 9f}, 0f)
                     : new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
@@ -1030,8 +971,6 @@ public final class FaceID {
             detalleTraje.quadTo(centroX + escalaCasco * 0.39, centroY + escalaCasco * 0.35,
                     centroX + escalaCasco * 0.33, centroY + escalaCasco * 0.36);
             g.draw(detalleTraje);
-
-            // esquinas sobre el rostro detectado
             float[] f = fila;
             if (f != null && img != null && est != VentanaCamara.Estado.ERROR) {
                 int x = (int) (ox + f[0] * escala);
@@ -1046,8 +985,6 @@ public final class FaceID {
                 esquina(g, x, y + ch, L, -L);
                 esquina(g, x + cw, y + ch, -L, -L);
             }
-
-            // palomita de éxito
             if (est == VentanaCamara.Estado.EXITO) {
                 g.setColor(new Color(6, 9, 20, 150));
                 g.fill(new Ellipse2D.Double(w / 2.0 - 46, h / 2.0 - 46, 92, 92));
@@ -1073,7 +1010,7 @@ public final class FaceID {
         }
     }
 
-    /** Puntos de progreso del registro (uno por captura). */
+    // Muestra cuántas capturas del registro ya se completaron.
     private static final class Progreso extends JComponent {
         private final int total;
         private volatile int hechas = 0;
@@ -1110,3 +1047,4 @@ public final class FaceID {
         }
     }
 }
+

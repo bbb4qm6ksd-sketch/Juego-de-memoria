@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 
 public class TipoCambio {
 
-    // aqui se pega el token que da el BCCR
+    // Este token permite consultar los datos publicados por el BCCR.
     private static final String TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJCQ0NSLVNEREUiLCJzdWIiOiJnYWJlbW9saWNvcmRvMDNAZ21haWwuY29tIiwiYXVkIjoiU0RERS1TaXRpb0V4dGVybm8iLCJleHAiOjI1MzQwMjMwMDgwMCwibmJmIjoxNzkzMjg0NTE3LCJpYXQiOjE3OTMyODQ1MTcsImp0aSI6ImRhNWY1YmVmLTE4MTItNGI0Ny04OGYyLWE0MGM3NzdhYTNiNCIsImVtYWlsIjoiZ2FiZW1vbGljb3JkbzAzQGdtYWlsLmNvbSJ9.WU9oui89VqdNGhN6r1TQ571bbZyawD6PyvW-YamaH5k";
 
     private static final String BASE = "https://apim.bccr.fi.cr/SDDE/api/"
@@ -25,8 +25,9 @@ public class TipoCambio {
             "\"valorDatoPorPeriodo\"\\s*:\\s*([0-9]+(?:\\.[0-9]+)?)");
     private static final HttpClient cliente = HttpClient.newHttpClient();
 
-    // devuelve el tipo de cambio de hoy; si hoy no hay dato (fin de semana, feriado)
-    // prueba con los dias anteriores
+    // Busca el tipo de cambio más reciente: primero consulta la fecha de hoy y,
+    // si el BCCR todavía no tiene un dato, revisa los cinco días anteriores.
+    // Devuelve el valor encontrado o informa si no hay datos disponibles.
     public static double obtener() throws IOException, InterruptedException {
         if (TOKEN.startsWith("PEGUE")) {
             throw new IllegalStateException("Falta poner el token en TipoCambio.TOKEN");
@@ -61,16 +62,17 @@ public class TipoCambio {
         return extraerValor(resp.body());
     }
 
-    // busca el valor numerico en el JSON; null si no viene
-    static Double extraerValor(String json) {
-        Matcher m = PATRON_VALOR.matcher(json);
+    // Revisa la respuesta del servicio y devuelve el valor del indicador si está presente.
+    // Si la respuesta no incluye ese dato, devuelve null para probar otra fecha.
+    static Double extraerValor(String respuesta) {
+        Matcher m = PATRON_VALOR.matcher(respuesta);
         if (m.find()) {
             return Double.parseDouble(m.group(1));
         }
         return null;
     }
 
-    // para probar el token sin abrir el juego
+    // Permite consultar el tipo de cambio desde la consola sin iniciar el juego.
     public static void main(String[] args) {
         try {
             System.out.println("Tipo de cambio: " + obtener());

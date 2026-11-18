@@ -3,7 +3,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 
-/** Paneles modales dibujados dentro de la ventana activa, con el estilo de AstroMatch. */
+
 public final class DialogoAstro {
 
     private DialogoAstro() { }

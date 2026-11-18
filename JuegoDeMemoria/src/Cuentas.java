@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 public class Cuentas {
 
-    // cada linea del archivo: usuario;correo;contraseña
+    // Maneja el registro, acceso y cambios de las cuentas guardadas.
     private static final Path ARCHIVO = Paths.get("cuentas.txt");
     private static final Pattern USUARIO = Pattern.compile("[A-Za-z0-9_.-]{1,20}");
     private static final Pattern CORREO = Pattern.compile("[^\\s@;]+@[^\\s@;]+\\.[^\\s@;]+");
@@ -22,6 +22,7 @@ public class Cuentas {
         String clave;
     }
 
+    // Revisa los datos y guarda la cuenta si todo está en orden.
     public static String registrar(String usuario, String correo, String contrasena) {
         String error = validarRegistro(usuario, correo, contrasena);
         if (error != null) {
@@ -37,7 +38,7 @@ public class Cuentas {
         }
     }
 
-    /** Valida una cuenta sin guardarla; el formulario la usa antes de abrir la cámara. */
+    // Comprueba los datos del registro antes de crear la cuenta.
     public static String validarRegistro(String usuario, String correo, String contrasena) {
         if (!USUARIO.matcher(usuario).matches()) {
             return "Usuario: usa de 1 a 20 caracteres (letras, números, . _ -).";
@@ -63,8 +64,7 @@ public class Cuentas {
             return "No se pudo validar la cuenta.";
         }
     }
-
-    // devuelve el nombre de usuario si los datos son correctos, o null
+    // Busca la cuenta y confirma que la contraseña coincida.
     public static String validar(String usuarioOCorreo, String contrasena) {
         try {
             for (Cuenta c : cargar()) {
@@ -78,8 +78,6 @@ public class Cuentas {
         }
         return null;
     }
-
-    // true si existe una cuenta con ese usuario o correo
     public static boolean existe(String usuarioOCorreo) {
         try {
             for (Cuenta c : cargar()) {
@@ -93,7 +91,6 @@ public class Cuentas {
         return false;
     }
 
-    /** Devuelve el correo asociado a un usuario; null si no existe o no se puede leer. */
     public static String correoDe(String usuario) {
         if (usuario == null) return null;
         try {
@@ -106,7 +103,6 @@ public class Cuentas {
         return null;
     }
 
-    /** Elimina una cuenta por nombre; se usa para revertir un alta incompleta de Face ID. */
     public static boolean eliminar(String usuario) {
         try {
             List<Cuenta> lista = cargar();
@@ -119,8 +115,7 @@ public class Cuentas {
             return false;
         }
     }
-
-    // cambia la contraseña de la cuenta; devuelve null si todo salió bien, o el mensaje de error
+    // Actualiza la contraseña de una cuenta existente.
     public static String restablecerClave(String usuarioOCorreo, String nuevaContrasena) {
         String errorClave = revisarClave(nuevaContrasena);
         if (errorClave != null) {
@@ -142,6 +137,7 @@ public class Cuentas {
         }
     }
 
+    // Comprueba que la contraseña cumpla con los requisitos.
     private static String revisarClave(String contrasena) {
         if (contrasena.length() < MIN_CONTRASENA) {
             return "La contraseña debe tener al menos " + MIN_CONTRASENA + " caracteres.";
@@ -159,7 +155,6 @@ public class Cuentas {
         if (!tieneMinuscula || !tieneMayuscula || !tieneCaracterEspecial) {
             return "La contraseña debe incluir una minúscula, una mayúscula y un carácter especial.";
         }
-        // El punto y coma separa los campos al guardar la cuenta.
         if (contrasena.contains(";")) {
             return "La contraseña no puede llevar el símbolo ;";
         }
@@ -170,6 +165,7 @@ public class Cuentas {
         return c.usuario.equalsIgnoreCase(usuarioOCorreo) || c.correo.equalsIgnoreCase(usuarioOCorreo);
     }
 
+    // Lee las cuentas del archivo y las prepara para usarlas.
     private static List<Cuenta> cargar() throws IOException {
         List<Cuenta> lista = new ArrayList<>();
         if (!Files.exists(ARCHIVO)) {
@@ -188,8 +184,7 @@ public class Cuentas {
         }
         return lista;
     }
-
-    // reescribe el archivo completo con la lista de cuentas
+    // Guarda en el archivo la lista actualizada de cuentas.
     private static void guardar(List<Cuenta> lista) throws IOException {
         StringBuilder sb = new StringBuilder();
         for (Cuenta c : lista) {
@@ -202,3 +197,4 @@ public class Cuentas {
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 }
+

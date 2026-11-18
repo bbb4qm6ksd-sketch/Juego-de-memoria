@@ -6,6 +6,8 @@ import javax.swing.SwingUtilities;
 
 public class ControladorRegistro {
 
+    // Coordina el registro de la cuenta y la captura del rostro.
+
     private final VistaRegistro vista;
     private final Window ventanaActiva;
     private final Runnable alTerminar;
@@ -30,6 +32,7 @@ public class ControladorRegistro {
         });
     }
 
+    // Revisa el formulario y registra el rostro con la cámara.
     private void registrarRostro() {
         String usuario = vista.getUsuario();
         String error = validarFormulario();
@@ -60,6 +63,7 @@ public class ControladorRegistro {
         }
     }
 
+    // Crea la cuenta cuando los datos y el registro facial están listos.
     private void crear() {
         String usuario = vista.getUsuario();
         String error = validarFormulario();
@@ -94,6 +98,7 @@ public class ControladorRegistro {
         terminar();
     }
 
+    // Comprueba que los campos estén completos y sean válidos.
     private String validarFormulario() {
         String usuario = vista.getUsuario();
         String correo = vista.getCorreo();
@@ -108,6 +113,7 @@ public class ControladorRegistro {
         return Cuentas.validarRegistro(usuario, correo, clave);
     }
 
+    // Borra el rostro guardado si se cambió el nombre de usuario.
     private void descartarSiCambioUsuario(String usuarioActual) {
         if (rostroRegistradoPara != null && !rostroRegistradoPara.equalsIgnoreCase(usuarioActual)) {
             FaceID.eliminar(rostroRegistradoPara);
@@ -116,6 +122,7 @@ public class ControladorRegistro {
         }
     }
 
+    // Cierra el registro y limpia cualquier rostro pendiente.
     private void terminar() {
         if (!cuentaCreada) descartarRostroPendiente();
         vista.dispose();
@@ -134,3 +141,4 @@ public class ControladorRegistro {
         vista.mostrarError(mensaje);
     }
 }
+

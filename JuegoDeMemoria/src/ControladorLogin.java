@@ -2,11 +2,14 @@ import java.awt.Container;
 
 public class ControladorLogin {
 
+    // Conecta las acciones de la pantalla de login con el resto del juego.
+
     private final VistaLogin vista;
     private final Container contenidoLogin;
     private final String tituloLogin;
 
     public ControladorLogin(VistaLogin vista) {
+        // Guarda la vista para poder cambiar su contenido y responder a los botones.
         this.vista = vista;
         this.contenidoLogin = vista.getContentPane();
         this.tituloLogin = vista.getTitle();
@@ -17,6 +20,7 @@ public class ControladorLogin {
         FaceID.instalarEnLogin(vista, this::abrirMenu);   // botón "ENTRAR CON FACE ID"
     }
 
+    // Revisa los datos ingresados y, si son correctos, abre el menú principal.
     private void ingresar() {
         String usuarioOCorreo = vista.getUsuario();
         String clave = vista.getContrasena();
@@ -37,6 +41,7 @@ public class ControladorLogin {
         abrirMenu(usuario);
     }
 
+    // Muestra el formulario para crear una cuenta.
     private void abrirRegistro() {
         VistaRegistro registro = new VistaRegistro(vista);
         vista.setContentPane(registro.getContentPane());
@@ -45,6 +50,7 @@ public class ControladorLogin {
         actualizarVentana();
     }
 
+    // Abre la pantalla para recuperar la contraseña.
     private void abrirRecuperacion() {
         VistaRecuperarContraseña recuperar = new VistaRecuperarContraseña();
         vista.setContentPane(recuperar);
@@ -54,6 +60,7 @@ public class ControladorLogin {
         actualizarVentana();
     }
 
+    // Vuelve a mostrar la pantalla de login después de cerrar otra pantalla.
     private void restaurarLogin() {
         vista.setContentPane(contenidoLogin);
         vista.setTitle(tituloLogin);
@@ -65,11 +72,13 @@ public class ControladorLogin {
         restaurarLogin();
     }
 
+    // Refresca la ventana para que se vean los cambios.
     private void actualizarVentana() {
         vista.revalidate();
         vista.repaint();
         vista.setVisible(true);
     }
+    // Prepara las pantallas y controles del usuario que inició sesión.
     private void abrirMenu(String usuario) {
         VistaPantallaPrincipal menu = new VistaPantallaPrincipal(usuario);
         Container contenidoMenu = menu.getContentPane();
@@ -172,4 +181,5 @@ public class ControladorLogin {
         menu.setVisible(true);
     }
 }
+
 
